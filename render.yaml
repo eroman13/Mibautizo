@@ -1,0 +1,42 @@
+services:
+  - type: pserv
+    name: mibautizo-backend
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    env: node
+    region: santiago
+    plan: free
+    
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          property: url
+        scope: build
+      - key: BACKEND_URL
+        fromService:
+          name: mibautizo-backend
+          property: url
+        scope: build
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mibautizo-db
+          property: connectionString
+      
+    autoDeploy: true
+
+  - type: pgsql
+    name: mibautizo-db
+    ipWhitelist: []
+    region: santiago
+    plan: free
+    
+databases:
+  - name: mibautizo-db
+    engine: postgresql
+    version: "14"
+    region: santiago
+    plan: free

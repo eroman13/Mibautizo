@@ -1,0 +1,83 @@
+/**
+ * Estilos globales - Tailwind CSS + customización
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-soft-gray text-gray-800 font-body;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+
+  /* Scroll suave */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* Botón primario (tierno y elegante) */
+  .btn-primary {
+    @apply bg-gradient-to-r from-pastel-pink to-pastel-lavender 
+           text-white font-semibold py-3 px-6 rounded-full
+           shadow-soft hover:shadow-card transition-all duration-300
+           hover:scale-105 active:scale-95;
+  }
+
+  /* Botón secundario */
+  .btn-secondary {
+    @apply bg-white text-pastel-pink border-2 border-pastel-pink
+           font-semibold py-3 px-6 rounded-full
+           shadow-soft hover:bg-pastel-pink hover:text-white
+           transition-all duration-300;
+  }
+
+  /* Tarjeta de regalo */
+  .gift-card {
+    @apply bg-white rounded-2xl shadow-soft overflow-hidden
+           transition-all duration-300 hover:shadow-card hover:-translate-y-1;
+  }
+
+  /* Input bonito */
+  .input-field {
+    @apply w-full px-4 py-3 border-2 border-gray-200 rounded-lg
+           focus:border-pastel-pink focus:outline-none focus:ring-2 focus:ring-pastel-pink/20
+           transition-all duration-200;
+  }
+
+  /* Badge/etiqueta */
+  .badge {
+    @apply inline-block px-3 py-1 text-sm font-medium rounded-full;
+  }
+
+  .badge-success {
+    @apply badge bg-green-100 text-green-700;
+  }
+
+  .badge-warning {
+    @apply badge bg-yellow-100 text-yellow-700;
+  }
+
+  .badge-info {
+    @apply badge bg-blue-100 text-blue-700;
+  }
+}
+
+@layer utilities {
+  /* Decoración tierna para secciones */
+  .section-decoration::before {
+    content: '✨';
+    @apply mr-2 opacity-50;
+  }
+
+  .section-decoration::after {
+    content: '✨';
+    @apply ml-2 opacity-50;
+  }
+}

@@ -1,0 +1,150 @@
+# ==================================================
+# Mesa de Regalos Bautizo - .gitignore
+# ==================================================
+
+# -------------------- DEPENDENCIAS --------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-store/
+
+# -------------------- VARIABLES DE ENTORNO --------------------
+# ⚠️ CRÍTICO: Nunca subir credenciales de Mercado Pago
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env*.local
+backend/.env
+frontend/.env
+
+# -------------------- BASE DE DATOS --------------------
+# SQLite (desarrollo local)
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+dev.db
+test.db
+
+# Migraciones ya están en Git, pero por si acaso:
+# prisma/migrations/*.sql (comentado - sí queremos versionar)
+
+# -------------------- BUILD Y DIST --------------------
+dist/
+build/
+.next/
+out/
+.nuxt/
+.vuepress/dist
+.serverless/
+.fusebox/
+.dynamodb/
+.tern-port
+
+# Frontend build
+frontend/dist/
+frontend/build/
+
+# Backend build
+backend/dist/
+backend/build/
+
+# -------------------- CACHE --------------------
+.cache/
+.parcel-cache/
+.turbo/
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Vite
+.vite/
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# -------------------- SISTEMA OPERATIVO --------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# -------------------- IDEs Y EDITORES --------------------
+.vscode/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.project
+.settings/
+.classpath
+
+# -------------------- LOGS --------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# PM2
+.pm2/
+pm2.json
+ecosystem.config.js
+
+# -------------------- PRUEBAS --------------------
+coverage/
+.nyc_output/
+*.lcov
+.cache-loader
+
+# -------------------- TEMPORAL --------------------
+tmp/
+temp/
+*.tmp
+*.temp
+.tmp/
+
+# -------------------- DEPLOYMENT --------------------
+.vercel
+.netlify
+.railway
+.render
+
+# -------------------- OTROS --------------------
+# ngrok
+ngrok.exe
+ngrok
+
+# Certificados SSL
+*.pem
+*.key
+*.crt
+
+# Backups
+*.bak
+*.backup
+*.old
+
+# Archivos grandes
+*.zip
+*.tar.gz
+*.rar
+
+# CSV exports (opcionales - comentar si quieres versionarlos)
+# contribuciones-*.csv
