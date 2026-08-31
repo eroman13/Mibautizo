@@ -10,7 +10,7 @@ import { formatCLP } from '../utils/format';
 import { Evento } from '../types';
 
 export default function Checkout() {
-  const { items, limpiarCarrito, regalosGemela1, regalosGemela2 } = useCarrito();
+  const { items, regalosGemela1, regalosGemela2 } = useCarrito();
   const navigate = useNavigate();
   const [evento, setEvento] = useState<Evento | null>(null);
   const [loading, setLoading] = useState(false);
