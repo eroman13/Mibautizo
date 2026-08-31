@@ -1,12 +1,11 @@
 # Archivos y carpetas a ignorar en Vercel
-backend/
+backend
 backend/**
 *.md
 .env
 .env.local
 .env.*.local
-node_modules/
-dist/
-.git/
+node_modules
+.git
 .gitignore
 .DS_Store
