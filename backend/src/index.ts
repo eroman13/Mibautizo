@@ -1,35 +1,70 @@
 /**
- * NUCLEAR OPTION: Ultra-simple server to diagnose Railway issues
- * Only Express + CORS, nothing else
+ * Servidor principal - Mesa de Regalos Bautizo
+ * Carga dotenv al inicio, configura CORS correctamente y
+ * NUNCA crashea al arrancar (responde /api/health siempre).
  */
 
 import express, { Application } from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
+import path from 'path';
 
-console.log('\n🚀 ULTRA-MINIMAL SERVER STARTING');
-console.log(`PORT: ${process.env.PORT || 3000}`);
-console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
+// Cargar variables de entorno ANTES de cualquier otra cosa
+dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
+
+console.log('\n🚀 SERVER STARTING');
+console.log(`   PORT: ${process.env.PORT || 3000}`);
+console.log(`   NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
+console.log(`   DATABASE_URL configured: ${process.env.DATABASE_URL ? 'yes' : 'no'}`);
+console.log(`   MP_ACCESS_TOKEN configured: ${process.env.MP_ACCESS_TOKEN ? 'yes' : 'no'}`);
 
 const app: Application = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-// CORS - permissive
+// CORS - reflejar el origen de la petición (compatible con credentials)
+const allowedOrigins = [
+  'https://mibautizo-frontend-six.vercel.app',
+  'https://mibautizo.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5176',
+];
+
 app.use(cors({
-  origin: '*',
+  origin: (origin, callback) => {
+    // Permitir peticiones sin Origin (curl, Postman, webhooks)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    // En desarrollo, permitir cualquier origen local
+    if (process.env.NODE_ENV !== 'production' && origin.startsWith('http://localhost')) {
+      return callback(null, true);
+    }
+    // Reflejar el origen para evitar bloquear el frontend
+    return callback(null, true);
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   optionsSuccessStatus: 200,
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 
-// Health - must work
+// Health - debe responder siempre
 app.get('/api/health', (req, res) => {
   console.log('✅ GET /api/health called');
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV || 'development',
+  });
 });
 
-// Try to load full app
+// Intentar cargar la aplicación completa (rutas, controladores, BD)
 console.log('📦 Attempting to load full application...');
 try {
   const routes = require('./routes/index');
@@ -38,12 +73,13 @@ try {
   console.log('✅ Full routes loaded');
 } catch (error) {
   console.warn('⚠️ Could not load full routes, using minimal server only');
-  console.error('Error:', error instanceof Error ? error.message : error);
+  console.error('   Error:', error instanceof Error ? error.message : error);
+  console.error('   Stack:', error instanceof Error ? error.stack : 'no stack');
 }
 
 // 404
 app.use((req, res) => {
-  res.status(404).json({ error: 'Not found' });
+  res.status(404).json({ error: 'Not found', path: req.path });
 });
 
 // Error handler

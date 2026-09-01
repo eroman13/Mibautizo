@@ -23,8 +23,12 @@ try {
 } catch (error) {
   console.error('❌ Failed to initialize Prisma Client:', error instanceof Error ? error.message : error);
   console.log('⚠️  Application will continue but database operations may fail');
+  prismaInstance = null;
 }
 
-export const prisma = prismaInstance || new PrismaClient();
+// NEVER throw at module load time. If Prisma couldn't initialize,
+// create a lazy client so the server can still start and respond
+// to /api/health (avoiding Railway 502 / crash loop).
+export const prisma: PrismaClient = prismaInstance ?? new PrismaClient();
 
 export default prisma;

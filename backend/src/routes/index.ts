@@ -26,12 +26,13 @@ import {
 
 const router = Router();
 
-// CRITICAL: Handle preflight requests
+// CRITICAL: Handle preflight requests (fallback en caso de que el
+// middleware global de CORS no lo intercepte antes)
 router.options('*', (req, res) => {
   res.set({
     'Access-Control-Allow-Origin': req.headers.origin || '*',
     'Access-Control-Allow-Methods': 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Requested-With',
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Max-Age': '86400'
   });
