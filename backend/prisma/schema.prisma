@@ -1,5 +1,6 @@
 // Schema de base de datos para Mesa de Regalos - Bautizo de Gemelas
-// Configurado para PostgreSQL en producción
+// Configurado para PostgreSQL en producción (Railway)
+// En desarrollo local, configura DATABASE_URL en .env
 
 generator client {
   provider = "prisma-client-js"
