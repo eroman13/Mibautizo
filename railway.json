@@ -3,6 +3,6 @@
     "buildCommand": "cd backend && npm install && npm run build"
   },
   "start": {
-    "startCommand": "cd backend && npm run start:prod"
+    "startCommand": "cd backend && bash start.sh"
   }
 }
