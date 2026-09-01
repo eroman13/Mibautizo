@@ -7,9 +7,14 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 
-// Cargar variables de entorno
-dotenv.config({ path: '../.env' });
+// Cargar variables de entorno solo si existen en desarrollo
+if (fs.existsSync('../.env')) {
+  dotenv.config({ path: '../.env' });
+} else {
+  console.log('⚠️ .env file not found (production mode - using environment variables)');
+}
 
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
