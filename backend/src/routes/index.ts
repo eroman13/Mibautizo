@@ -26,6 +26,18 @@ import {
 
 const router = Router();
 
+// CRITICAL: Handle preflight requests
+router.options('*', (req, res) => {
+  res.set({
+    'Access-Control-Allow-Origin': req.headers.origin || '*',
+    'Access-Control-Allow-Methods': 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Max-Age': '86400'
+  });
+  res.sendStatus(200);
+});
+
 // Middleware simple de autenticación
 const verificarAuth = (req: any, res: any, next: any) => {
   const authHeader = req.headers.authorization;
