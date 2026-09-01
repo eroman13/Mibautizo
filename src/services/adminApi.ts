@@ -39,6 +39,16 @@ export const adminApi = {
     return response.json();
   },
 
+  // Carga masiva de regalos
+  crearRegalosMasivo: async (regalos: any[]) => {
+    const response = await fetch(`${API_URL}/admin/regalos/bulk`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ regalos }),
+    });
+    return response.json();
+  },
+
   actualizarRegalo: async (id: number, data: any) => {
     const response = await fetch(`${API_URL}/admin/regalos/${id}`, {
       method: 'PUT',

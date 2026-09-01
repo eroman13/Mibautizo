@@ -239,6 +239,75 @@ export async function eliminarRegalo(req: Request, res: Response) {
 }
 
 /**
+ * Crear múltiples regalos de forma masiva
+ * POST /api/admin/regalos/bulk
+ * Body: { regalos: [{ nombre, descripcion, precioCLP, imagenUrl?, imagenBase64?, permiteColaborativo? }] }
+ * La imagen puede venir como URL externa (imagenUrl) o como data URL (imagenBase64).
+ */
+export async function crearRegalosMasivo(req: Request, res: Response) {
+  try {
+    const { regalos } = req.body;
+
+    if (!regalos || !Array.isArray(regalos) || regalos.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Debes enviar un array de regalos',
+      });
+    }
+
+    const creados: any[] = [];
+    const errores: Array<{ index: number; nombre: string; error: string }> = [];
+
+    for (let i = 0; i < regalos.length; i++) {
+      const regalo = regalos[i];
+      const { nombre, descripcion, precioCLP, imagenUrl, imagenBase64, permiteColaborativo } = regalo;
+
+      // Validar campos obligatorios
+      if (!nombre || !descripcion || precioCLP === undefined || precioCLP === null) {
+        errores.push({ index: i, nombre: nombre || `#${i + 1}`, error: 'nombre, descripcion y precioCLP son obligatorios' });
+        continue;
+      }
+
+      // Determinar la imagen: prioridad a imagenBase64, luego imagenUrl
+      const imagenFinal = imagenBase64 || imagenUrl;
+      if (!imagenFinal) {
+        errores.push({ index: i, nombre, error: 'Falta imagen (URL o base64)' });
+        continue;
+      }
+
+      try {
+        const nuevoRegalo = await prisma.gift.create({
+          data: {
+            nombre,
+            descripcion,
+            precioCLP: parseInt(String(precioCLP)),
+            imagenUrl: imagenFinal,
+            permiteColaborativo: Boolean(permiteColaborativo),
+          },
+        });
+        creados.push(nuevoRegalo);
+      } catch (error: any) {
+        errores.push({ index: i, nombre, error: error.message || 'Error al crear' });
+      }
+    }
+
+    console.log(`📦 Carga masiva: ${creados.length} creados, ${errores.length} con error`);
+
+    res.json({
+      success: true,
+      data: {
+        creados: creados.length,
+        total: regalos.length,
+        errores,
+      },
+    });
+  } catch (error) {
+    console.error('Error en carga masiva:', error);
+    res.status(500).json({ success: false, error: 'Error en carga masiva' });
+  }
+}
+
+/**
  * Actualizar configuración del evento
  * PUT /api/admin/evento
  */

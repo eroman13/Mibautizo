@@ -58,7 +58,7 @@ app.use(cors({
   optionsSuccessStatus: 200,
 }));
 
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '100mb' }));
 
 // Health - debe responder siempre
 app.get('/api/health', (req, res) => {

@@ -25,6 +25,20 @@ export default function AdminRegalos() {
     permiteColaborativo: false,
   });
 
+  // Estados para carga masiva
+  const [modalMasivoAbierto, setModalMasivoAbierto] = useState(false);
+  const [modoCarga, setModoCarga] = useState<'json' | 'formulario'>('json');
+  const [jsonText, setJsonText] = useState('');
+  const [cargandoMasivo, setCargandoMasivo] = useState(false);
+  const [filasMasivo, setFilasMasivo] = useState<Array<{
+    nombre: string;
+    descripcion: string;
+    precioCLP: number;
+    imagenUrl: string;
+    imagenBase64: string;
+    permiteColaborativo: boolean;
+  }>>([{ nombre: '', descripcion: '', precioCLP: 0, imagenUrl: '', imagenBase64: '', permiteColaborativo: false }]);
+
   useEffect(() => {
     cargarRegalos();
   }, []);
@@ -163,6 +177,97 @@ export default function AdminRegalos() {
     }
   };
 
+  // ---------- Funciones de carga masiva ----------
+
+  const procesarJsonMasivo = async () => {
+    setCargandoMasivo(true);
+    try {
+      const regalos = JSON.parse(jsonText);
+      if (!Array.isArray(regalos)) throw new Error('El JSON debe ser un array');
+
+      const response = await adminApi.crearRegalosMasivo(regalos);
+      if (response.success) {
+        const { creados, errores } = response.data;
+        if (errores.length > 0) {
+          console.error('Errores en carga masiva:', errores);
+          alert(`✅ ${creados} regalos creados.\n⚠️ ${errores.length} con error (ver consola).`);
+        } else {
+          alert(`✅ ${creados} regalos creados exitosamente.`);
+        }
+        await cargarRegalos();
+        setModalMasivoAbierto(false);
+        setJsonText('');
+      } else {
+        alert(response.error || 'Error en carga masiva');
+      }
+    } catch (e: any) {
+      alert('JSON inválido: ' + (e.message || 'Error al parsear'));
+    } finally {
+      setCargandoMasivo(false);
+    }
+  };
+
+  const agregarFilaMasivo = () => {
+    setFilasMasivo([
+      ...filasMasivo,
+      { nombre: '', descripcion: '', precioCLP: 0, imagenUrl: '', imagenBase64: '', permiteColaborativo: false },
+    ]);
+  };
+
+  const eliminarFilaMasivo = (index: number) => {
+    if (filasMasivo.length === 1) return;
+    setFilasMasivo(filasMasivo.filter((_, i) => i !== index));
+  };
+
+  const actualizarFilaMasivo = (index: number, campo: string, valor: any) => {
+    const nuevas = [...filasMasivo];
+    nuevas[index] = { ...nuevas[index], [campo]: valor };
+    setFilasMasivo(nuevas);
+  };
+
+  const subirImagenFila = (index: number, file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      actualizarFilaMasivo(index, 'imagenBase64', e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const procesarFormularioMasivo = async () => {
+    setCargandoMasivo(true);
+    try {
+      const regalosValidos = filasMasivo.filter(
+        (f) => f.nombre.trim() && f.descripcion.trim() && f.precioCLP > 0 && (f.imagenUrl || f.imagenBase64)
+      );
+
+      if (regalosValidos.length === 0) {
+        alert('Agrega al menos un regalo completo (nombre, descripción, precio e imagen)');
+        return;
+      }
+
+      const response = await adminApi.crearRegalosMasivo(regalosValidos);
+      if (response.success) {
+        const { creados, errores } = response.data;
+        if (errores.length > 0) {
+          console.error('Errores en carga masiva:', errores);
+          alert(`✅ ${creados} regalos creados.\n⚠️ ${errores.length} con error (ver consola).`);
+        } else {
+          alert(`✅ ${creados} regalos creados exitosamente.`);
+        }
+        await cargarRegalos();
+        setModalMasivoAbierto(false);
+        setFilasMasivo([{ nombre: '', descripcion: '', precioCLP: 0, imagenUrl: '', imagenBase64: '', permiteColaborativo: false }]);
+      } else {
+        alert(response.error || 'Error en carga masiva');
+      }
+    } catch (error) {
+      console.error('Error en carga masiva:', error);
+      alert('Error al procesar la carga masiva');
+    } finally {
+      setCargandoMasivo(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -189,9 +294,12 @@ export default function AdminRegalos() {
 
       <div className="container mx-auto px-4 py-8">
         {/* Botón agregar */}
-        <div className="mb-6">
+        <div className="mb-6 flex gap-3 flex-wrap">
           <button onClick={() => abrirModal()} className="btn-primary">
             ➕ Agregar Nuevo Regalo
+          </button>
+          <button onClick={() => setModalMasivoAbierto(true)} className="btn-secondary">
+            📦 Carga Masiva
           </button>
         </div>
 
@@ -402,6 +510,198 @@ export default function AdminRegalos() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Modal de carga masiva */}
+      {modalMasivoAbierto && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-card w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b flex justify-between items-center">
+              <h2 className="text-xl font-display font-bold text-gray-800">
+                📦 Carga Masiva de Regalos
+              </h2>
+              <button
+                onClick={() => setModalMasivoAbierto(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-6">
+              {/* Tabs */}
+              <div className="flex gap-2 mb-6">
+                <button
+                  onClick={() => setModoCarga('json')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                    modoCarga === 'json' ? 'bg-pastel-pink text-white' : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  📋 Pegar JSON
+                </button>
+                <button
+                  onClick={() => setModoCarga('formulario')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                    modoCarga === 'formulario' ? 'bg-pastel-pink text-white' : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  ✍️ Formulario múltiple
+                </button>
+              </div>
+
+              {modoCarga === 'json' ? (
+                <div>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Pega un array JSON de regalos. Cada regalo puede tener <code className="bg-gray-100 px-1 rounded">imagenUrl</code> (URL externa) o <code className="bg-gray-100 px-1 rounded">imagenBase64</code> (data URL).
+                  </p>
+                  <textarea
+                    value={jsonText}
+                    onChange={(e) => setJsonText(e.target.value)}
+                    className="input-field w-full font-mono text-sm h-64"
+                    placeholder={`[\n  {\n    "nombre": "Coche para bebé",\n    "descripcion": "Coche ligero y plegable",\n    "precioCLP": 120000,\n    "imagenUrl": "https://ejemplo.com/foto.jpg",\n    "permiteColaborativo": false\n  }\n]`}
+                  />
+                  <div className="mt-4 flex gap-3">
+                    <button
+                      onClick={procesarJsonMasivo}
+                      disabled={cargandoMasivo}
+                      className="btn-primary flex-1"
+                    >
+                      {cargandoMasivo ? '⏳ Procesando...' : '📦 Cargar regalos'}
+                    </button>
+                    <button
+                      onClick={() => setModalMasivoAbierto(false)}
+                      className="btn-secondary flex-1"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Completa los campos de cada regalo. Para la imagen puedes subir un archivo o pegar una URL.
+                  </p>
+
+                  <div className="space-y-4">
+                    {filasMasivo.map((fila, index) => (
+                      <div key={index} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="font-medium text-gray-700 text-sm">
+                            Regalo #{index + 1}
+                          </span>
+                          {filasMasivo.length > 1 && (
+                            <button
+                              onClick={() => eliminarFilaMasivo(index)}
+                              className="text-red-500 text-sm hover:text-red-700"
+                            >
+                              ✕ Eliminar
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">Nombre *</label>
+                            <input
+                              type="text"
+                              value={fila.nombre}
+                              onChange={(e) => actualizarFilaMasivo(index, 'nombre', e.target.value)}
+                              className="input-field"
+                              placeholder="Ej: Coche para bebé"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">Precio (CLP) *</label>
+                            <input
+                              type="number"
+                              value={fila.precioCLP}
+                              onChange={(e) => actualizarFilaMasivo(index, 'precioCLP', Number(e.target.value))}
+                              className="input-field"
+                              placeholder="120000"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mt-3">
+                          <label className="block text-xs text-gray-600 mb-1">Descripción *</label>
+                          <input
+                            type="text"
+                            value={fila.descripcion}
+                            onChange={(e) => actualizarFilaMasivo(index, 'descripcion', e.target.value)}
+                            className="input-field"
+                            placeholder="Coche ligero y plegable"
+                          />
+                        </div>
+
+                        <div className="mt-3">
+                          <label className="block text-xs text-gray-600 mb-1">Imagen</label>
+                          <div className="flex items-center gap-3">
+                            {fila.imagenBase64 || fila.imagenUrl ? (
+                              <img
+                                src={fila.imagenBase64 || fila.imagenUrl}
+                                alt="preview"
+                                className="w-16 h-16 object-cover rounded-lg border"
+                              />
+                            ) : (
+                              <div className="w-16 h-16 bg-gray-100 rounded-lg border flex items-center justify-center text-gray-400 text-2xl">
+                                📸
+                              </div>
+                            )}
+                            <div className="flex-1 space-y-2">
+                              <label className="inline-block px-3 py-1.5 bg-gray-100 rounded-lg text-sm cursor-pointer hover:bg-gray-200">
+                                📁 Subir imagen
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => e.target.files?.[0] && subirImagenFila(index, e.target.files[0])}
+                                />
+                              </label>
+                              <input
+                                type="url"
+                                value={fila.imagenUrl}
+                                onChange={(e) => actualizarFilaMasivo(index, 'imagenUrl', e.target.value)}
+                                className="input-field"
+                                placeholder="... o pega URL de imagen"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-3 flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id={`colaborativo-masivo-${index}`}
+                            checked={fila.permiteColaborativo}
+                            onChange={(e) => actualizarFilaMasivo(index, 'permiteColaborativo', e.target.checked)}
+                            className="w-4 h-4"
+                          />
+                          <label htmlFor={`colaborativo-masivo-${index}`} className="text-sm text-gray-700">
+                            Permitir aportes colaborativos
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 flex gap-3">
+                    <button
+                      onClick={agregarFilaMasivo}
+                      className="btn-secondary flex-1"
+                    >
+                      ➕ Agregar otro regalo
+                    </button>
+                    <button
+                      onClick={procesarFormularioMasivo}
+                      disabled={cargandoMasivo}
+                      className="btn-primary flex-1"
+                    >
+                      {cargandoMasivo ? '⏳ Procesando...' : '📦 Cargar todos'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

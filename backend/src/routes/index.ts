@@ -12,6 +12,7 @@ import {
   getStats,
   getContribuciones,
   crearRegalo,
+  crearRegalosMasivo,
   actualizarRegalo,
   eliminarRegalo,
   actualizarEvento,
@@ -68,6 +69,7 @@ router.post('/admin/login', adminLogin);
 router.get('/admin/stats', verificarAuth, getStats);
 router.get('/admin/contribuciones', verificarAuth, getContribuciones);
 router.post('/admin/regalos', verificarAuth, crearRegalo);
+router.post('/admin/regalos/bulk', verificarAuth, crearRegalosMasivo);
 router.put('/admin/regalos/:id', verificarAuth, actualizarRegalo);
 router.delete('/admin/regalos/:id', verificarAuth, eliminarRegalo);
 router.put('/admin/evento', verificarAuth, actualizarEvento);
