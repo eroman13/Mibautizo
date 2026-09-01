@@ -8,6 +8,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
+import { prisma } from './lib/prisma';
+import apiRoutes from './routes';
 
 // Cargar variables de entorno solo si existen en desarrollo
 if (fs.existsSync('../.env')) {
@@ -52,9 +54,6 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Servir archivos estáticos (imágenes subidas)
 app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
 
-// Importar rutas
-import apiRoutes from './routes';
-
 // Log configuración de inicio
 console.log('📋 Configuración al startup:');
 console.log(`   DATABASE_URL configured: ${process.env.DATABASE_URL ? '✅' : '❌'}`);
@@ -62,14 +61,32 @@ console.log(`   FRONTEND_URL: ${FRONTEND_URL}`);
 console.log(`   NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
 console.log(`   PORT: ${PORT}`);
 
-// Rutas de prueba
+// Health endpoint - NO depende de BD
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    message: '🍼 Backend Mesa de Regalos funcionando correctamente',
+    message: '🍼 Backend Mesa de Regalos - ONLINE',
     timestamp: new Date().toISOString(),
-    database: process.env.DATABASE_URL ? 'configured' : 'NOT CONFIGURED'
+    environment: process.env.NODE_ENV || 'development',
+    database_configured: !!process.env.DATABASE_URL
   });
+});
+
+// Database status endpoint - para diagnóstico
+app.get('/api/db-status', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ 
+      status: 'connected',
+      message: '✅ Database connection successful'
+    });
+  } catch (error) {
+    res.status(503).json({ 
+      status: 'disconnected',
+      message: '❌ Database connection failed',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
 // Montar rutas de la API
