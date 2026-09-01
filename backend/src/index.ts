@@ -89,6 +89,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 
 // Iniciar servidor
 const server = app.listen(Number(PORT), '0.0.0.0', () => {
+  console.log(`✅ SERVER STARTED - Port ${PORT}`);
   console.log(`🚀 Servidor backend corriendo en http://0.0.0.0:${PORT}`);
   console.log(`🌐 Frontend configurado en: ${FRONTEND_URL}`);
   console.log(`📦 Ambiente: ${process.env.NODE_ENV || 'development'}`);
