@@ -3,6 +3,7 @@
  */
 
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { buildApiUrl } from '../services/config';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -28,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
-      const response = await fetch('http://localhost:3000/api/admin/login', {
+      const response = await fetch(buildApiUrl('/admin/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),

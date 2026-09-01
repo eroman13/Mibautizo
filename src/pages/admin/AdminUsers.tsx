@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { buildApiUrl } from '../../services/config';
 
 interface AdminUser {
   id: number;
@@ -53,7 +54,7 @@ export default function AdminUsers() {
       setLoading(true);
       setError('');
       const token = localStorage.getItem('admin_token');
-      const response = await fetch('http://localhost:3000/api/admin-users', {
+      const response = await fetch(buildApiUrl('/admin-users'), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -97,7 +98,7 @@ export default function AdminUsers() {
       setError('');
       const token = localStorage.getItem('admin_token');
       
-      const response = await fetch('http://localhost:3000/api/admin-users', {
+      const response = await fetch(buildApiUrl('/admin-users'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -146,7 +147,7 @@ export default function AdminUsers() {
       setError('');
       const token = localStorage.getItem('admin_token');
       
-      const response = await fetch(`http://localhost:3000/api/admin-users/${userId}`, {
+      const response = await fetch(buildApiUrl(`/admin-users/${userId}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -179,7 +180,7 @@ export default function AdminUsers() {
 
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`http://localhost:3000/api/admin-users/${userId}`, {
+      const response = await fetch(buildApiUrl(`/admin-users/${userId}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

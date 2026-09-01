@@ -2,7 +2,7 @@
  * Cliente API para el panel admin
  */
 
-const API_URL = 'http://localhost:3000/api';
+import { API_URL } from './config';
 
 function getAuthHeaders() {
   const token = localStorage.getItem('admin_token');

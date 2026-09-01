@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import { adminApi } from '../../services/adminApi';
+import { API_URL, buildApiUrl } from '../../services/config';
 import { Link } from 'react-router-dom';
 import { Evento } from '../../types';
 
@@ -67,7 +68,7 @@ export default function AdminConfiguracion() {
         const base64 = e.target?.result as string;
         
         // Enviar al backend
-        const response = await fetch('http://localhost:3000/api/upload-image', {
+        const response = await fetch(buildApiUrl('/upload-image'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -80,7 +81,7 @@ export default function AdminConfiguracion() {
 
         const data = await response.json();
         if (data.success) {
-          setFormData({ ...formData, portadaUrl: `http://localhost:3000${data.imageUrl}` });
+          setFormData({ ...formData, portadaUrl: `${API_URL}${data.imageUrl}` });
           console.log('✅ Imagen subida:', data.imageUrl);
         } else {
           alert('Error al subir imagen: ' + data.error);
