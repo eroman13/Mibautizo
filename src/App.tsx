@@ -6,6 +6,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { CarritoProvider } from './context/CarritoContext';
 import { AuthProvider } from './context/AuthContext';
+import ErrorBoundary from './components/ErrorBoundary';
+import ValidarRetornoPago from './components/pago/ValidarRetornoPago';
 
 // Páginas públicas
 import Home from './pages/Home';
@@ -14,6 +16,8 @@ import Checkout from './pages/Checkout';
 import PagoExitoso from './pages/PagoExitoso';
 import PagoFallido from './pages/PagoFallido';
 import PagoPendiente from './pages/PagoPendiente';
+import PagoEstadoControlado from './pages/PagoEstadoControlado';
+import NotFound from './pages/NotFound';
 
 // Páginas del admin
 import AdminLogin from './pages/admin/Login';
@@ -29,62 +33,92 @@ function App() {
     <Router>
       <AuthProvider>
         <CarritoProvider>
-          <div className="min-h-screen bg-soft-gray">
-            <Routes>
-              {/* Rutas públicas */}
-              <Route path="/" element={<Home />} />
-              <Route path="/regalos" element={<Regalos />} />
-              <Route path="/checkout" element={<Checkout />} />
-              
-              {/* Páginas de retorno de Mercado Pago */}
-              <Route path="/pago-exitoso" element={<PagoExitoso />} />
-              <Route path="/pago-fallido" element={<PagoFallido />} />
-              <Route path="/pago-pendiente" element={<PagoPendiente />} />
+          <ErrorBoundary>
+            <div className="min-h-screen bg-soft-gray">
+              <Routes>
+                {/* Rutas públicas */}
+                <Route path="/" element={<Home />} />
+                <Route path="/regalos" element={<Regalos />} />
+                <Route path="/checkout" element={<Checkout />} />
 
-              {/* Panel admin */}
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route
-                path="/admin/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/contribuciones"
-                element={
-                  <ProtectedRoute>
-                    <AdminContribuciones />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/regalos"
-                element={
-                  <ProtectedRoute>
-                    <AdminRegalos />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/configuracion"
-                element={
-                  <ProtectedRoute>
-                    <AdminConfiguracion />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/usuarios"
-                element={
-                  <ProtectedRoute>
-                    <AdminUsers />
-                  </ProtectedRoute>
-                }
-              />
-            </Routes>
-          </div>
+                {/* Páginas de retorno de Mercado Pago (validadas) */}
+                <Route
+                  path="/pago-exitoso"
+                  element={
+                    <ValidarRetornoPago>
+                      <PagoExitoso />
+                    </ValidarRetornoPago>
+                  }
+                />
+                <Route
+                  path="/pago-fallido"
+                  element={
+                    <ValidarRetornoPago>
+                      <PagoFallido />
+                    </ValidarRetornoPago>
+                  }
+                />
+                <Route
+                  path="/pago-pendiente"
+                  element={
+                    <ValidarRetornoPago>
+                      <PagoPendiente />
+                    </ValidarRetornoPago>
+                  }
+                />
+                <Route
+                  path="/pago-estado-controlado"
+                  element={<PagoEstadoControlado />}
+                />
+
+                {/* Panel admin */}
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route
+                  path="/admin/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/contribuciones"
+                  element={
+                    <ProtectedRoute>
+                      <AdminContribuciones />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/regalos"
+                  element={
+                    <ProtectedRoute>
+                      <AdminRegalos />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/configuracion"
+                  element={
+                    <ProtectedRoute>
+                      <AdminConfiguracion />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/usuarios"
+                  element={
+                    <ProtectedRoute>
+                      <AdminUsers />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Página 404 (catch-all) */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </div>
+          </ErrorBoundary>
         </CarritoProvider>
       </AuthProvider>
     </Router>
