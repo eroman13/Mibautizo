@@ -1,1 +1,1 @@
-web: cd backend && node dist/index.js
+web: cd backend && npm run build && node dist/index.js
