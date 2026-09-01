@@ -1,12 +1,12 @@
 // Schema de base de datos para Mesa de Regalos - Bautizo de Gemelas
-// Configurado para SQLite, pero preparado para migrar a PostgreSQL
+// Configurado para PostgreSQL en producción
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
