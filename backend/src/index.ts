@@ -15,15 +15,19 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 
 console.log('\n🚀 SERVER STARTING');
-console.log(`   PORT: ${process.env.PORT || 8080}`);
+const app: Application = express();
+
+// Railway: el dominio público apunta al puerto 8080 (target port "custom").
+// En producción forzamos 8080 para evitar mismatch si existe una variable
+// PORT=3000 inyectada por Railway. En desarrollo usamos PORT o 3000.
+const PORT = process.env.NODE_ENV === 'production'
+  ? 8080
+  : (Number(process.env.PORT) || 3000);
+
+console.log(`   PORT: ${PORT}`);
 console.log(`   NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
 console.log(`   DATABASE_URL configured: ${process.env.DATABASE_URL ? 'yes' : 'no'}`);
 console.log(`   MP_ACCESS_TOKEN configured: ${process.env.MP_ACCESS_TOKEN ? 'yes' : 'no'}`);
-
-const app: Application = express();
-// Railway usa el puerto 8080 por defecto para el dominio público.
-// Si process.env.PORT existe, se usa; si no, 8080.
-const PORT = Number(process.env.PORT) || 8080;
 
 // CORS - reflejar el origen de la petición (compatible con credentials)
 const allowedOrigins = [
