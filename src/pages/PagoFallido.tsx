@@ -73,6 +73,9 @@ export default function PagoFallido() {
           <Link to="/regalos" className="btn-secondary inline-block w-full">
             Volver a la lista de regalos
           </Link>
+          <Link to="/" className="text-pastel-pink hover:text-pastel-lavender text-sm inline-block">
+            ← Volver al inicio
+          </Link>
         </div>
       </div>
     </div>

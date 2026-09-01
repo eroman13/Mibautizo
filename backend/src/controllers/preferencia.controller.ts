@@ -174,7 +174,7 @@ export async function crearPreferencia(req: Request, res: Response) {
             failure: `${frontendUrl}/pago-fallido`,
             pending: `${frontendUrl}/pago-pendiente`,
           },
-          auto_return: 'approved',
+          auto_return: 'all',
           notification_url: `${backendUrl}/api/webhook`,
           statement_descriptor: 'BAUTIZO GEMELAS',
           external_reference: JSON.stringify({
