@@ -41,6 +41,27 @@ app.use(cors({
   optionsSuccessStatus: 200,
 }));
 
+// Handle preflight requests explicitly
+app.options('*', cors({
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      'https://mibautizo-frontend-six.vercel.app',
+      'http://localhost:5176',
+      'http://localhost:5174',
+      FRONTEND_URL,
+    ];
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, false);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  optionsSuccessStatus: 200,
+}));
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
