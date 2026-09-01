@@ -80,7 +80,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 // Iniciar servidor
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`🚀 Servidor backend corriendo en http://0.0.0.0:${PORT}`);
   console.log(`🌐 Frontend configurado en: ${FRONTEND_URL}`);
   console.log(`📦 Ambiente: ${process.env.NODE_ENV || 'development'}`);
