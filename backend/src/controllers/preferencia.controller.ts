@@ -143,8 +143,16 @@ export async function crearPreferencia(req: Request, res: Response) {
     ];
 
     // URLs del frontend (desde .env)
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    // En producción, si FRONTEND_URL apunta a localhost o no está configurada,
+    // usamos la URL real de Vercel para que el botón "volver a la tienda"
+    // de Mercado Pago redirija correctamente.
+    const isProduction = process.env.NODE_ENV === 'production';
+    let frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
+
+    if (isProduction && (frontendUrl.includes('localhost') || frontendUrl.includes('127.0.0.1'))) {
+      frontendUrl = 'https://mibautizo-frontend-six.vercel.app';
+    }
 
     console.log('📋 Creando preferencia en Mercado Pago...');
     console.log('  - Monto total: $' + payment.totalCharge);
@@ -166,6 +174,7 @@ export async function crearPreferencia(req: Request, res: Response) {
             failure: `${frontendUrl}/pago-fallido`,
             pending: `${frontendUrl}/pago-pendiente`,
           },
+          auto_return: 'approved',
           notification_url: `${backendUrl}/api/webhook`,
           statement_descriptor: 'BAUTIZO GEMELAS',
           external_reference: JSON.stringify({
