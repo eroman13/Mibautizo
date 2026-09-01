@@ -1,0 +1,22 @@
+# Ignorar archivos que no son necesarios en el contexto de build
+# (solo necesitamos backend/)
+node_modules
+**/node_modules
+.git
+.gitignore
+*.md
+.env
+.env.*
+backend/.env
+backend/.env.*
+backend/dist
+backend/node_modules
+backend/.dockerignore
+# Frontend (no se usa en el build del backend)
+/src
+/index.html
+/vite.config.ts
+/tsconfig.json
+/tsconfig.node.json
+/tailwind.config.js
+/postcss.config.js
