@@ -83,6 +83,15 @@ try {
   console.error('   Stack:', error instanceof Error ? error.stack : 'no stack');
 }
 
+// Auto-seed: poblar la base de datos si está vacía (no bloquea el arranque)
+try {
+  const { autoSeedIfEmpty } = require('./lib/autoSeed');
+  autoSeedIfEmpty();
+} catch (error) {
+  console.warn('⚠️ Could not load autoSeed module');
+  console.error('   Error:', error instanceof Error ? error.message : error);
+}
+
 // 404
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found', path: req.path });
