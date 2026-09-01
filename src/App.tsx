@@ -45,7 +45,7 @@ function App() {
                 <Route
                   path="/pago-exitoso"
                   element={
-                    <ValidarRetornoPago>
+                    <ValidarRetornoPago esperado="aprobado">
                       <PagoExitoso />
                     </ValidarRetornoPago>
                   }
@@ -53,7 +53,7 @@ function App() {
                 <Route
                   path="/pago-fallido"
                   element={
-                    <ValidarRetornoPago>
+                    <ValidarRetornoPago esperado={['rechazado', 'cancelado']}>
                       <PagoFallido />
                     </ValidarRetornoPago>
                   }
@@ -61,7 +61,7 @@ function App() {
                 <Route
                   path="/pago-pendiente"
                   element={
-                    <ValidarRetornoPago>
+                    <ValidarRetornoPago esperado="pendiente">
                       <PagoPendiente />
                     </ValidarRetornoPago>
                   }

@@ -3,12 +3,11 @@
  */
 
 import { useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useValidarRetornoPago } from '../hooks/useValidarRetornoPago';
 
 export default function PagoExitoso() {
-  const [searchParams] = useSearchParams();
-  const paymentId = searchParams.get('payment_id');
-  const externalReference = searchParams.get('external_reference');
+  const { paymentId, externalReference } = useValidarRetornoPago();
 
   useEffect(() => {
     // Aquí podrías hacer un tracking o analytics

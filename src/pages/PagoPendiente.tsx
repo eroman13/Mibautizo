@@ -2,11 +2,11 @@
  * Página de pago pendiente
  */
 
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useValidarRetornoPago } from '../hooks/useValidarRetornoPago';
 
 export default function PagoPendiente() {
-  const [searchParams] = useSearchParams();
-  const paymentId = searchParams.get('payment_id');
+  const { paymentId } = useValidarRetornoPago();
 
   return (
     <div className="min-h-screen bg-soft-gray flex items-center justify-center px-4">

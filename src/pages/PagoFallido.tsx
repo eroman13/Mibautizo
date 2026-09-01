@@ -2,11 +2,12 @@
  * Página de pago fallido
  */
 
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useValidarRetornoPago } from '../hooks/useValidarRetornoPago';
 
 export default function PagoFallido() {
-  const [searchParams] = useSearchParams();
-  const paymentId = searchParams.get('payment_id');
+  const { paymentId, estado } = useValidarRetornoPago();
+  const esCancelado = estado === 'cancelado';
 
   return (
     <div className="min-h-screen bg-soft-gray flex items-center justify-center px-4">
@@ -19,18 +20,21 @@ export default function PagoFallido() {
             </svg>
           </div>
           <h1 className="text-3xl md:text-4xl font-display font-bold text-gray-800 mb-3">
-            Pago no procesado
+            {esCancelado ? 'Pago cancelado' : 'Pago no procesado'}
           </h1>
         </div>
 
         {/* Mensaje */}
         <div className="mb-8 space-y-4">
           <p className="text-lg text-gray-700">
-            Hubo un problema al procesar tu pago. 😔
+            {esCancelado
+              ? 'Cancelaste el pago.'
+              : 'Hubo un problema al procesar tu pago. 😔'}
           </p>
           <p className="text-gray-600">
-            Esto puede ocurrir por varios motivos: fondos insuficientes, datos incorrectos de la tarjeta, 
-            o un problema temporal con el procesador de pagos.
+            {esCancelado
+              ? 'No se realizó ningún cobro. Puedes volver a intentarlo cuando quieras.'
+              : 'Esto puede ocurrir por varios motivos: fondos insuficientes, datos incorrectos de la tarjeta, o un problema temporal con el procesador de pagos.'}
           </p>
           
           {paymentId && (
