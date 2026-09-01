@@ -2,10 +2,17 @@
  * Cliente API para comunicarse con el backend
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const apiBaseUrl = rawApiUrl.replace(/\/$/, '');
+const API_URL = apiBaseUrl.endsWith('/api') ? apiBaseUrl : `${apiBaseUrl}/api`;
+
+function buildApiUrl(endpoint: string) {
+  const trimmedEndpoint = endpoint.replace(/^\//, '');
+  return `${API_URL}/${trimmedEndpoint}`;
+}
 
 async function fetchAPI(endpoint: string, options?: RequestInit) {
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  const response = await fetch(buildApiUrl(endpoint), {
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,
