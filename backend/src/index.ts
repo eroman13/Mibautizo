@@ -50,12 +50,20 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')
 // Importar rutas
 import apiRoutes from './routes';
 
+// Log configuración de inicio
+console.log('📋 Configuración al startup:');
+console.log(`   DATABASE_URL configured: ${process.env.DATABASE_URL ? '✅' : '❌'}`);
+console.log(`   FRONTEND_URL: ${FRONTEND_URL}`);
+console.log(`   NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
+console.log(`   PORT: ${PORT}`);
+
 // Rutas de prueba
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     message: '🍼 Backend Mesa de Regalos funcionando correctamente',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    database: process.env.DATABASE_URL ? 'configured' : 'NOT CONFIGURED'
   });
 });
 
@@ -80,11 +88,34 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 // Iniciar servidor
-app.listen(Number(PORT), '0.0.0.0', () => {
+const server = app.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`🚀 Servidor backend corriendo en http://0.0.0.0:${PORT}`);
   console.log(`🌐 Frontend configurado en: ${FRONTEND_URL}`);
   console.log(`📦 Ambiente: ${process.env.NODE_ENV || 'development'}`);
   console.log(`💾 Base de datos: PostgreSQL (${process.env.DATABASE_URL ? 'configurada' : 'no configurada'})`);
+});
+
+// Manejo de errores del servidor
+server.on('error', (err) => {
+  console.error('❌ Error del servidor:', err);
+  process.exit(1);
+});
+
+// Manejo de señales para shutdown graceful
+process.on('SIGTERM', () => {
+  console.log('⚠️ SIGTERM recibido, cerrando servidor...');
+  server.close(() => {
+    console.log('✅ Servidor cerrado');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('⚠️ SIGINT recibido, cerrando servidor...');
+  server.close(() => {
+    console.log('✅ Servidor cerrado');
+    process.exit(0);
+  });
 });
 
 export default app;
