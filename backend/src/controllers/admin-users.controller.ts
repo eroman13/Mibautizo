@@ -102,7 +102,7 @@ export async function updateAdminUser(req: Request, res: Response) {
     const { id } = req.params;
     const { nombre, email, activo, password } = req.body;
 
-    const userId = parseInt(id);
+    const userId = parseInt(String(id));
 
     // Preparar datos a actualizar
     const updateData: any = {};
@@ -150,7 +150,7 @@ export async function updateAdminUser(req: Request, res: Response) {
 export async function deleteAdminUser(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const userId = parseInt(id);
+    const userId = parseInt(String(id));
 
     // Verificar que no sea el único usuario
     const totalUsers = await prisma.adminUser.count();

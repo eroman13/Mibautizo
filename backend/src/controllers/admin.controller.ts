@@ -183,7 +183,7 @@ export async function actualizarRegalo(req: Request, res: Response) {
     const { nombre, descripcion, precioCLP, imagenUrl, permiteColaborativo, estado } = req.body;
 
     const regalo = await prisma.gift.update({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(String(id)) },
       data: {
         nombre,
         descripcion,
@@ -214,7 +214,7 @@ export async function eliminarRegalo(req: Request, res: Response) {
 
     // Verificar si tiene contribuciones
     const contribuciones = await prisma.contribution.count({
-      where: { giftId: parseInt(id) },
+      where: { giftId: parseInt(String(id)) },
     });
 
     if (contribuciones > 0) {
@@ -225,7 +225,7 @@ export async function eliminarRegalo(req: Request, res: Response) {
     }
 
     await prisma.gift.delete({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(String(id)) },
     });
 
     res.json({

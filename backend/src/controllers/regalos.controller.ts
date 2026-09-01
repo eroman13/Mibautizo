@@ -53,7 +53,7 @@ export async function getRegaloById(req: Request, res: Response) {
     const { id } = req.params;
 
     const regalo = await prisma.gift.findUnique({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(String(id)) },
       include: {
         contributions: {
           where: {
