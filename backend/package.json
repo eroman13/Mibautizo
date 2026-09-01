@@ -12,6 +12,7 @@
     "build": "tsc --skipLibCheck && prisma generate",
     "start": "[ -d dist ] || npm run build && node dist/index.js",
     "start:prod": "npm run build && (prisma db push --accept-data-loss || echo 'DB sync skipped') && node dist/index.js",
+    "start:shell": "bash start.sh",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",

@@ -1,20 +1,19 @@
 #!/bin/bash
 set -e
 
-echo "🔨 Building application..."
+echo "🔨 Starting Mesa de Regalos Backend..."
+echo "📦 Environment: $NODE_ENV"
+echo "🌐 Server will run on port $PORT or 3000"
+
+# Compile TypeScript
+echo "⚙️ Compiling TypeScript..."
 npm run build
 
-echo "📦 Running database migrations..."
-npm run start:prod &
-BACKEND_PID=$!
+# Sync database schema (best effort, don't fail if it errors)
+echo "🗄️  Syncing database..."
+prisma db push --accept-data-loss || echo "⚠️ Database sync skipped (using existing schema)"
 
-# Give the server 5 seconds to start
-sleep 5
+# Start the server
+echo "🚀 Starting Express server..."
+node dist/index.js
 
-if ps -p $BACKEND_PID > /dev/null 2>&1; then
-  echo "✅ Server started successfully (PID: $BACKEND_PID)"
-  wait $BACKEND_PID
-else
-  echo "❌ Server failed to start"
-  exit 1
-fi
