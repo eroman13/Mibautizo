@@ -25,9 +25,9 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Test de conexión al iniciar
-if (gmailUser && gmailPass) {
-  transporter.verify((error, success) => {
+// Test de conexión al iniciar (solo en desarrollo, sin bloquear)
+if (gmailUser && gmailPass && process.env.NODE_ENV !== 'production') {
+  transporter.verify((error) => {
     if (error) {
       console.error('❌ Error verificando configuración de Gmail:', error.message);
     } else {
