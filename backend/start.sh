@@ -1,19 +1,23 @@
 #!/bin/bash
-set -e
 
 echo "🔨 Starting Mesa de Regalos Backend..."
 echo "📦 Environment: $NODE_ENV"
 echo "🌐 Server will run on port $PORT or 3000"
 
-# Compile TypeScript
+# Compile TypeScript (MUST succeed)
 echo "⚙️ Compiling TypeScript..."
-npm run build
+if ! npm run build; then
+  echo "❌ Build failed!"
+  exit 1
+fi
 
-# Sync database schema (best effort, don't fail if it errors)
+echo "✅ Build successful"
+
+# Sync database schema (optional, don't fail)
 echo "🗄️  Syncing database..."
-prisma db push --accept-data-loss || echo "⚠️ Database sync skipped (using existing schema)"
+npx prisma db push --accept-data-loss 2>/dev/null || echo "⚠️ Database sync skipped"
 
-# Start the server
+# Start the server (MUST be last)
 echo "🚀 Starting Express server..."
-node dist/index.js
+exec node dist/index.js
 
