@@ -27,7 +27,23 @@ const PORT = process.env.NODE_ENV === 'production'
 console.log(`   PORT: ${PORT}`);
 console.log(`   NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
 console.log(`   DATABASE_URL configured: ${process.env.DATABASE_URL ? 'yes' : 'no'}`);
-console.log(`   MP_ACCESS_TOKEN configured: ${process.env.MP_ACCESS_TOKEN ? 'yes' : 'no'}`);
+
+// Log de diagnóstico de credenciales de Mercado Pago (sin exponer token completo)
+const mpToken = process.env.MP_ACCESS_TOKEN || '';
+if (mpToken) {
+  const parts = mpToken.split('-');
+  const userId = parts[parts.length - 1] || 'N/A';
+  console.log(`   MP_ACCESS_TOKEN: ${mpToken.substring(0, 20)}...`);
+  console.log(`   MP_ACCESS_TOKEN user_id: ${userId}`);
+} else {
+  console.log('   MP_ACCESS_TOKEN: NO CONFIGURADO');
+}
+const mpPublicKey = process.env.MP_PUBLIC_KEY || '';
+if (mpPublicKey) {
+  console.log(`   MP_PUBLIC_KEY: ${mpPublicKey.substring(0, 20)}...`);
+} else {
+  console.log('   MP_PUBLIC_KEY: NO CONFIGURADO');
+}
 
 // CORS - reflejar el origen de la petición (compatible con credentials)
 const allowedOrigins = [

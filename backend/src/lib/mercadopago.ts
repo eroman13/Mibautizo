@@ -34,4 +34,8 @@ export const paymentClient = new Payment(client);
 export const COMMISSION_RATE = parseFloat(process.env.MP_COMMISSION_RATE || '0.038');
 
 console.log('✅ Mercado Pago configurado correctamente');
+if (accessToken) {
+  console.log(`   Token usado: ${accessToken.substring(0, 20)}...`);
+  console.log(`   user_id: ${accessToken.split('-').pop()}`);
+}
 console.log(`📊 Tasa de comisión: ${(COMMISSION_RATE * 100).toFixed(2)}%`);
