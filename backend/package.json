@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc --skipLibCheck && prisma generate",
-    "start": "test -d dist || npm run build && node dist/index.js",
+    "start": "npm run build && prisma db push --accept-data-loss && node dist/index.js",
     "start:prod": "npm run build && prisma db push --accept-data-loss && node dist/index.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
