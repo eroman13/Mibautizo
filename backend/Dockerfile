@@ -27,8 +27,8 @@ RUN npx prisma generate && npx tsc --skipLibCheck
 
 ENV NODE_ENV=production
 
-# Exponer el puerto (Railway lo sobrescribe con $PORT)
-EXPOSE 3000
+# Exponer el puerto 8080 (Railway usa 8080 para el dominio público)
+EXPOSE 8080
 
 # Iniciar el servidor
 CMD ["node", "dist/index.js"]

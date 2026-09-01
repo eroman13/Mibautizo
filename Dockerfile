@@ -27,6 +27,6 @@ RUN npx prisma generate && npx tsc --skipLibCheck
 
 ENV NODE_ENV=production
 
-EXPOSE 3000
+EXPOSE 8080
 
 CMD ["node", "dist/index.js"]
