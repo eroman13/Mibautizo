@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import { adminApi } from '../../services/adminApi';
 import { buildApiUrl } from '../../services/config';
+import { comprimirImagen } from '../../utils/imagen';
 import { formatCLP } from '../../utils/format';
 import { Link } from 'react-router-dom';
 import { Regalo } from '../../types';
@@ -101,33 +102,26 @@ export default function AdminRegalos() {
   const subirImagen = async (file: File) => {
     try {
       setSubiendo(true);
-      
-      // Leer archivo como base64
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64 = e.target?.result as string;
-        
-        // Enviar al backend
-        const response = await fetch(buildApiUrl('/upload-image'), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            base64,
-            filename: file.name,
-          }),
-        });
 
-        const data = await response.json();
-        if (data.success) {
-          setFormData({ ...formData, imagenUrl: data.imageUrl });
-          console.log('✅ Imagen subida:', data.imageUrl);
-        } else {
-          alert('Error al subir imagen: ' + data.error);
-        }
-      };
-      reader.readAsDataURL(file);
+      // Comprimir y redimensionar la imagen antes de subirla
+      const base64 = await comprimirImagen(file);
+
+      // Enviar al backend
+      const response = await fetch(buildApiUrl('/upload-image'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ base64 }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setFormData({ ...formData, imagenUrl: data.imageUrl });
+        console.log('✅ Imagen subida');
+      } else {
+        alert('Error al subir imagen: ' + data.error);
+      }
     } catch (error: any) {
       console.error('Error al subir imagen:', error);
       alert('Error al subir imagen');
@@ -225,12 +219,9 @@ export default function AdminRegalos() {
     setFilasMasivo(nuevas);
   };
 
-  const subirImagenFila = (index: number, file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      actualizarFilaMasivo(index, 'imagenBase64', e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+  const subirImagenFila = async (index: number, file: File) => {
+    const base64 = await comprimirImagen(file);
+    actualizarFilaMasivo(index, 'imagenBase64', base64);
   };
 
   const procesarFormularioMasivo = async () => {
