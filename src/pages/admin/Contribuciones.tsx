@@ -27,6 +27,29 @@ export default function AdminContribuciones() {
     }
   };
 
+  const limpiarPagos = async () => {
+    const confirmacion = confirm(
+      '⚠️ ¿Estás seguro de eliminar TODOS los pagos registrados?\n\n' +
+      'Esta acción borrará todas las contribuciones y reseteará los regalos ' +
+      '(monto recaudado y estado). No se puede deshacer.'
+    );
+
+    if (!confirmacion) return;
+
+    try {
+      const response = await adminApi.limpiarPagos();
+      if (response.success) {
+        alert(response.message || 'Pagos eliminados correctamente');
+        await cargarContribuciones();
+      } else {
+        alert(response.error || 'Error al limpiar pagos');
+      }
+    } catch (error) {
+      console.error('Error al limpiar pagos:', error);
+      alert('Error al limpiar pagos');
+    }
+  };
+
   const contribucionesFiltradas = contribuciones.filter(c =>
     c.nombreInvitado.toLowerCase().includes(filtro.toLowerCase()) ||
     c.gift?.nombre.toLowerCase().includes(filtro.toLowerCase())
@@ -67,12 +90,20 @@ export default function AdminContribuciones() {
               placeholder="Buscar por nombre o regalo..."
               className="input-field max-w-md"
             />
-            <button
-              onClick={() => adminApi.exportarCSV()}
-              className="btn-primary"
-            >
-              📤 Exportar a CSV
-            </button>
+            <div className="flex gap-3 flex-wrap">
+              <button
+                onClick={() => adminApi.exportarCSV()}
+                className="btn-primary"
+              >
+                📤 Exportar a CSV
+              </button>
+              <button
+                onClick={limpiarPagos}
+                className="btn-secondary text-red-600"
+              >
+                🧹 Limpiar pagos de prueba
+              </button>
+            </div>
           </div>
         </div>
 

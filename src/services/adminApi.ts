@@ -94,4 +94,13 @@ export const adminApi = {
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
   },
+
+  // Limpiar todos los pagos de prueba
+  limpiarPagos: async () => {
+    const response = await fetch(`${API_URL}/admin/limpiar-pagos`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  },
 };
