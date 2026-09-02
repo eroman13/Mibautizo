@@ -12,7 +12,7 @@ export default function Regalos() {
   const [regalos, setRegalos] = useState<Regalo[]>([]);
   const [evento, setEvento] = useState<Evento | null>(null);
   const [loading, setLoading] = useState(true);
-  const [orden, setOrden] = useState('recientes');
+  const [orden, setOrden] = useState('nombre');
 
   useEffect(() => {
     cargarDatos();
@@ -94,10 +94,10 @@ export default function Regalos() {
               onChange={(e) => setOrden(e.target.value)}
               className="input-field max-w-xs"
             >
+              <option value="nombre">Nombre (A-Z)</option>
               <option value="recientes">Recién agregados</option>
               <option value="precio-asc">Precio: menor a mayor</option>
               <option value="precio-desc">Precio: mayor a menor</option>
-              <option value="nombre">Nombre (A-Z)</option>
             </select>
           </div>
         </div>

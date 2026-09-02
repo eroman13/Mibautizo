@@ -11,7 +11,7 @@ export async function getRegalos(req: Request, res: Response) {
     // Obtener todos los regalos con su estado actual
     const regalos = await prisma.gift.findMany({
       orderBy: {
-        id: 'asc', // Orden de creación (el frontend permite reordenar)
+        nombre: 'asc', // Orden alfabético por defecto
       },
       select: {
         id: true,
