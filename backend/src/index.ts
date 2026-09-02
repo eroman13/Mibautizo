@@ -8,6 +8,7 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import { execSync } from 'child_process';
 
 // Cargar variables de entorno ANTES de cualquier otra cosa
 dotenv.config();
@@ -43,6 +44,20 @@ if (mpPublicKey) {
   console.log(`   MP_PUBLIC_KEY: ${mpPublicKey.substring(0, 20)}...`);
 } else {
   console.log('   MP_PUBLIC_KEY: NO CONFIGURADO');
+}
+
+// Sincronizar el schema de la base de datos (aplica cambios pendientes).
+// Se ejecuta aquí (dentro del código) porque Railway ignora el startCommand
+// del railway.json, por lo que el `prisma db push` del Dockerfile no se ejecuta.
+try {
+  console.log('🔄 Sincronizando schema de base de datos...');
+  execSync('npx prisma db push --accept-data-loss --skip-generate', {
+    stdio: 'inherit',
+    timeout: 120000,
+  });
+  console.log('✅ Schema de base de datos sincronizado');
+} catch (error) {
+  console.error('⚠️ Error al sincronizar schema:', error instanceof Error ? error.message : error);
 }
 
 // CORS - reflejar el origen de la petición (compatible con credentials)
