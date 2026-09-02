@@ -96,16 +96,23 @@ export async function crearPreferencia(req: Request, res: Response) {
     // Calcular el monto final según el modo de comisión
     const payment = calculatePayment(totalBase, COMMISSION_RATE, modoComision);
 
-    // Crear items para Mercado Pago (un item por regalo, con su precio correcto)
+    // Crear items para Mercado Pago (un item por regalo, con el precio correcto
+    // según el modo de comisión)
     const items: any[] = [];
     for (const contribution of contributionsData) {
       const regalo = await prisma.gift.findUnique({ where: { id: contribution.giftId } });
       if (regalo) {
+        // En modo A, el invitado cubre la comisión: cada regalo se cobra con recargo.
+        // En modo B, el invitado paga solo el precio base (el organizador asume la comisión).
+        const unitPrice = modoComision === 'B'
+          ? contribution.baseAmount
+          : Math.ceil(contribution.baseAmount / (1 - COMMISSION_RATE));
+
         items.push({
           title: regalo.nombre,
           description: regalo.descripcion,
           quantity: 1,
-          unit_price: contribution.baseAmount,
+          unit_price: unitPrice,
           currency_id: 'CLP',
         });
       }

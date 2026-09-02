@@ -30,5 +30,5 @@ ENV NODE_ENV=production
 # Exponer el puerto 8080 (Railway usa 8080 para el dominio público)
 EXPOSE 8080
 
-# Iniciar el servidor
-CMD ["node", "dist/index.js"]
+# Aplicar cambios de schema a la BD y luego iniciar el servidor
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node dist/index.js"]

@@ -43,7 +43,7 @@ export async function webhook(req: Request, res: Response) {
     });
 
     // Verificar si ya procesamos este pago (idempotencia)
-    const existingContribution = await prisma.contribution.findUnique({
+    const existingContribution = await prisma.contribution.findFirst({
       where: { mpPaymentId: paymentId.toString() },
     });
 

@@ -53,7 +53,7 @@ model Contribution {
   emailInvitado      String?
   dedicatoria        String?
   estadoPago         String   // "pending" | "approved" | "rejected" | "cancelled"
-  mpPaymentId        String   @unique // ID del pago en Mercado Pago (para idempotencia)
+  mpPaymentId        String // ID del pago en Mercado Pago (puede repetirse si un pago cubre varios regalos)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
