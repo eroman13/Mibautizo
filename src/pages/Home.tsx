@@ -58,7 +58,7 @@ export default function Home() {
             srcSet={generarSrcSet(evento.portadaUrl)}
             sizes="100vw"
             alt={`Bautizo de ${evento.nombreGemela1} y ${evento.nombreGemela2}`}
-            className="absolute inset-0 w-full h-full object-cover object-center"
+            className="absolute inset-0 w-full h-full object-cover object-top md:object-center"
             style={{ filter: 'brightness(0.65)' }}
           />
         )}
