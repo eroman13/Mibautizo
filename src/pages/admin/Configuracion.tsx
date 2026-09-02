@@ -63,9 +63,10 @@ export default function AdminConfiguracion() {
     try {
       setSubiendo(true);
 
-      // Comprimir la portada con mayor resolución y calidad
-      // (es una imagen full-screen, necesita más detalle que los regalos)
-      const base64 = await comprimirImagen(file, 1600, 0.85);
+      // Comprimir la portada con resolución Full HD y buena calidad.
+      // 1920px es el estándar para pantallas 1080p. El base64 resultante
+      // (~500KB-1MB) es manejable para PostgreSQL y la carga web.
+      const base64 = await comprimirImagen(file, 1920, 0.85);
 
       // Enviar al backend
       const response = await fetch(buildApiUrl('/upload-image'), {
