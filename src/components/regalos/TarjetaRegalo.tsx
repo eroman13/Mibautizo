@@ -17,7 +17,6 @@ export default function TarjetaRegalo({ regalo, gemela1, gemela2 }: TarjetaRegal
   const { agregarAlCarrito } = useCarrito();
   const [notificacion, setNotificacion] = useState<{ visible: boolean; gemela: string }>({ visible: false, gemela: '' });
 
-  const estaRegalado = regalo.estado === 'pagado' && !regalo.permiteColaborativo;
   const porcentajeRecaudado = regalo.permiteColaborativo
     ? Math.min((regalo.montoRecaudadoCLP / regalo.precioCLP) * 100, 100)
     : 0;
@@ -30,13 +29,11 @@ export default function TarjetaRegalo({ regalo, gemela1, gemela2 }: TarjetaRegal
   };
 
   const handleAgregarGemela1 = () => {
-    if (estaRegalado) return;
     agregarAlCarrito(regalo, 'gemela1');
     mostrarNotificacion(gemela1);
   };
 
   const handleAgregarGemela2 = () => {
-    if (estaRegalado) return;
     agregarAlCarrito(regalo, 'gemela2');
     mostrarNotificacion(gemela2);
   };
@@ -61,13 +58,7 @@ export default function TarjetaRegalo({ regalo, gemela1, gemela2 }: TarjetaRegal
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
         />
         
-        {/* Badge de estado */}
-        {estaRegalado && (
-          <div className="absolute top-3 right-3 bg-pink-500 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
-            Ya regalado 💝
-          </div>
-        )}
-        
+        {/* Badge de colaborativo */}
         {regalo.permiteColaborativo && (
           <div className="absolute top-3 left-3 bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
             🤝 Colaborativo
@@ -120,29 +111,15 @@ export default function TarjetaRegalo({ regalo, gemela1, gemela2 }: TarjetaRegal
         <div className="space-y-2">
           <button
             onClick={handleAgregarGemela1}
-            disabled={estaRegalado}
-            className={`
-              w-full py-2 px-4 rounded-full font-semibold transition-all duration-300 text-sm
-              ${estaRegalado
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-pastel-pink/20 text-pastel-pink hover:bg-pastel-pink/40'
-              }
-            `}
+            className="w-full py-2 px-4 rounded-full font-semibold transition-all duration-300 text-sm bg-pastel-pink/20 text-pastel-pink hover:bg-pastel-pink/40"
           >
-            {estaRegalado ? '✓' : '🎁'} Para {gemela1}
+            🎁 Para {gemela1}
           </button>
           <button
             onClick={handleAgregarGemela2}
-            disabled={estaRegalado}
-            className={`
-              w-full py-2 px-4 rounded-full font-semibold transition-all duration-300 text-sm
-              ${estaRegalado
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-pastel-lavender/20 text-pastel-lavender hover:bg-pastel-lavender/40'
-              }
-            `}
+            className="w-full py-2 px-4 rounded-full font-semibold transition-all duration-300 text-sm bg-pastel-lavender/20 text-pastel-lavender hover:bg-pastel-lavender/40"
           >
-            {estaRegalado ? '✓' : '🎁'} Para {gemela2}
+            🎁 Para {gemela2}
           </button>
         </div>
       </div>

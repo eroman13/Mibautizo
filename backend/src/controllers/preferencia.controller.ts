@@ -69,14 +69,6 @@ export async function crearPreferencia(req: Request, res: Response) {
         });
       }
 
-      // Validar que el regalo esté disponible (excepto si es colaborativo)
-      if (regalo.estado === 'pagado' && !regalo.permiteColaborativo) {
-        return res.status(400).json({
-          success: false,
-          error: `El regalo "${regalo.nombre}" ya fue regalado`,
-        });
-      }
-
       // Determinar el monto del regalo
       let montoRegalo = regalo.precioCLP;
 

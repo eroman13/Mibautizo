@@ -124,36 +124,25 @@ export async function webhook(req: Request, res: Response) {
         },
       });
 
-      // Actualizar el estado del regalo
+      // Actualizar el monto recaudado del regalo (acumulativo, sin bloquear)
       if (giftId) {
         const giftData = await prisma.gift.findUnique({
           where: { id: giftId },
         });
 
         if (giftData) {
-          // Si es colaborativo, sumar al monto recaudado
-          if (giftData.permiteColaborativo) {
-            await prisma.gift.update({
-              where: { id: giftId },
-              data: {
-                montoRecaudadoCLP: giftData.montoRecaudadoCLP + montoNeto,
-                // Si se alcanzó el objetivo, marcar como pagado
-                estado:
-                  giftData.montoRecaudadoCLP + montoNeto >= giftData.precioCLP
-                    ? 'pagado'
-                    : 'disponible',
-              },
-            });
-          } else {
-            // Si no es colaborativo, marcarlo como pagado directamente
-            await prisma.gift.update({
-              where: { id: giftId },
-              data: {
-                estado: 'pagado',
-                montoRecaudadoCLP: montoNeto,
-              },
-            });
-          }
+          const nuevoRecaudado = giftData.montoRecaudadoCLP + montoNeto;
+          await prisma.gift.update({
+            where: { id: giftId },
+            data: {
+              montoRecaudadoCLP: nuevoRecaudado,
+              // 'pagado' es solo informativo; ya no bloquea nuevos regalos
+              estado:
+                giftData.precioCLP > 0 && nuevoRecaudado >= giftData.precioCLP
+                  ? 'pagado'
+                  : 'disponible',
+            },
+          });
         }
       }
 
