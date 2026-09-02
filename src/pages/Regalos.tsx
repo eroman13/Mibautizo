@@ -77,7 +77,7 @@ export default function Regalos() {
           </h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
             Elige el regalo que quieres hacerle a {evento.nombreGemela1} y {evento.nombreGemela2}. 
-            Puedes seleccionar varios regalos, uno para cada bebe 💝
+            Puedes seleccionar entre varios regalos, elige uno para cada bebe 💝
           </p>
         </div>
 
