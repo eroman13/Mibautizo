@@ -52,13 +52,26 @@ export default function Home() {
       {/* Hero / Portada (full-screen) */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Imagen de fondo optimizada por dispositivo (object-fit evita cortes) */}
+        {/* Imagen mobile (solo pantallas pequeñas) */}
+        {evento.portadaUrlMobile && (
+          <img
+            src={evento.portadaUrlMobile}
+            srcSet={generarSrcSet(evento.portadaUrlMobile)}
+            sizes="100vw"
+            alt={`Bautizo de ${evento.nombreGemela1} y ${evento.nombreGemela2}`}
+            className="absolute inset-0 w-full h-full object-cover object-center md:hidden"
+            style={{ filter: 'brightness(0.65)' }}
+          />
+        )}
+
+        {/* Imagen desktop (pantallas medianas y grandes) */}
         {evento.portadaUrl && (
           <img
             src={evento.portadaUrl}
             srcSet={generarSrcSet(evento.portadaUrl)}
             sizes="100vw"
             alt={`Bautizo de ${evento.nombreGemela1} y ${evento.nombreGemela2}`}
-            className="absolute inset-0 w-full h-full object-cover object-top md:object-center"
+            className="absolute inset-0 w-full h-full object-cover object-center hidden md:block"
             style={{ filter: 'brightness(0.65)' }}
           />
         )}
@@ -84,7 +97,7 @@ export default function Home() {
             </span>
             <span className="hidden md:inline">•</span>
             <a
-              href={`https://waze.com/ul?q=${encodeURIComponent(evento.lugar)}`}
+              href={evento.wazeUrl || `https://waze.com/ul?q=${encodeURIComponent(evento.lugar)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 hover:underline underline-offset-4 transition-all"

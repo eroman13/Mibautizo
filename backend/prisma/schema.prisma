@@ -21,6 +21,8 @@ model Event {
   lugar              String
   mensajeBienvenida  String
   portadaUrl         String?
+  portadaUrlMobile   String? // Imagen optimizada para pantallas móviles
+  wazeUrl            String? // URL de Waze para la ubicación del evento
   modoComision       String   @default("A") // "A" = invitado cubre, "B" = organizador asume
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt

@@ -321,6 +321,8 @@ export async function actualizarEvento(req: Request, res: Response) {
       lugar,
       mensajeBienvenida,
       portadaUrl,
+      portadaUrlMobile,
+      wazeUrl,
       modoComision,
     } = req.body;
 
@@ -334,6 +336,8 @@ export async function actualizarEvento(req: Request, res: Response) {
         lugar,
         mensajeBienvenida,
         portadaUrl,
+        portadaUrlMobile,
+        wazeUrl,
         modoComision,
       },
     });

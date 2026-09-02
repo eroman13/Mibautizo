@@ -24,6 +24,8 @@ export default function AdminConfiguracion() {
     lugar: '',
     mensajeBienvenida: '',
     portadaUrl: '',
+    portadaUrlMobile: '',
+    wazeUrl: '',
     modoComision: 'A',
   });
 
@@ -87,6 +89,36 @@ export default function AdminConfiguracion() {
     } catch (error: any) {
       console.error('Error al subir imagen:', error);
       alert('Error al subir imagen');
+    } finally {
+      setSubiendo(false);
+    }
+  };
+
+  const subirImagenMobile = async (file: File) => {
+    try {
+      setSubiendo(true);
+
+      // Comprimir la imagen móvil (vertical) a buena resolución
+      const base64 = await comprimirImagen(file, 1080, 0.85);
+
+      const response = await fetch(buildApiUrl('/upload-image'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ base64 }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setFormData({ ...formData, portadaUrlMobile: data.imageUrl });
+        console.log('✅ Imagen móvil subida');
+      } else {
+        alert('Error al subir imagen móvil: ' + data.error);
+      }
+    } catch (error: any) {
+      console.error('Error al subir imagen móvil:', error);
+      alert('Error al subir imagen móvil');
     } finally {
       setSubiendo(false);
     }
@@ -215,6 +247,24 @@ export default function AdminConfiguracion() {
               />
             </div>
 
+            {/* URL de Waze */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Enlace de Waze (opcional)
+              </label>
+              <input
+                type="url"
+                value={formData.wazeUrl || ''}
+                onChange={(e) => setFormData({ ...formData, wazeUrl: e.target.value })}
+                className="input-field"
+                placeholder="https://waze.com/ul?ll=-33.45,-70.66&navigate=yes"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Pega aquí el enlace exacto de Waze a la ubicación del evento.
+                Si lo dejas vacío, se usará el texto del campo "Lugar".
+              </p>
+            </div>
+
             {/* URL de portada */}
             <div>
               <label className="block text-gray-700 font-medium mb-2">
@@ -280,6 +330,42 @@ export default function AdminConfiguracion() {
                   placeholder="https://..."
                 />
               </div>
+            </div>
+
+            {/* Imagen de portada para móvil */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Imagen de portada para móvil (opcional)
+              </label>
+              <p className="text-xs text-gray-500 mb-2">
+                Imagen vertical optimizada para pantallas de celular.
+                Si no la configuras, se usará la imagen de portada principal.
+              </p>
+
+              {formData.portadaUrlMobile && (
+                <div className="mb-4 rounded-lg overflow-hidden border-2 border-pastel-lavender">
+                  <img
+                    src={formData.portadaUrlMobile}
+                    alt="Preview portada móvil"
+                    className="w-full h-48 object-cover"
+                  />
+                </div>
+              )}
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => e.target.files?.[0] && subirImagenMobile(e.target.files[0])}
+                disabled={subiendo}
+                className="hidden"
+                id="portadaMobileInput"
+              />
+              <label
+                htmlFor="portadaMobileInput"
+                className="inline-block px-4 py-2 bg-pastel-lavender text-white rounded-lg hover:bg-pastel-pink disabled:opacity-50 cursor-pointer"
+              >
+                {subiendo ? '⏳ Subiendo...' : '📁 Subir imagen móvil'}
+              </label>
             </div>
 
             {/* Mensaje de bienvenida */}

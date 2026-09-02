@@ -22,6 +22,8 @@ export interface Evento {
   lugar: string;
   mensajeBienvenida: string;
   portadaUrl: string | null;
+  portadaUrlMobile?: string | null;
+  wazeUrl?: string | null;
   modoComision: 'A' | 'B';
 }
 
