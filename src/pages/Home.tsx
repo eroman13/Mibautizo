@@ -83,9 +83,15 @@ export default function Home() {
               🕐 {evento.hora}
             </span>
             <span className="hidden md:inline">•</span>
-            <span className="flex items-center gap-2">
+            <a
+              href={`https://waze.com/ul?q=${encodeURIComponent(evento.lugar)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 hover:underline underline-offset-4 transition-all"
+              title="Abrir en Waze"
+            >
               📍 {evento.lugar}
-            </span>
+            </a>
           </div>
         </div>
       </section>
