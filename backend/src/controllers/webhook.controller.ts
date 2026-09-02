@@ -66,12 +66,20 @@ export async function webhook(req: Request, res: Response) {
     }
 
     const referenceData = JSON.parse(externalReference);
-    const { invitado, regalos, payment: paymentCalc } = referenceData;
+    const { invitado, regalos, payment: paymentCalc, modoComision } = referenceData;
+
+    // Calcular el total base sumando todos los regalos (para la proporción)
+    const totalBase = regalos.reduce(
+      (sum: number, r: any) => sum + (r.baseAmount || 0),
+      0
+    );
 
     console.log('📝 Procesando contribución:', {
       invitado: invitado.nombre,
       cantidadRegalos: regalos.length,
       montoTotal: payment.transaction_amount,
+      totalBase,
+      modoComision,
     });
 
     // Crear las contribuciones en la base de datos
@@ -79,11 +87,27 @@ export async function webhook(req: Request, res: Response) {
       const giftId = regalo.giftId;
       const baseAmount = regalo.baseAmount;
 
-      // Calcular proporciones si hay múltiples regalos
-      const proportion = baseAmount / paymentCalc.totalCharge;
-      const montoBruto = Math.ceil(payment.transaction_amount! * proportion);
-      const comision = Math.ceil(paymentCalc.commission * proportion);
-      const montoNeto = montoBruto - comision;
+      // Proporción correcta: baseAmount individual / totalBase (suma de todos).
+      // ANTES se dividía por totalCharge (que incluye la comisión), lo que
+      // causaba que el organizador recibiera menos de lo que corresponde.
+      const proportion = totalBase > 0 ? baseAmount / totalBase : 1;
+
+      // Monto bruto = lo que pagó el invitado por este regalo (proporcional)
+      const montoBruto = Math.round((payment.transaction_amount || 0) * proportion);
+
+      let comision: number;
+      let montoNeto: number;
+
+      if (modoComision === 'B') {
+        // Modo B: el organizador asume la comisión
+        comision = Math.round((paymentCalc.commission || 0) * proportion);
+        montoNeto = montoBruto - comision;
+      } else {
+        // Modo A (por defecto): el invitado cubre la comisión.
+        // El organizador recibe el TOTAL del regalo (baseAmount).
+        comision = montoBruto - baseAmount;
+        montoNeto = baseAmount;
+      }
 
       // Crear la contribución
       await prisma.contribution.create({
