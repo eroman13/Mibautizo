@@ -63,8 +63,9 @@ export default function AdminConfiguracion() {
     try {
       setSubiendo(true);
 
-      // Comprimir y redimensionar la imagen antes de subirla
-      const base64 = await comprimirImagen(file);
+      // Comprimir la portada con mayor resolución y calidad
+      // (es una imagen full-screen, necesita más detalle que los regalos)
+      const base64 = await comprimirImagen(file, 1600, 0.85);
 
       // Enviar al backend
       const response = await fetch(buildApiUrl('/upload-image'), {
