@@ -12,6 +12,7 @@ export default function Regalos() {
   const [regalos, setRegalos] = useState<Regalo[]>([]);
   const [evento, setEvento] = useState<Evento | null>(null);
   const [loading, setLoading] = useState(true);
+  const [orden, setOrden] = useState('recientes');
 
   useEffect(() => {
     cargarDatos();
@@ -31,6 +32,21 @@ export default function Regalos() {
       setLoading(false);
     }
   };
+
+  // Ordenar regalos según el criterio seleccionado
+  const regalosOrdenados = [...regalos].sort((a, b) => {
+    switch (orden) {
+      case 'precio-asc':
+        return a.precioCLP - b.precioCLP;
+      case 'precio-desc':
+        return b.precioCLP - a.precioCLP;
+      case 'nombre':
+        return a.nombre.localeCompare(b.nombre, 'es');
+      case 'recientes':
+      default:
+        return b.id - a.id;
+    }
+  });
 
   if (loading) {
     return (
@@ -65,9 +81,30 @@ export default function Regalos() {
           </p>
         </div>
 
+        {/* Barra de ordenamiento */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-6">
+          <p className="text-gray-600">
+            {regalos.length} regalo{regalos.length !== 1 ? 's' : ''} disponibles
+          </p>
+          <div className="flex items-center gap-2">
+            <label htmlFor="orden" className="text-gray-600 whitespace-nowrap">Ordenar por:</label>
+            <select
+              id="orden"
+              value={orden}
+              onChange={(e) => setOrden(e.target.value)}
+              className="input-field max-w-xs"
+            >
+              <option value="recientes">Recién agregados</option>
+              <option value="precio-asc">Precio: menor a mayor</option>
+              <option value="precio-desc">Precio: mayor a menor</option>
+              <option value="nombre">Nombre (A-Z)</option>
+            </select>
+          </div>
+        </div>
+
         {/* Grid de regalos */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
-          {regalos.map(regalo => (
+          {regalosOrdenados.map(regalo => (
             <TarjetaRegalo 
               key={regalo.id} 
               regalo={regalo}
