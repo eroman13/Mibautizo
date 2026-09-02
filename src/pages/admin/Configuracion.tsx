@@ -23,6 +23,7 @@ export default function AdminConfiguracion() {
     hora: '',
     lugar: '',
     lugarRecepcion: '',
+    wazeUrlRecepcion: '',
     mensajeBienvenida: '',
     portadaUrl: '',
     portadaUrlMobile: '',
@@ -262,6 +263,23 @@ export default function AdminConfiguracion() {
               />
               <p className="text-xs text-gray-500 mt-1">
                 Lugar donde se celebrará la recepción después de la ceremonia. Si lo dejas vacío, no se mostrará el aviso.
+              </p>
+            </div>
+
+            {/* URL de Waze de la recepción (opcional) */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Enlace de Waze de la recepción (opcional)
+              </label>
+              <input
+                type="url"
+                value={formData.wazeUrlRecepcion || ''}
+                onChange={(e) => setFormData({ ...formData, wazeUrlRecepcion: e.target.value })}
+                className="input-field"
+                placeholder="https://waze.com/ul?ll=-34.35,-71.01&navigate=yes"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Pega aquí el enlace de Waze al lugar de la recepción. Si lo dejas vacío, se buscará el nombre del campo anterior en Waze.
               </p>
             </div>
 

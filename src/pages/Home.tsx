@@ -138,7 +138,7 @@ export default function Home() {
               📍 {evento.lugarRecepcion}
             </p>
             <a
-              href={`https://waze.com/ul?q=${encodeURIComponent(evento.lugarRecepcion)}`}
+              href={evento.wazeUrlRecepcion || `https://waze.com/ul?q=${encodeURIComponent(evento.lugarRecepcion)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-gray-500 hover:text-pastel-pink hover:underline underline-offset-4 transition-colors font-medium"

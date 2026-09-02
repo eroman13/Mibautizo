@@ -22,9 +22,12 @@ export async function autoSeedIfEmpty() {
       if (existingEvent.lugarRecepcion === null) {
         await prisma.event.update({
           where: { id: existingEvent.id },
-          data: { lugarRecepcion: 'Centro de Evento Miriam Roman' },
+          data: {
+            lugarRecepcion: 'Centro de Evento Miriam Roman',
+            wazeUrlRecepcion: 'https://waze.com/ul?ll=-34.3530487,-71.0180287&navigate=yes',
+          },
         });
-        console.log('✅ Lugar de recepción por defecto aplicado: Centro de Evento Miriam Roman');
+        console.log('✅ Lugar y Waze de la recepción por defecto aplicados');
       }
       return;
     }
@@ -42,6 +45,7 @@ export async function autoSeedIfEmpty() {
         hora: '16:00',
         lugar: 'Parroquia San Francisco, Santiago',
         lugarRecepcion: 'Centro de Evento Miriam Roman',
+        wazeUrlRecepcion: 'https://waze.com/ul?ll=-34.3530487,-71.0180287&navigate=yes',
         mensajeBienvenida: '¡Bienvenidos a la celebración del bautizo de nuestras hermosas gemelas! 🎀✨\n\nNos llena de alegría poder compartir este día tan especial con ustedes. Su presencia es el mejor regalo, pero si desean hacernos un presente, hemos preparado esta lista de deseos para las pequeñas.\n\nCada aporte nos ayudará a darles lo mejor a Antonia y Emilia en sus primeros meses de vida.\n\n¡Gracias por ser parte de este momento único! 💝',
         portadaUrl: 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=1200',
         modoComision: 'A',

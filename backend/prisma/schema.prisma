@@ -20,6 +20,7 @@ model Event {
   hora               String   // Formato: "16:00"
   lugar              String
   lugarRecepcion     String? // Lugar donde se realizará la recepción después de la ceremonia
+  wazeUrlRecepcion   String? // URL de Waze para la recepción (opcional)
   mensajeBienvenida  String
   portadaUrl         String?
   portadaUrlMobile   String? // Imagen optimizada para pantallas móviles

@@ -21,6 +21,7 @@ export interface Evento {
   hora: string;
   lugar: string;
   lugarRecepcion?: string | null;
+  wazeUrlRecepcion?: string | null;
   mensajeBienvenida: string;
   portadaUrl: string | null;
   portadaUrlMobile?: string | null;
