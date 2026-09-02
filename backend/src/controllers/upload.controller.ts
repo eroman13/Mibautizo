@@ -1,25 +1,22 @@
 /**
  * Controlador de subida de archivos
+ *
+ * Devuelve la imagen como data URL (base64) directamente, sin guardarla en
+ * el filesystem. Esto es necesario porque Railway usa un filesystem efímero:
+ * cualquier archivo guardado en disco se pierde en el siguiente redeploy.
+ * La imagen se guarda en la base de datos (campo imagenUrl/portadaUrl).
  */
 
 import { Request, Response } from 'express';
-import * as fs from 'fs';
-import * as path from 'path';
-
-// Crear carpeta de uploads si no existe
-const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
 
 export const uploadImage = async (req: Request, res: Response) => {
   try {
-    const { base64, filename } = req.body;
+    const { base64 } = req.body;
 
-    if (!base64 || !filename) {
+    if (!base64) {
       return res.status(400).json({
         success: false,
-        error: 'base64 y filename son requeridos',
+        error: 'base64 es requerido',
       });
     }
 
@@ -31,41 +28,12 @@ export const uploadImage = async (req: Request, res: Response) => {
       });
     }
 
-    // Extraer el tipo y datos
-    const matches = base64.match(/^data:image\/([^;]+);base64,(.+)$/);
-    if (!matches) {
-      return res.status(400).json({
-        success: false,
-        error: 'Formato de imagen inválido',
-      });
-    }
+    console.log('✅ Imagen recibida (data URL)');
 
-    const [, ext, data] = matches;
-
-    // Sanitizar nombre de archivo
-    const safeName = filename
-      .toLowerCase()
-      .replace(/[^a-z0-9.-]/g, '_')
-      .slice(0, 100);
-
-    // Generar nombre único con timestamp
-    const timestamp = Date.now();
-    const uniqueName = `${timestamp}_${safeName}`;
-    const filePath = path.join(uploadsDir, uniqueName);
-
-    // Guardar archivo
-    const buffer = Buffer.from(data, 'base64');
-    fs.writeFileSync(filePath, buffer);
-
-    // Retornar URL relativa
-    const imageUrl = `/uploads/${uniqueName}`;
-
-    console.log('✅ Imagen subida:', imageUrl);
-
+    // Devolver la imagen como data URL para que se guarde en la base de datos
     res.json({
       success: true,
-      imageUrl,
-      filename: uniqueName,
+      imageUrl: base64,
     });
   } catch (error: any) {
     console.error('❌ Error en uploadImage:', error);

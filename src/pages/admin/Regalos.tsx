@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import { adminApi } from '../../services/adminApi';
-import { API_URL, buildApiUrl } from '../../services/config';
+import { buildApiUrl } from '../../services/config';
 import { formatCLP } from '../../utils/format';
 import { Link } from 'react-router-dom';
 import { Regalo } from '../../types';
@@ -121,7 +121,7 @@ export default function AdminRegalos() {
 
         const data = await response.json();
         if (data.success) {
-          setFormData({ ...formData, imagenUrl: `${API_URL}${data.imageUrl}` });
+          setFormData({ ...formData, imagenUrl: data.imageUrl });
           console.log('✅ Imagen subida:', data.imageUrl);
         } else {
           alert('Error al subir imagen: ' + data.error);

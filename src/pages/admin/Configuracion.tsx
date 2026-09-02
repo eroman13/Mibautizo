@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import { adminApi } from '../../services/adminApi';
-import { API_URL, buildApiUrl } from '../../services/config';
+import { buildApiUrl } from '../../services/config';
 import { Link } from 'react-router-dom';
 import { Evento } from '../../types';
 
@@ -81,7 +81,7 @@ export default function AdminConfiguracion() {
 
         const data = await response.json();
         if (data.success) {
-          setFormData({ ...formData, portadaUrl: `${API_URL}${data.imageUrl}` });
+          setFormData({ ...formData, portadaUrl: data.imageUrl });
           console.log('✅ Imagen subida:', data.imageUrl);
         } else {
           alert('Error al subir imagen: ' + data.error);
