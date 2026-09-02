@@ -123,6 +123,33 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Recepción (se muestra si está configurada) */}
+      {evento.lugarRecepcion && (
+        <section className="container mx-auto px-4 pb-12 max-w-3xl">
+          <div className="bg-white rounded-2xl shadow-card p-8 md:p-10 text-center">
+            <div className="text-4xl mb-3">🎉</div>
+            <h3 className="text-3xl font-display font-bold text-gray-800 mb-4 section-decoration">
+              Recepción
+            </h3>
+            <p className="text-lg text-gray-600 mb-3">
+              Después de la ceremonia, la recepción será en:
+            </p>
+            <p className="text-2xl md:text-3xl font-display font-bold text-pastel-pink mb-4">
+              📍 {evento.lugarRecepcion}
+            </p>
+            <a
+              href={`https://waze.com/ul?q=${encodeURIComponent(evento.lugarRecepcion)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-gray-500 hover:text-pastel-pink hover:underline underline-offset-4 transition-colors font-medium"
+              title="Abrir en Waze"
+            >
+              🧭 Cómo llegar en Waze
+            </a>
+          </div>
+        </section>
+      )}
+
       {/* CTA */}
       <section className="container mx-auto px-4 pb-16 text-center">
         <Link to="/regalos" className="btn-primary inline-block text-lg px-8 py-4">

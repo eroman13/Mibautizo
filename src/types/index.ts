@@ -20,6 +20,7 @@ export interface Evento {
   fecha: string;
   hora: string;
   lugar: string;
+  lugarRecepcion?: string | null;
   mensajeBienvenida: string;
   portadaUrl: string | null;
   portadaUrlMobile?: string | null;

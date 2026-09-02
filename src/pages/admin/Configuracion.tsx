@@ -22,6 +22,7 @@ export default function AdminConfiguracion() {
     fecha: '',
     hora: '',
     lugar: '',
+    lugarRecepcion: '',
     mensajeBienvenida: '',
     portadaUrl: '',
     portadaUrlMobile: '',
@@ -245,6 +246,23 @@ export default function AdminConfiguracion() {
                 className="input-field"
                 placeholder="Ej: Parroquia San Francisco, Santiago"
               />
+            </div>
+
+            {/* Lugar de la recepción (opcional) */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Lugar de la recepción (opcional)
+              </label>
+              <input
+                type="text"
+                value={formData.lugarRecepcion || ''}
+                onChange={(e) => setFormData({ ...formData, lugarRecepcion: e.target.value })}
+                className="input-field"
+                placeholder="Ej: Centro de Evento Miriam Roman"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Lugar donde se celebrará la recepción después de la ceremonia. Si lo dejas vacío, no se mostrará el aviso.
+              </p>
             </div>
 
             {/* URL de Waze */}

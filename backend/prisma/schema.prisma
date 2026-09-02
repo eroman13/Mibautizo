@@ -19,6 +19,7 @@ model Event {
   fecha              String   // Formato: "2026-09-15"
   hora               String   // Formato: "16:00"
   lugar              String
+  lugarRecepcion     String? // Lugar donde se realizará la recepción después de la ceremonia
   mensajeBienvenida  String
   portadaUrl         String?
   portadaUrlMobile   String? // Imagen optimizada para pantallas móviles
