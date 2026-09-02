@@ -17,6 +17,7 @@ import {
   eliminarRegalo,
   actualizarEvento,
   exportarCSV,
+  limpiarPagos,
 } from '../controllers/admin.controller';
 import {
   getAllAdminUsers,
@@ -74,6 +75,7 @@ router.put('/admin/regalos/:id', verificarAuth, actualizarRegalo);
 router.delete('/admin/regalos/:id', verificarAuth, eliminarRegalo);
 router.put('/admin/evento', verificarAuth, actualizarEvento);
 router.get('/admin/export-csv', verificarAuth, exportarCSV);
+router.post('/admin/limpiar-pagos', verificarAuth, limpiarPagos);
 
 // Rutas de gestión de usuarios admin
 router.get('/admin-users', verificarAuth, getAllAdminUsers);

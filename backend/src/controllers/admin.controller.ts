@@ -407,3 +407,38 @@ export async function exportarCSV(req: Request, res: Response) {
     res.status(500).json({ success: false, error: 'Error al exportar CSV' });
   }
 }
+
+/**
+ * Eliminar todos los pagos de prueba (contribuciones) y resetear los regalos.
+ * POST /api/admin/limpiar-pagos
+ */
+export async function limpiarPagos(req: Request, res: Response) {
+  try {
+    // 1. Eliminar todas las contribuciones (pagos)
+    const { count: contribucionesEliminadas } = await prisma.contribution.deleteMany({});
+
+    // 2. Resetear los regalos: monto recaudado a 0 y estado a 'disponible'
+    const { count: regalosReseteados } = await prisma.gift.updateMany({
+      data: {
+        montoRecaudadoCLP: 0,
+        estado: 'disponible',
+      },
+    });
+
+    console.log(
+      `🧹 Limpieza: ${contribucionesEliminadas} pagos eliminados, ${regalosReseteados} regalos reseteados`
+    );
+
+    res.json({
+      success: true,
+      message: `Se eliminaron ${contribucionesEliminadas} pagos y se resetearon ${regalosReseteados} regalos`,
+      data: {
+        contribucionesEliminadas,
+        regalosReseteados,
+      },
+    });
+  } catch (error) {
+    console.error('Error al limpiar pagos:', error);
+    res.status(500).json({ success: false, error: 'Error al limpiar pagos' });
+  }
+}
