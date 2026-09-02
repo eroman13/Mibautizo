@@ -64,3 +64,25 @@ export async function comprimirImagen(
     reader.readAsDataURL(file);
   });
 }
+
+/**
+ * Genera el atributo `srcset` para servir imágenes en diferentes resoluciones
+ * según el dispositivo/navegador. Solo funciona con URLs que aceptan el
+ * parámetro `w=` (Pexels, Unsplash). Para data URLs (base64) devuelve undefined.
+ *
+ * @param url URL de la imagen
+ * @returns String para el atributo srcset, o undefined si no aplica
+ */
+export function generarSrcSet(url: string): string | undefined {
+  if (!url || url.startsWith('data:')) return undefined;
+  if (!url.includes('w=')) return undefined;
+
+  const conAncho = (w: number) => url.replace(/w=\d+/, `w=${w}`);
+
+  return [
+    `${conAncho(480)} 480w`,
+    `${conAncho(800)} 800w`,
+    `${conAncho(1200)} 1200w`,
+  ].join(', ');
+}
+

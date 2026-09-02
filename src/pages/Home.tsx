@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { Evento } from '../types';
 import { api } from '../services/api';
 import { formatDate } from '../utils/format';
+import { generarSrcSet } from '../utils/imagen';
 
 export default function Home() {
   const [evento, setEvento] = useState<Evento | null>(null);
@@ -48,21 +49,22 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero / Portada */}
-      <section className="relative h-[60vh] min-h-[400px] flex items-center justify-center overflow-hidden">
-        {/* Imagen de fondo */}
+      {/* Hero / Portada (full-screen) */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Imagen de fondo optimizada por dispositivo (object-fit evita cortes) */}
         {evento.portadaUrl && (
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{
-              backgroundImage: `url(${evento.portadaUrl})`,
-              filter: 'brightness(0.7)',
-            }}
+          <img
+            src={evento.portadaUrl}
+            srcSet={generarSrcSet(evento.portadaUrl)}
+            sizes="100vw"
+            alt={`Bautizo de ${evento.nombreGemela1} y ${evento.nombreGemela2}`}
+            className="absolute inset-0 w-full h-full object-cover object-center"
+            style={{ filter: 'brightness(0.65)' }}
           />
         )}
-        
-        {/* Overlay degradado */}
-        <div className="absolute inset-0 bg-gradient-to-b from-pastel-blue/50 via-pastel-pink/50 to-white"></div>
+
+        {/* Overlay degradado para legibilidad */}
+        <div className="absolute inset-0 bg-gradient-to-b from-pastel-blue/40 via-pastel-pink/30 to-pastel-blue/40"></div>
 
         {/* Contenido */}
         <div className="relative z-10 text-center px-4 max-w-3xl">
