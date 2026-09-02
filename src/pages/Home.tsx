@@ -106,6 +106,16 @@ export default function Home() {
               📍 {evento.lugar}
             </a>
           </div>
+
+          {/* CTA principal: botón de regalos (lo más importante de la página) */}
+          <div className="mt-10">
+            <Link
+              to="/regalos"
+              className="btn-primary inline-block text-xl md:text-2xl px-12 py-4 shadow-card"
+            >
+              Ver la lista de regalos 🎁
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -149,13 +159,6 @@ export default function Home() {
           </div>
         </section>
       )}
-
-      {/* CTA */}
-      <section className="container mx-auto px-4 pb-16 text-center">
-        <Link to="/regalos" className="btn-primary inline-block text-lg px-8 py-4">
-          Ver la lista de regalos 🎁
-        </Link>
-      </section>
 
       {/* Acceso administración (discreto) */}
       <div className="container mx-auto px-4 pb-8 text-center">

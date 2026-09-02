@@ -234,71 +234,79 @@ export default function AdminConfiguracion() {
               </div>
             </div>
 
-            {/* Lugar */}
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Lugar
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.lugar}
-                onChange={(e) => setFormData({ ...formData, lugar: e.target.value })}
-                className="input-field"
-                placeholder="Ej: Parroquia San Francisco, Santiago"
-              />
+            {/* ---- CEREMONIA: iglesia ---- */}
+            <div className="border-2 border-pastel-lavender/40 rounded-xl p-4 space-y-4">
+              <p className="flex items-center gap-2 text-gray-800 font-semibold text-lg">
+                ⛪ Ceremonia — en la iglesia
+              </p>
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  Nombre de la iglesia
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.lugar}
+                  onChange={(e) => setFormData({ ...formData, lugar: e.target.value })}
+                  className="input-field"
+                  placeholder="Ej: Parroquia San Francisco, Quinta de Tilcoco"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Se muestra en el encabezado de la portada con 📍
+                </p>
+              </div>
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  Enlace de Waze de la iglesia
+                </label>
+                <input
+                  type="url"
+                  value={formData.wazeUrl || ''}
+                  onChange={(e) => setFormData({ ...formData, wazeUrl: e.target.value })}
+                  className="input-field"
+                  placeholder="https://waze.com/ul?ll=-34.35,-71.01&navigate=yes"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Link del 📍 de la ceremonia en la portada. Si lo dejas vacío, se buscará el nombre de la iglesia en Waze.
+                </p>
+              </div>
             </div>
 
-            {/* Lugar de la recepción (opcional) */}
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Lugar de la recepción (opcional)
-              </label>
-              <input
-                type="text"
-                value={formData.lugarRecepcion || ''}
-                onChange={(e) => setFormData({ ...formData, lugarRecepcion: e.target.value })}
-                className="input-field"
-                placeholder="Ej: Centro de Evento Miriam Roman"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Lugar donde se celebrará la recepción después de la ceremonia. Si lo dejas vacío, no se mostrará el aviso.
+            {/* ---- RECEPCIÓN: comida ---- */}
+            <div className="border-2 border-pastel-pink/40 rounded-xl p-4 space-y-4">
+              <p className="flex items-center gap-2 text-gray-800 font-semibold text-lg">
+                🎉 Recepción — comida después de la ceremonia
               </p>
-            </div>
-
-            {/* URL de Waze de la recepción (opcional) */}
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Cómo llegar en Waze — recepción (opcional)
-              </label>
-              <input
-                type="url"
-                value={formData.wazeUrlRecepcion || ''}
-                onChange={(e) => setFormData({ ...formData, wazeUrlRecepcion: e.target.value })}
-                className="input-field"
-                placeholder="https://waze.com/ul?ll=-34.3530487,-71.0180287&navigate=yes"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Controla el botón "Cómo llegar en Waze" de la sección Recepción en la portada. Si lo dejas vacío, se buscará el nombre del lugar en Waze.
-              </p>
-            </div>
-
-            {/* URL de Waze */}
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Enlace de Waze (opcional)
-              </label>
-              <input
-                type="url"
-                value={formData.wazeUrl || ''}
-                onChange={(e) => setFormData({ ...formData, wazeUrl: e.target.value })}
-                className="input-field"
-                placeholder="https://waze.com/ul?ll=-33.45,-70.66&navigate=yes"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Pega aquí el enlace exacto de Waze a la ubicación del evento.
-                Si lo dejas vacío, se usará el texto del campo "Lugar".
-              </p>
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  Lugar de la recepción (opcional)
+                </label>
+                <input
+                  type="text"
+                  value={formData.lugarRecepcion || ''}
+                  onChange={(e) => setFormData({ ...formData, lugarRecepcion: e.target.value })}
+                  className="input-field"
+                  placeholder="Ej: Centro de Evento Miriam Roman"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Se muestra en la sección "Recepción" de la portada. Si lo dejas vacío, esa sección no aparece.
+                </p>
+              </div>
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  Enlace de Waze de la recepción (opcional)
+                </label>
+                <input
+                  type="url"
+                  value={formData.wazeUrlRecepcion || ''}
+                  onChange={(e) => setFormData({ ...formData, wazeUrlRecepcion: e.target.value })}
+                  className="input-field"
+                  placeholder="https://waze.com/ul?ll=-34.3530487,-71.0180287&navigate=yes"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Link del botón "Cómo llegar en Waze" de la sección Recepción. Si lo dejas vacío, se buscará el nombre del lugar en Waze.
+                </p>
+              </div>
             </div>
 
             {/* URL de portada */}
