@@ -47,7 +47,7 @@ if (mpPublicKey) {
 
 // CORS - reflejar el origen de la petición (compatible con credentials)
 const allowedOrigins = [
-  'https://mibautizo-frontend-six.vercel.app',
+  'https://bautizo-anto-emi.vercel.app',
   'https://mibautizo.vercel.app',
   'http://localhost:5173',
   'http://localhost:5174',

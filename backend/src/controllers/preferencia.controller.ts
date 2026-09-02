@@ -138,7 +138,7 @@ export async function crearPreferencia(req: Request, res: Response) {
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
 
     if (isProduction && (frontendUrl.includes('localhost') || frontendUrl.includes('127.0.0.1'))) {
-      frontendUrl = 'https://mibautizo-frontend-six.vercel.app';
+      frontendUrl = 'https://bautizo-anto-emi.vercel.app';
     }
 
     console.log('📋 Creando preferencia en Mercado Pago...');

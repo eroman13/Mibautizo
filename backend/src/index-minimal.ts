@@ -17,7 +17,7 @@ console.log(`📍 DATABASE_URL configured: ${process.env.DATABASE_URL ? 'yes' : 
 // Enable CORS
 app.use(cors({
   origin: [
-    'https://mibautizo-frontend-six.vercel.app',
+    'https://bautizo-anto-emi.vercel.app',
     'http://localhost:5176',
     'http://localhost:5174'
   ],
