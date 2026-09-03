@@ -3,6 +3,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Regalo, Evento } from '../types';
 import { api } from '../services/api';
 import TarjetaRegalo from '../components/regalos/TarjetaRegalo';
@@ -70,6 +71,17 @@ export default function Regalos() {
   return (
     <div className="min-h-screen bg-soft-gray py-12">
       <div className="container mx-auto px-4">
+        {/* Volver al inicio */}
+        <div className="mb-6">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-gray-500 hover:text-pastel-pink font-medium transition-colors"
+          >
+            <span className="text-lg leading-none" aria-hidden>←</span>
+            Volver al inicio
+          </Link>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-display font-bold text-gray-800 mb-4 section-decoration">
