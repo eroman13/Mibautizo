@@ -30,6 +30,18 @@ model Event {
   updatedAt          DateTime @updatedAt
 }
 
+// Intención de compra guardada antes de crear la preferencia en Mercado Pago.
+// El external_reference de MP está limitado a 256 caracteres y el payload del
+// carrito (invitado + varios regalos + dedicatoria) lo supera fácilmente, lo que
+// hacía que MP no pudiera procesar el pago. Guardamos el payload completo aquí y
+// usamos solo el id como external_reference.
+model CheckoutIntent {
+  id        Int      @id @default(autoincrement())
+  payload   String   // JSON: invitado, regalos, modoComision y cálculo de pago
+  estado    String   @default("pending") // pending | approved
+  createdAt DateTime @default(now())
+}
+
 // Regalos del catálogo
 model Gift {
   id                    Int            @id @default(autoincrement())

@@ -58,14 +58,37 @@ export async function webhook(req: Request, res: Response) {
       return res.sendStatus(200);
     }
 
-    // Parsear la referencia externa (datos del regalo y el invitado)
+    // Obtener los datos de la compra guardados al crear la preferencia.
+    // El external_reference ahora es el id (corto) de un CheckoutIntent creado
+    // en la BD, porque el JSON completo superaba el límite de 256 caracteres de
+    // Mercado Pago. Se mantiene compatibilidad con pagos antiguos cuyo
+    // external_reference era un JSON embebido.
     const externalReference = payment.external_reference;
     if (!externalReference) {
       console.log('⚠️ Pago sin external_reference');
       return res.sendStatus(200);
     }
 
-    const referenceData = JSON.parse(externalReference);
+    let referenceData: any;
+    const externalStr = String(externalReference);
+    if (externalStr.startsWith('{')) {
+      // Pago antiguo: los datos venían embebidos en el JSON
+      referenceData = JSON.parse(externalStr);
+    } else {
+      const intent = await prisma.checkoutIntent.findUnique({
+        where: { id: Number(externalStr) },
+      });
+      if (!intent) {
+        console.log('⚠️ CheckoutIntent no encontrado:', externalStr);
+        return res.sendStatus(200);
+      }
+      referenceData = JSON.parse(intent.payload);
+      await prisma.checkoutIntent.update({
+        where: { id: intent.id },
+        data: { estado: 'approved' },
+      });
+    }
+
     const { invitado, regalos, payment: paymentCalc, modoComision } = referenceData;
 
     // Calcular el total base sumando todos los regalos (para la proporción)

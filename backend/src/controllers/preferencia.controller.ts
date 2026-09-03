@@ -157,6 +157,23 @@ export async function crearPreferencia(req: Request, res: Response) {
     console.log('  - Items:', body.regalos.length);
     console.log('  - URLs configuradas:', { frontendUrl, backendUrl });
 
+    // Guardar los datos del carrito en la BD antes de crear la preferencia.
+    // El external_reference de MP está limitado a 256 caracteres y el JSON con
+    // invitado + varios regalos lo supera (≈480+ caracteres), lo que provocaba
+    // que Mercado Pago no pudiera procesar el pago. Usamos solo el id como
+    // referencia y recuperamos el payload completo en el webhook.
+    const checkoutIntent = await prisma.checkoutIntent.create({
+      data: {
+        payload: JSON.stringify({
+          invitado: body.invitado,
+          regalos: contributionsData,
+          modoComision,
+          payment,
+        }),
+      },
+    });
+    console.log(`🗂️ Checkout intent creado: #${checkoutIntent.id}`);
+
     // Crear la preferencia en Mercado Pago
     let preference;
     try {
@@ -175,12 +192,7 @@ export async function crearPreferencia(req: Request, res: Response) {
           auto_return: 'all',
           notification_url: `${backendUrl}/api/webhook`,
           statement_descriptor: 'BAUTIZO GEMELAS',
-          external_reference: JSON.stringify({
-            invitado: body.invitado,
-            regalos: contributionsData,
-            modoComision,
-            payment,
-          }),
+          external_reference: checkoutIntent.id.toString(),
         },
       });
     } catch (mpError) {
