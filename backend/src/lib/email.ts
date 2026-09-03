@@ -4,6 +4,12 @@
  */
 
 import nodemailer from 'nodemailer';
+import dns from 'node:dns';
+
+// Railway no tiene salida IPv6: si Node resuelve smtp.gmail.com a una dirección
+// IPv6 la conexión falla con ENETUNREACH/ETIMEDOUT. Forzamos el orden IPv4
+// para que el SMTP de Gmail se conecte por IPv4.
+dns.setDefaultResultOrder('ipv4first');
 
 // Obtener configuración del entorno
 // Aceptar ambos nombres de variables (GMAIL_* y MAIL_*) por compatibilidad
