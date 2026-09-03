@@ -6,8 +6,12 @@
 import nodemailer from 'nodemailer';
 
 // Obtener configuración del entorno
-const gmailUser = process.env.GMAIL_USER?.trim();
-const gmailPass = process.env.GMAIL_PASS?.trim().replace(/\s+/g, ''); // Remover espacios
+// Aceptar ambos nombres de variables (GMAIL_* y MAIL_*) por compatibilidad
+// con la documentación del proyecto y la configuración existente en Railway.
+const gmailUser = (process.env.GMAIL_USER || process.env.MAIL_USER || '').trim();
+const gmailPass = (process.env.GMAIL_PASS || process.env.MAIL_PASS || '')
+  .trim()
+  .replace(/\s+/g, ''); // Remover espacios
 const isTestMode = process.env.GMAIL_TEST === 'true';
 
 // Validar configuración
@@ -52,6 +56,13 @@ export async function enviarConfirmacionRegalo({
   totalCLP: number;
   dedicatoria?: string;
 }) {
+  if (!gmailUser || !gmailPass) {
+    console.warn(
+      `⚠️ Confirmación NO enviada a ${para}: credenciales de email no configuradas (GMAIL_USER/GMAIL_PASS o MAIL_USER/MAIL_PASS).`
+    );
+    return { success: false, error: new Error('Credenciales de email no configuradas') };
+  }
+
   try {
     const nombreGemelas = process.env.GEMELA1_NAME || 'Antonia';
     const nombreGemela2 = process.env.GEMELA2_NAME || 'Emilia';
@@ -184,6 +195,13 @@ export async function enviarNotificacionAlAdmin({
   regalos: Array<{ nombre: string; cantidad: number }>;
   totalCLP: number;
 }) {
+  if (!gmailUser || !gmailPass) {
+    console.warn(
+      '⚠️ Notificación al admin NO enviada: credenciales de email no configuradas (GMAIL_USER/GMAIL_PASS o MAIL_USER/MAIL_PASS).'
+    );
+    return { success: false, error: new Error('Credenciales de email no configuradas') };
+  }
+
   try {
     const nombreGemelas = process.env.GEMELA1_NAME || 'Antonia';
     const nombreGemela2 = process.env.GEMELA2_NAME || 'Emilia';

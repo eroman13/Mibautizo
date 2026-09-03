@@ -196,26 +196,32 @@ export async function webhook(req: Request, res: Response) {
 
     // Enviar correo de confirmación al invitado
     if (invitado.email) {
-      await enviarConfirmacionRegalo({
+      const emailResult = await enviarConfirmacionRegalo({
         para: invitado.email,
         nombreInvitado: invitado.nombre,
         regalos: regalosConDetalles,
         totalCLP: Math.ceil(payment.transaction_amount!),
         dedicatoria: invitado.dedicatoria,
       });
+      if (!emailResult.success) {
+        console.warn('⚠️ No se pudo enviar la confirmación al invitado:', (emailResult.error as Error)?.message);
+      }
     }
 
     // Enviar notificación al administrador
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@bautizo.local';
     if (adminEmail && adminEmail !== 'admin@bautizo.local') {
       // Solo enviar si se configuró un email real
-      await enviarNotificacionAlAdmin({
+      const adminResult = await enviarNotificacionAlAdmin({
         para: adminEmail,
         nombreInvitado: invitado.nombre,
         emailInvitado: invitado.email || 'No proporcionado',
         regalos: regalosConDetalles,
         totalCLP: Math.ceil(payment.transaction_amount!),
       });
+      if (!adminResult.success) {
+        console.warn('⚠️ No se pudo enviar la notificación al admin:', (adminResult.error as Error)?.message);
+      }
     }
 
     console.log('🎉 Webhook procesado exitosamente');
