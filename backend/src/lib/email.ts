@@ -1,6 +1,6 @@
 /**
  * Servicio de envío de correos electrónicos
- * Usa Nodemailer con SMTP de Gmail
+ * Métodos: Brevo API (HTTP, recomendado), Resend API (HTTP) o SMTP Gmail (legacy)
  */
 
 import nodemailer from 'nodemailer';
@@ -24,16 +24,25 @@ const gmailPass = (process.env.GMAIL_PASS || process.env.MAIL_PASS || '')
   .replace(/\s+/g, ''); // Remover espacios
 const isTestMode = process.env.GMAIL_TEST === 'true';
 
-// Resend (API HTTP de correo, recomendada en Railway): más confiable que SMTP
-// porque usa HTTPS en el puerto 443. El SMTP a Gmail da "Connection timeout"
-// desde Railway porque los puertos 587/465 suelen estar bloqueados.
+// Brevo (API HTTP, RECOMENDADO): permite verificar un email existente (ej. Gmail)
+// sin DNS. Usa HTTPS (puerto 443), que Railway no bloquea (a diferencia de SMTP).
+const brevoApiKey = (process.env.BREVO_API_KEY || '').trim();
+const brevoSenderEmail = (process.env.BREVO_SENDER_EMAIL || gmailUser || '').trim();
+const brevoSenderName = (process.env.BREVO_SENDER_NAME || 'Bautizo Anto & Emi').trim();
+
+// Resend (API HTTP alternativa): más confiable que SMTP porque usa HTTPS en el
+// puerto 443. El SMTP a Gmail da "Connection timeout" desde Railway porque los
+// puertos 587/465 suelen estar bloqueados.
 const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
 const resendFrom = (process.env.RESEND_FROM || 'Bautizo Anto & Emi <onboarding@resend.dev>').trim();
 
 // Validar configuración
-if (!resendApiKey && (!gmailUser || !gmailPass)) {
-  console.warn('⚠️ Configuración de email incompleta. Se necesita RESEND_API_KEY o GMAIL_USER/GMAIL_PASS.');
+const hayCredencialesEmail = Boolean(brevoApiKey || resendApiKey || (gmailUser && gmailPass));
+if (!hayCredencialesEmail) {
+  console.warn('⚠️ Configuración de email incompleta. Configura BREVO_API_KEY, RESEND_API_KEY o GMAIL_USER/GMAIL_PASS.');
   console.warn('   Los correos NO se enviarán hasta que se configure correctamente.');
+} else if (brevoApiKey) {
+  console.log(`📧 Email vía Brevo API (${brevoSenderEmail})`);
 } else if (resendApiKey) {
   console.log(`📧 Email vía Resend API (${resendFrom})`);
 } else {
@@ -88,9 +97,42 @@ function crearTransporter(host: string) {
 }
 
 /**
- * Envío vía Resend (API HTTP). Es el método recomendado en Railway porque
- * usa HTTPS (puerto 443), evitando el bloqueo de los puertos SMTP (587/465)
- * que provoca "Connection timeout" con Gmail.
+ * Envío vía Brevo (API HTTP). RECOMENDADO para este proyecto porque permite
+ * verificar un email existente (Gmail) sin necesidad de un dominio propio.
+ * Usa HTTPS (puerto 443), que Railway no bloquea.
+ */
+async function enviarConBrevo(mailOptions: any): Promise<string> {
+  const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'api-key': brevoApiKey,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({
+      sender: {
+        email: brevoSenderEmail,
+        name: brevoSenderName,
+      },
+      to: [{ email: mailOptions.to }],
+      subject: mailOptions.subject,
+      htmlContent: mailOptions.html,
+    }),
+  });
+
+  if (!resp.ok) {
+    const detalle = await resp.text();
+    throw new Error(`Brevo API error ${resp.status}: ${detalle}`);
+  }
+
+  const data = (await resp.json()) as { messageId?: string };
+  return data.messageId || '';
+}
+
+/**
+ * Envío vía Resend (API HTTP). Alternativa a Brevo. Requiere un dominio
+ * verificado (o `onboarding@resend.dev` solo para pruebas, que únicamente
+ * entrega al email de la cuenta).
  */
 async function enviarConResend(mailOptions: any): Promise<string> {
   const resp = await fetch('https://api.resend.com/emails', {
@@ -132,13 +174,18 @@ async function enviarConSmtp(mailOptions: any): Promise<string | undefined> {
  * Usa Resend API si está configurada; si no, usa SMTP de Gmail.
  */
 async function enviarConReintentos(mailOptions: any) {
-  const metodo = resendApiKey ? 'Resend' : 'SMTP';
+  const metodo = brevoApiKey ? 'Brevo' : resendApiKey ? 'Resend' : 'SMTP';
   let lastError: any;
   for (let intento = 1; intento <= 3; intento++) {
     try {
-      const messageId = resendApiKey
-        ? await enviarConResend(mailOptions)
-        : await enviarConSmtp(mailOptions);
+      let messageId: string | undefined;
+      if (brevoApiKey) {
+        messageId = await enviarConBrevo(mailOptions);
+      } else if (resendApiKey) {
+        messageId = await enviarConResend(mailOptions);
+      } else {
+        messageId = await enviarConSmtp(mailOptions);
+      }
       return { success: true, messageId };
     } catch (error) {
       lastError = error;
@@ -181,9 +228,9 @@ export async function enviarConfirmacionRegalo({
   totalCLP: number;
   dedicatoria?: string;
 }) {
-  if (!resendApiKey && (!gmailUser || !gmailPass)) {
+  if (!brevoApiKey && !resendApiKey && (!gmailUser || !gmailPass)) {
     console.warn(
-      `⚠️ Confirmación NO enviada a ${para}: credenciales de email no configuradas (RESEND_API_KEY o GMAIL_USER/GMAIL_PASS).`
+      `⚠️ Confirmación NO enviada a ${para}: credenciales de email no configuradas (BREVO_API_KEY, RESEND_API_KEY o GMAIL_USER/GMAIL_PASS).`
     );
     return { success: false, error: new Error('Credenciales de email no configuradas') };
   }
@@ -325,9 +372,9 @@ export async function enviarNotificacionAlAdmin({
   regalos: Array<{ nombre: string; cantidad: number }>;
   totalCLP: number;
 }) {
-  if (!resendApiKey && (!gmailUser || !gmailPass)) {
+  if (!brevoApiKey && !resendApiKey && (!gmailUser || !gmailPass)) {
     console.warn(
-      '⚠️ Notificación al admin NO enviada: credenciales de email no configuradas (RESEND_API_KEY o GMAIL_USER/GMAIL_PASS).'
+      '⚠️ Notificación al admin NO enviada: credenciales de email no configuradas (BREVO_API_KEY, RESEND_API_KEY o GMAIL_USER/GMAIL_PASS).'
     );
     return { success: false, error: new Error('Credenciales de email no configuradas') };
   }
