@@ -135,7 +135,18 @@ export async function crearPreferencia(req: Request, res: Response) {
     // de Mercado Pago redirija correctamente.
     const isProduction = process.env.NODE_ENV === 'production';
     let frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
+
+    // URL pública del backend para el webhook de Mercado Pago.
+    // Railway inyecta el dominio en RAILWAY_PUBLIC_DOMAIN automáticamente,
+    // así que si BACKEND_URL no está definido usamos ese dominio (evita
+    // notification_url apuntando a localhost, que rompería los webhooks).
+    let backendUrl = process.env.BACKEND_URL || '';
+    if (!backendUrl && process.env.RAILWAY_PUBLIC_DOMAIN) {
+      backendUrl = `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
+    }
+    if (!backendUrl) {
+      backendUrl = 'http://localhost:3000';
+    }
 
     if (isProduction && (frontendUrl.includes('localhost') || frontendUrl.includes('127.0.0.1'))) {
       frontendUrl = 'https://bautizo-anto-emi.vercel.app';
