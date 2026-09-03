@@ -22,9 +22,9 @@ interface ConfirmarBody {
   asistentes?: AsistenteBody[];
 }
 
-// Edad máxima considerada "niño" (mayores de 15 se consideran adultos)
-const EDAD_MAX_NINO = 15;
-const EDAD_ADULTO = 16; // primer año como adulto
+// Edad máxima considerada "niño" (mayores de 13 se consideran adultos)
+const EDAD_MAX_NINO = 13;
+const EDAD_ADULTO = 14; // primer año como adulto
 // Rangos de niños para el resumen
 const EDAD_NINO_MENOR_MAX = 7; // grupo 0 a 7
 const MAX_PERSONAS = 30;
@@ -61,9 +61,9 @@ function validarAsistentes(asistentes: AsistenteBody[]): string | null {
 }
 
 // Clasifica a una persona en un grupo para el resumen:
-// - adulto (tipo adulto o edad >= 16)
+// - adulto (tipo adulto o edad >= 14)
 // - ninoMenor (0 a 7)
-// - ninoMayor (8 a 15)
+// - ninoMayor (8 a 13)
 type GrupoAsistente = 'adulto' | 'ninoMenor' | 'ninoMayor';
 
 function grupoDe(asistente: { tipo: string; edad: number | null }): GrupoAsistente {

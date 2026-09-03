@@ -8,14 +8,14 @@ import { adminApi } from '../../services/adminApi';
 import { ConfirmacionAsistencia } from '../../types';
 
 // Clasifica a una persona igual que el backend:
-// - adulto (tipo adulto o edad >= 16)
+// - adulto (tipo adulto o edad >= 14)
 // - ninoMenor (0 a 7 años)
-// - ninoMayor (8 a 15 años)
+// - ninoMayor (8 a 13 años)
 type Grupo = 'adulto' | 'ninoMenor' | 'ninoMayor';
 function grupoDePersona(p: { tipo: string; edad?: number | null }): Grupo {
   if (p.tipo === 'adulto') return 'adulto';
-  const edad = p.edad ?? 16; // sin edad registrada -> adulto
-  if (edad >= 16) return 'adulto';
+  const edad = p.edad ?? 14; // sin edad registrada -> adulto
+  if (edad >= 14) return 'adulto';
   if (edad <= 7) return 'ninoMenor';
   return 'ninoMayor';
 }
@@ -133,7 +133,7 @@ export default function AdminAsistencias() {
             <p className="text-3xl font-bold mt-1">{resumen.ninosMenores}</p>
           </div>
           <div className="bg-gradient-to-br from-purple-400 to-purple-600 text-white rounded-2xl shadow-card p-6">
-            <h3 className="text-sm font-medium opacity-90">Niños (8 a 15 años)</h3>
+            <h3 className="text-sm font-medium opacity-90">Niños (8 a 13 años)</h3>
             <p className="text-3xl font-bold mt-1">{resumen.ninosMayores}</p>
           </div>
         </div>
@@ -211,7 +211,7 @@ export default function AdminAsistencias() {
                             )}
                             {mayores.length > 0 && (
                               <span className="badge bg-purple-100 text-purple-700">
-                                🧑 {mayores.length} (8-15)
+                                🧑 {mayores.length} (8-13)
                               </span>
                             )}
                           </div>
