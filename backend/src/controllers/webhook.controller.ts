@@ -194,7 +194,10 @@ export async function webhook(req: Request, res: Response) {
       })
     );
 
-    // Enviar correo de confirmación al invitado
+    // Enviar correo de confirmación al invitado.
+    // Se obtiene la fecha real del evento desde la BD (no EVENT_DATE del entorno)
+    // para que el correo muestre la misma fecha configurada en el admin.
+    const evento = await prisma.event.findUnique({ where: { id: 1 } });
     if (invitado.email) {
       const emailResult = await enviarConfirmacionRegalo({
         para: invitado.email,
@@ -202,6 +205,7 @@ export async function webhook(req: Request, res: Response) {
         regalos: regalosConDetalles,
         totalCLP: Math.ceil(payment.transaction_amount!),
         dedicatoria: invitado.dedicatoria,
+        fechaBautizo: evento?.fecha,
       });
       if (!emailResult.success) {
         console.warn('⚠️ No se pudo enviar la confirmación al invitado:', (emailResult.error as Error)?.message);

@@ -215,18 +215,40 @@ if (gmailUser && gmailPass && process.env.NODE_ENV !== 'production') {
 /**
  * Enviar correo de confirmación de regalo
  */
+
+// Meses en español para formatear la fecha del evento (ej: "10 de octubre de 2026")
+const MESES_ES = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+];
+
+// Convierte "2026-10-10" en "10 de octubre de 2026". Si el valor ya es texto
+// legible (ej. EVENT_DATE="15 de septiembre de 2026"), lo devuelve tal cual.
+function formatearFechaBautizo(valor?: string): string {
+  const texto = (valor || '').trim();
+  if (!texto) return '';
+  const match = texto.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return texto;
+  const anio = Number(match[1]);
+  const mes = Number(match[2]);
+  const dia = Number(match[3]);
+  return `${dia} de ${MESES_ES[mes - 1] || ''} de ${anio}`;
+}
+
 export async function enviarConfirmacionRegalo({
   para,
   nombreInvitado,
   regalos,
   totalCLP,
   dedicatoria,
+  fechaBautizo,
 }: {
   para: string;
   nombreInvitado: string;
   regalos: Array<{ nombre: string; cantidad: number; precio: number }>;
   totalCLP: number;
   dedicatoria?: string;
+  fechaBautizo?: string;
 }) {
   if (!brevoApiKey && !resendApiKey && (!gmailUser || !gmailPass)) {
     console.warn(
@@ -238,7 +260,13 @@ export async function enviarConfirmacionRegalo({
   try {
     const nombreGemelas = process.env.GEMELA1_NAME || 'Antonia';
     const nombreGemela2 = process.env.GEMELA2_NAME || 'Emilia';
-    const fechaBautizo = process.env.EVENT_DATE || '15 de septiembre';
+
+    // La fecha real del evento viene desde la BD (admin > Configuración) y la
+    // envía el webhook. Respaldo: variable EVENT_DATE del entorno.
+    const fechaTexto =
+      formatearFechaBautizo(fechaBautizo) ||
+      formatearFechaBautizo(process.env.EVENT_DATE) ||
+      'Fecha del evento';
 
     // Generar HTML del correo
     const regalosHTML = regalos
@@ -319,7 +347,7 @@ export async function enviarConfirmacionRegalo({
 
             <p>
               <strong>Detalles del evento:</strong><br>
-              📅 ${fechaBautizo}<br>
+              📅 ${fechaTexto}<br>
               👶 Bautizo de ${nombreGemelas} y ${nombreGemela2}
             </p>
           </div>

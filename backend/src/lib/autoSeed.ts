@@ -41,7 +41,7 @@ export async function autoSeedIfEmpty() {
       create: {
         nombreGemela1: 'Antonia',
         nombreGemela2: 'Emilia',
-        fecha: '2026-09-15',
+        fecha: '2026-10-10',
         hora: '16:00',
         lugar: 'Parroquia San Francisco, Santiago',
         lugarRecepcion: 'Centro de Evento Miriam Roman',

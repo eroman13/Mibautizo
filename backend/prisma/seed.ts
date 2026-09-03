@@ -23,7 +23,7 @@ async function main() {
     create: {
       nombreGemela1: 'Antonia',
       nombreGemela2: 'Emilia',
-      fecha: '2026-09-15',
+      fecha: '2026-10-10',
       hora: '16:00',
       lugar: 'Parroquia San Francisco, Santiago',
       mensajeBienvenida: '¡Bienvenidos a la celebración del bautizo de nuestras hermosas gemelas! 🎀✨\n\nNos llena de alegría poder compartir este día tan especial con ustedes. Su presencia es el mejor regalo, pero si desean hacernos un presente, hemos preparado esta lista de deseos para las pequeñas.\n\nCada aporte nos ayudará a darles lo mejor a Antonia y Emilia en sus primeros meses de vida.\n\n¡Gracias por ser parte de este momento único! 💝',
