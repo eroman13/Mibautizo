@@ -53,4 +53,18 @@ export const api = {
       body: JSON.stringify(data),
     });
   },
+
+  // Confirmar asistencia al evento (RSVP)
+  confirmarAsistencia: async (data: {
+    nombreFamilia: string;
+    email?: string;
+    telefono?: string;
+    mensaje?: string;
+    asistentes: Array<{ nombre: string; tipo: 'adulto' | 'nino'; edad?: number | null }>;
+  }) => {
+    return fetchAPI('/confirmar-asistencia', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
 };

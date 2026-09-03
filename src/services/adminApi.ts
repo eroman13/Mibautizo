@@ -113,4 +113,20 @@ export const adminApi = {
     });
     return response.json();
   },
+
+  // Confirmaciones de asistencia
+  getAsistencias: async () => {
+    const response = await fetch(`${API_URL}/admin/asistencias`, {
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  },
+
+  eliminarAsistencia: async (id: number) => {
+    const response = await fetch(`${API_URL}/admin/asistencias/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  },
 };

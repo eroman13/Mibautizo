@@ -48,3 +48,20 @@ export interface Desglose {
   neto: number;
   modoComision: 'A' | 'B';
 }
+
+export interface AsistenteConfirmacion {
+  id?: number;
+  nombre: string;
+  tipo: 'adulto' | 'nino';
+  edad?: number | null;
+}
+
+export interface ConfirmacionAsistencia {
+  id: number;
+  nombreFamilia: string;
+  email?: string | null;
+  telefono?: string | null;
+  mensaje?: string | null;
+  createdAt: string;
+  asistentes: AsistenteConfirmacion[];
+}

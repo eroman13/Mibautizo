@@ -68,6 +68,9 @@ export default function AdminDashboard() {
             <Link to="/admin/contribuciones" className="text-gray-600 hover:text-pastel-pink">
               Contribuciones
             </Link>
+            <Link to="/admin/asistencias" className="text-gray-600 hover:text-pastel-pink">
+              📋 Asistencia
+            </Link>
             <Link to="/admin/regalos" className="text-gray-600 hover:text-pastel-pink">
               Gestionar Regalos
             </Link>

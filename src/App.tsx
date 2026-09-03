@@ -13,6 +13,7 @@ import ValidarRetornoPago from './components/pago/ValidarRetornoPago';
 import Home from './pages/Home';
 import Regalos from './pages/Regalos';
 import Checkout from './pages/Checkout';
+import ConfirmarAsistencia from './pages/ConfirmarAsistencia';
 import PagoExitoso from './pages/PagoExitoso';
 import PagoFallido from './pages/PagoFallido';
 import PagoPendiente from './pages/PagoPendiente';
@@ -23,6 +24,7 @@ import NotFound from './pages/NotFound';
 import AdminLogin from './pages/admin/Login';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminContribuciones from './pages/admin/Contribuciones';
+import AdminAsistencias from './pages/admin/Asistencias';
 import AdminRegalos from './pages/admin/Regalos';
 import AdminConfiguracion from './pages/admin/Configuracion';
 import AdminUsers from './pages/admin/AdminUsers';
@@ -40,6 +42,7 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/regalos" element={<Regalos />} />
                 <Route path="/checkout" element={<Checkout />} />
+                <Route path="/confirmar-asistencia" element={<ConfirmarAsistencia />} />
 
                 {/* Páginas de retorno de Mercado Pago (validadas) */}
                 <Route
@@ -86,6 +89,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <AdminContribuciones />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/asistencias"
+                  element={
+                    <ProtectedRoute>
+                      <AdminAsistencias />
                     </ProtectedRoute>
                   }
                 />

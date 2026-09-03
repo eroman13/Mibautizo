@@ -85,3 +85,24 @@ model AdminUser {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
+
+// Confirmación de asistencia al evento (una por familia)
+model Asistencia {
+  id            Int         @id @default(autoincrement())
+  nombreFamilia String      // Ej: "Familia Pérez"
+  email         String?     // Contacto opcional
+  telefono      String?     // Contacto opcional
+  mensaje       String?     // Notas opcionales (alergias, silla, etc.)
+  createdAt     DateTime    @default(now())
+  asistentes    Asistente[]
+}
+
+// Persona que asiste dentro de una familia (adulto o niño)
+model Asistente {
+  id           Int        @id @default(autoincrement())
+  asistenciaId Int
+  asistencia   Asistencia @relation(fields: [asistenciaId], references: [id], onDelete: Cascade)
+  nombre       String
+  tipo         String     // 'adulto' | 'nino'
+  edad         Int?       // Obligatorio si tipo = 'nino'
+}

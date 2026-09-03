@@ -8,6 +8,11 @@ import { crearPreferencia } from '../controllers/preferencia.controller';
 import { webhook } from '../controllers/webhook.controller';
 import { uploadImage } from '../controllers/upload.controller';
 import {
+  confirmarAsistencia,
+  getAsistencias,
+  eliminarAsistencia,
+} from '../controllers/asistencia.controller';
+import {
   adminLogin,
   getStats,
   getContribuciones,
@@ -66,6 +71,9 @@ router.post('/crear-preferencia', crearPreferencia);
 // Webhook de Mercado Pago
 router.post('/webhook', webhook);
 
+// Confirmación de asistencia (RSVP)
+router.post('/confirmar-asistencia', confirmarAsistencia);
+
 // Rutas del panel admin
 router.post('/admin/login', adminLogin);
 router.get('/admin/stats', verificarAuth, getStats);
@@ -78,6 +86,8 @@ router.put('/admin/evento', verificarAuth, actualizarEvento);
 router.get('/admin/export-csv', verificarAuth, exportarCSV);
 router.post('/admin/limpiar-pagos', verificarAuth, limpiarPagos);
 router.post('/admin/test-email', verificarAuth, testEmail);
+router.get('/admin/asistencias', verificarAuth, getAsistencias);
+router.delete('/admin/asistencias/:id', verificarAuth, eliminarAsistencia);
 
 // Rutas de gestión de usuarios admin
 router.get('/admin-users', verificarAuth, getAllAdminUsers);

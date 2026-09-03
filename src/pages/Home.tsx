@@ -123,14 +123,22 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA: botón de regalos */}
+      {/* CTA: confirmar asistencia y regalos */}
       <section className="container mx-auto px-4 pb-12 text-center">
-        <Link
-          to="/regalos"
-          className="btn-primary inline-block text-xl md:text-2xl px-12 py-4 shadow-card"
-        >
-          Ver la lista de regalos 🎁
-        </Link>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Link
+            to="/confirmar-asistencia"
+            className="btn-secondary inline-block text-lg md:text-xl px-10 py-4 shadow-soft"
+          >
+            💌 Confirmar asistencia
+          </Link>
+          <Link
+            to="/regalos"
+            className="btn-primary inline-block text-xl md:text-2xl px-12 py-4 shadow-card"
+          >
+            Ver la lista de regalos 🎁
+          </Link>
+        </div>
       </section>
 
       {/* Recepción (se muestra si está configurada) */}
