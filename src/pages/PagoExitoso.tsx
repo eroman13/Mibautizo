@@ -35,7 +35,7 @@ export default function PagoExitoso() {
             Tu regalo ha sido procesado correctamente. 💝
           </p>
           <p className="text-gray-600">
-            Los papás de las gemelas recibirán tu mensaje y tu aporte con mucho cariño.
+            Los papás de las pequeñas recibirán tu mensaje y tus regalos con mucho cariño.
             ¡Gracias por ser parte de este momento tan especial!
           </p>
           
