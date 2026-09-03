@@ -20,14 +20,45 @@ if (!gmailUser || !gmailPass) {
   console.warn('   Los correos NO se enviarán hasta que se configure correctamente.');
 }
 
-// Configurar transporte de email
+// Configurar transporte de email.
+// Se usa smtp.gmail.com:587 con STARTTLS (secure:false) porque el puerto 465
+// (SSL) dio "Connection timeout" (ETIMEDOUT) desde Railway. Los timeouts se
+// amplían y el envío se reintenta para tolerar fallos transitorios de red.
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, // STARTTLS
+  requireTLS: true,
   auth: {
     user: gmailUser || 'placeholder@gmail.com',
     pass: gmailPass || 'placeholder',
   },
+  connectionTimeout: 30000,
+  greetingTimeout: 30000,
+  socketTimeout: 60000,
 });
+
+/**
+ * Envía un correo con reintentos automáticos (hasta 3 intentos).
+ * Gmail desde Railway puede fallar con "Connection timeout" de forma transitoria.
+ */
+async function enviarConReintentos(mailOptions: any) {
+  let lastError: any;
+  for (let intento = 1; intento <= 3; intento++) {
+    try {
+      const resultado = await transporter.sendMail(mailOptions);
+      return { success: true, messageId: resultado.messageId };
+    } catch (error) {
+      lastError = error;
+      console.warn(`⚠️ Intento ${intento}/3 de envío falló:`, (error as any).message);
+      if (intento < 3) {
+        // Esperar 3s, luego 6s entre reintentos
+        await new Promise((r) => setTimeout(r, 3000 * intento));
+      }
+    }
+  }
+  return { success: false, error: lastError };
+}
 
 // Test de conexión al iniciar (solo en desarrollo, sin bloquear)
 if (gmailUser && gmailPass && process.env.NODE_ENV !== 'production') {
@@ -162,7 +193,7 @@ export async function enviarConfirmacionRegalo({
     `;
 
     // Enviar correo
-    const resultado = await transporter.sendMail({
+    const resultado = await enviarConReintentos({
       from: gmailUser || 'tu-email@gmail.com',
       to: para,
       subject: `✅ Confirmación de regalo para ${nombreGemelas} y ${nombreGemela2}`,
@@ -241,7 +272,7 @@ export async function enviarNotificacionAlAdmin({
       </html>
     `;
 
-    const resultado = await transporter.sendMail({
+    const resultado = await enviarConReintentos({
       from: gmailUser || 'tu-email@gmail.com',
       to: para,
       subject: `✅ Nuevo regalo: $${totalCLP.toLocaleString('es-CL')} CLP de ${nombreInvitado}`,
