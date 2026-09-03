@@ -6,10 +6,14 @@
 import nodemailer from 'nodemailer';
 import dns from 'node:dns';
 
-// Railway no tiene salida IPv6: si Node resuelve smtp.gmail.com a una dirección
-// IPv6 la conexión falla con ENETUNREACH/ETIMEDOUT. Forzamos el orden IPv4
-// para que el SMTP de Gmail se conecte por IPv4.
+// Railway no tiene salida IPv6: si nodemailer resuelve smtp.gmail.com a una
+// dirección IPv6, la conexión falla con ENETUNREACH/ETIMEDOUT. Nodemailer v9
+// elige una dirección AL AZAR entre las IPv4/IPv6 resueltas, por lo que
+// `dns.setDefaultResultOrder('ipv4first')` NO basta. Resolvemos una IP IPv4
+// explícita y la usamos como host (con `servername` para el certificado TLS).
 dns.setDefaultResultOrder('ipv4first');
+
+const SMTP_HOSTNAME = 'smtp.gmail.com';
 
 // Obtener configuración del entorno
 // Aceptar ambos nombres de variables (GMAIL_* y MAIL_*) por compatibilidad
@@ -26,29 +30,62 @@ if (!gmailUser || !gmailPass) {
   console.warn('   Los correos NO se enviarán hasta que se configure correctamente.');
 }
 
-// Configurar transporte de email.
+// Resolver la IPv4 de Gmail de forma perezosa y cacheada. Si la resolución
+// falla, se usa el hostname (comportamiento anterior).
+let smtpIpv4: string | null = null;
+let smtpIpv4Promise: Promise<string> | null = null;
+
+function getSmtpHost(): Promise<string> {
+  if (smtpIpv4) return Promise.resolve(smtpIpv4);
+  if (!smtpIpv4Promise) {
+    smtpIpv4Promise = dns.promises
+      .resolve4(SMTP_HOSTNAME)
+      .then((addrs) => {
+        smtpIpv4 = addrs && addrs.length ? addrs[0] : SMTP_HOSTNAME;
+        return smtpIpv4;
+      })
+      .catch((error) => {
+        console.warn('⚠️ No se pudo resolver IPv4 de smtp.gmail.com:', error.message);
+        smtpIpv4 = SMTP_HOSTNAME;
+        return SMTP_HOSTNAME;
+      });
+  }
+  return smtpIpv4Promise;
+}
+
+// Crear transporte de email.
 // Se usa smtp.gmail.com:587 con STARTTLS (secure:false) porque el puerto 465
 // (SSL) dio "Connection timeout" (ETIMEDOUT) desde Railway. Los timeouts se
 // amplían y el envío se reintenta para tolerar fallos transitorios de red.
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // STARTTLS
-  requireTLS: true,
-  auth: {
-    user: gmailUser || 'placeholder@gmail.com',
-    pass: gmailPass || 'placeholder',
-  },
-  connectionTimeout: 30000,
-  greetingTimeout: 30000,
-  socketTimeout: 60000,
-});
+// `host` se pasa como IP IPv4 (cuando se resuelve) para evitar que nodemailer
+// elija una IPv6 sin salida en Railway. `servername` conserva el nombre de
+// dominio para el SNI y la validación del certificado TLS.
+function crearTransporter(host: string) {
+  return nodemailer.createTransport({
+    host,
+    port: 587,
+    secure: false, // STARTTLS
+    requireTLS: true,
+    servername: SMTP_HOSTNAME,
+    auth: {
+      user: gmailUser || 'placeholder@gmail.com',
+      pass: gmailPass || 'placeholder',
+    },
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 60000,
+  });
+}
 
 /**
  * Envía un correo con reintentos automáticos (hasta 3 intentos).
  * Gmail desde Railway puede fallar con "Connection timeout" de forma transitoria.
  */
 async function enviarConReintentos(mailOptions: any) {
+  // Resolver IPv4 antes de crear el transporte para evitar IPv6 en Railway
+  const host = await getSmtpHost();
+  const transporter = crearTransporter(host);
+
   let lastError: any;
   for (let intento = 1; intento <= 3; intento++) {
     try {
@@ -68,12 +105,14 @@ async function enviarConReintentos(mailOptions: any) {
 
 // Test de conexión al iniciar (solo en desarrollo, sin bloquear)
 if (gmailUser && gmailPass && process.env.NODE_ENV !== 'production') {
-  transporter.verify((error) => {
-    if (error) {
-      console.error('❌ Error verificando configuración de Gmail:', error.message);
-    } else {
-      console.log('✅ Configuración de Gmail verificada correctamente');
-    }
+  getSmtpHost().then((host) => {
+    crearTransporter(host).verify((error) => {
+      if (error) {
+        console.error('❌ Error verificando configuración de Gmail:', error.message);
+      } else {
+        console.log('✅ Configuración de Gmail verificada correctamente');
+      }
+    });
   });
 }
 
@@ -206,6 +245,11 @@ export async function enviarConfirmacionRegalo({
       html,
     });
 
+    if (!resultado.success) {
+      console.error('❌ Error al enviar correo después de 3 intentos:', (resultado.error as Error)?.message);
+      return { success: false, error: resultado.error };
+    }
+
     console.log('✅ Correo enviado:', resultado.messageId);
     return { success: true, messageId: resultado.messageId };
   } catch (error: any) {
@@ -284,6 +328,11 @@ export async function enviarNotificacionAlAdmin({
       subject: `✅ Nuevo regalo: $${totalCLP.toLocaleString('es-CL')} CLP de ${nombreInvitado}`,
       html,
     });
+
+    if (!resultado.success) {
+      console.error('❌ Error al enviar notificación al admin después de 3 intentos:', (resultado.error as Error)?.message);
+      return { success: false, error: resultado.error };
+    }
 
     console.log('✅ Notificación enviada al admin:', resultado.messageId);
     return { success: true, messageId: resultado.messageId };
