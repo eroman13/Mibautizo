@@ -49,9 +49,24 @@ export async function createAdminUser(req: Request, res: Response) {
       });
     }
 
+    // Validaciones de seguridad
+    const usernameLimpio = String(username).trim();
+    if (!/^[a-zA-Z0-9._-]{3,30}$/.test(usernameLimpio)) {
+      return res.status(400).json({
+        success: false,
+        error: 'El usuario debe tener entre 3 y 30 caracteres (letras, números, . _ -)',
+      });
+    }
+    if (String(password).length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: 'La contraseña debe tener al menos 8 caracteres',
+      });
+    }
+
     // Verificar que el usuario no exista
     const existingUser = await prisma.adminUser.findUnique({
-      where: { username },
+      where: { username: usernameLimpio },
     });
 
     if (existingUser) {
@@ -62,12 +77,12 @@ export async function createAdminUser(req: Request, res: Response) {
     }
 
     // Hashear contraseña
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(String(password), 10);
 
     // Crear usuario
     const newUser = await prisma.adminUser.create({
       data: {
-        username,
+        username: usernameLimpio,
         password: hashedPassword,
         nombre,
         email: email || null,
@@ -110,7 +125,13 @@ export async function updateAdminUser(req: Request, res: Response) {
     if (email) updateData.email = email;
     if (typeof activo === 'boolean') updateData.activo = activo;
     if (password) {
-      updateData.password = await bcrypt.hash(password, 10);
+      if (String(password).length < 8) {
+        return res.status(400).json({
+          success: false,
+          error: 'La contraseña debe tener al menos 8 caracteres',
+        });
+      }
+      updateData.password = await bcrypt.hash(String(password), 10);
     }
 
     const updatedUser = await prisma.adminUser.update({

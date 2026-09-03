@@ -127,8 +127,12 @@ async function main() {
 
   // 3. Crear usuarios admin iniciales
   console.log('👤 Creando usuarios administradores...');
-  const adminPassword = await bcrypt.hash('gemelas2026', 10);
-  
+  // Contraseña inicial: ADMIN_PASSWORD del entorno o una aleatoria. Nunca una fija conocida.
+  const passwordPlano =
+    process.env.ADMIN_PASSWORD?.trim() ||
+    `Cambiar-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  const adminPassword = await bcrypt.hash(passwordPlano, 10);
+
   const adminUser = await prisma.adminUser.upsert({
     where: { username: 'admin' },
     update: {},
@@ -142,6 +146,8 @@ async function main() {
   });
 
   console.log(`✅ Usuario admin creado: ${adminUser.username}`);
+  console.log(`   Contraseña inicial: ${passwordPlano}`);
+  console.log('   ⚠️ CÁMBIALA de inmediato desde el panel (👥 Usuarios) tras el primer ingreso.');
 
   console.log('\n🎉 ¡Seed completado exitosamente!');
   console.log('\n📊 Resumen:');

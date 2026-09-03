@@ -7,6 +7,7 @@ import prisma from '../lib/prisma';
 import bcrypt from 'bcryptjs';
 import { COMMISSION_RATE } from '../lib/mercadopago';
 import { enviarCorreoPrueba } from '../lib/email';
+import { firmarToken } from '../lib/security';
 
 /**
  * Login con usuario y contraseña
@@ -16,29 +17,26 @@ export async function adminLogin(req: Request, res: Response) {
   try {
     const { username, password } = req.body;
 
-    // Buscar usuario en BD
-    const user = await prisma.adminUser.findUnique({
-      where: { username },
-    });
-
-    if (!user) {
+    if (typeof username !== 'string' || typeof password !== 'string' || !username || !password) {
       return res.status(401).json({
         success: false,
         error: 'Usuario o contraseña incorrectos',
       });
     }
 
-    // Verificar que esté activo
-    if (!user.activo) {
+    const user = await prisma.adminUser.findUnique({
+      where: { username: username.trim() },
+    });
+
+    // Respuesta genérica (no revelar si el usuario existe) para evitar enumeración
+    if (!user || !user.activo) {
       return res.status(401).json({
         success: false,
-        error: 'Usuario desactivado',
+        error: 'Usuario o contraseña incorrectos',
       });
     }
 
-    // Verificar contraseña
     const passwordMatch = await bcrypt.compare(password, user.password);
-
     if (!passwordMatch) {
       return res.status(401).json({
         success: false,
@@ -46,10 +44,13 @@ export async function adminLogin(req: Request, res: Response) {
       });
     }
 
-    // Login exitoso
+    // Token firmado (HMAC). La sesión expira a las 12 horas.
+    const token = firmarToken({ id: user.id, username: user.username });
+
+    console.log(`🔐 Login exitoso: ${user.username}`);
     res.json({
       success: true,
-      token: 'admin-authenticated',
+      token,
     });
   } catch (error) {
     console.error('Error en login:', error);

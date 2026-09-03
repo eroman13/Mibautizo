@@ -9,6 +9,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { execSync } from 'child_process';
+import { securityHeaders } from './lib/security';
 
 // Cargar variables de entorno ANTES de cualquier otra cosa
 dotenv.config();
@@ -60,8 +61,9 @@ try {
   console.error('⚠️ Error al sincronizar schema:', error instanceof Error ? error.message : error);
 }
 
-// CORS - reflejar el origen de la petición (compatible con credentials)
-const allowedOrigins = [
+// CORS - lista blanca de orígenes permitidos (NO reflejar cualquier origen).
+// Reflejar cualquier origen con credentials es un riesgo de seguridad.
+const allowedOrigins: string[] = [
   'https://bautizo-anto-emi.vercel.app',
   'https://mibautizo.vercel.app',
   'http://localhost:5173',
@@ -69,27 +71,40 @@ const allowedOrigins = [
   'http://localhost:5176',
 ];
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Permitir peticiones sin Origin (curl, Postman, webhooks)
+// FRONTEND_URL (si está definido) y orígenes extra separados por coma
+if (process.env.FRONTEND_URL) {
+  const f = process.env.FRONTEND_URL.trim().replace(/\/+$/, '');
+  if (f && !allowedOrigins.includes(f)) allowedOrigins.push(f);
+}
+if (process.env.ALLOWED_ORIGINS) {
+  for (const o of process.env.ALLOWED_ORIGINS.split(',')) {
+    const t = o.trim().replace(/\/+$/, '');
+    if (t && !allowedOrigins.includes(t)) allowedOrigins.push(t);
+  }
+}
+
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Permitir peticiones sin Origin (curl, Postman, webhooks, apps móviles)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    // En desarrollo, permitir cualquier origen local
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    // En desarrollo, permitir cualquier origen localhost
     if (process.env.NODE_ENV !== 'production' && origin.startsWith('http://localhost')) {
       return callback(null, true);
     }
-    // Reflejar el origen para evitar bloquear el frontend
-    return callback(null, true);
+    console.warn(`🚫 CORS bloqueado para origen: ${origin}`);
+    return callback(new Error('Origen no permitido por CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   optionsSuccessStatus: 200,
-}));
+};
 
-app.use(express.json({ limit: '100mb' }));
+app.use(cors(corsOptions));
+app.use(securityHeaders());
+
+app.use(express.json({ limit: '25mb' }));
 
 // Health - debe responder siempre
 app.get('/api/health', (req, res) => {
@@ -128,10 +143,14 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Not found', path: req.path });
 });
 
-// Error handler
+// Error handler (no exponer detalles internos al cliente)
 app.use((err: any, req: any, res: any, next: any) => {
+  if (res.headersSent) return next(err);
   console.error('ERROR:', err.message);
-  res.status(500).json({ error: err.message });
+  console.error('   Stack:', err.stack);
+  // Errores de parsing JSON (body malformado) -> 400; resto -> 500 genérico
+  const status = err instanceof SyntaxError ? 400 : 500;
+  res.status(status).json({ error: status === 400 ? 'JSON inválido' : 'Error interno del servidor' });
 });
 
 // Start

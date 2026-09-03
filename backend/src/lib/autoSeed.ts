@@ -81,7 +81,12 @@ export async function autoSeedIfEmpty() {
     // 3. Crear usuario admin inicial (si no existe)
     const existingAdmin = await prisma.adminUser.findUnique({ where: { username: 'admin' } });
     if (!existingAdmin) {
-      const adminPassword = await bcrypt.hash('gemelas2026', 10);
+      // Contraseña inicial: ADMIN_PASSWORD del entorno o una aleatoria generada.
+      // NUNCA usar una contraseña fija conocida.
+      const passwordPlano =
+        process.env.ADMIN_PASSWORD?.trim() ||
+        `Cambiar-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+      const adminPassword = await bcrypt.hash(passwordPlano, 10);
       await prisma.adminUser.create({
         data: {
           username: 'admin',
@@ -92,6 +97,8 @@ export async function autoSeedIfEmpty() {
         },
       });
       console.log('✅ Usuario admin creado (username: admin)');
+      console.log(`   Contraseña inicial: ${passwordPlano}`);
+      console.log('   ⚠️ CÁMBIALA de inmediato desde el panel (👥 Usuarios) tras el primer ingreso.');
     } else {
       console.log('✅ Usuario admin ya existente. Omitido.');
     }

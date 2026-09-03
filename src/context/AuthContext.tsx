@@ -19,9 +19,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Verificar si hay un token guardado
+    // Verificar si hay un token guardado (la validez la comprueba el backend)
     const token = localStorage.getItem('admin_token');
-    if (token === 'admin-authenticated') {
+    if (token) {
       setIsAuthenticated(true);
     }
     setLoading(false);

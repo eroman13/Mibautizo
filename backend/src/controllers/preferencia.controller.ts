@@ -226,7 +226,6 @@ export async function crearPreferencia(req: Request, res: Response) {
     res.status(500).json({
       success: false,
       error: 'Error al crear la preferencia de pago',
-      details: error instanceof Error ? error.message : 'Error desconocido',
     });
   }
 }
