@@ -24,10 +24,20 @@ const gmailPass = (process.env.GMAIL_PASS || process.env.MAIL_PASS || '')
   .replace(/\s+/g, ''); // Remover espacios
 const isTestMode = process.env.GMAIL_TEST === 'true';
 
+// Resend (API HTTP de correo, recomendada en Railway): más confiable que SMTP
+// porque usa HTTPS en el puerto 443. El SMTP a Gmail da "Connection timeout"
+// desde Railway porque los puertos 587/465 suelen estar bloqueados.
+const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
+const resendFrom = (process.env.RESEND_FROM || 'Bautizo Anto & Emi <onboarding@resend.dev>').trim();
+
 // Validar configuración
-if (!gmailUser || !gmailPass) {
-  console.warn('⚠️ Configuración de email incompleta. GMAIL_USER o GMAIL_PASS no configurados.');
+if (!resendApiKey && (!gmailUser || !gmailPass)) {
+  console.warn('⚠️ Configuración de email incompleta. Se necesita RESEND_API_KEY o GMAIL_USER/GMAIL_PASS.');
   console.warn('   Los correos NO se enviarán hasta que se configure correctamente.');
+} else if (resendApiKey) {
+  console.log(`📧 Email vía Resend API (${resendFrom})`);
+} else {
+  console.log('📧 Email vía SMTP Gmail (modo legacy, puede fallar en Railway)');
 }
 
 // Resolver la IPv4 de Gmail de forma perezosa y cacheada. Si la resolución
@@ -78,22 +88,61 @@ function crearTransporter(host: string) {
 }
 
 /**
- * Envía un correo con reintentos automáticos (hasta 3 intentos).
- * Gmail desde Railway puede fallar con "Connection timeout" de forma transitoria.
+ * Envío vía Resend (API HTTP). Es el método recomendado en Railway porque
+ * usa HTTPS (puerto 443), evitando el bloqueo de los puertos SMTP (587/465)
+ * que provoca "Connection timeout" con Gmail.
  */
-async function enviarConReintentos(mailOptions: any) {
-  // Resolver IPv4 antes de crear el transporte para evitar IPv6 en Railway
+async function enviarConResend(mailOptions: any): Promise<string> {
+  const resp = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${resendApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: resendFrom,
+      to: [mailOptions.to],
+      subject: mailOptions.subject,
+      html: mailOptions.html,
+    }),
+  });
+
+  if (!resp.ok) {
+    const detalle = await resp.text();
+    throw new Error(`Resend API error ${resp.status}: ${detalle}`);
+  }
+
+  const data = (await resp.json()) as { id?: string };
+  return data.id as string;
+}
+
+/**
+ * Envío vía SMTP de Gmail (legacy). Resuelve IPv4 explícitamente porque
+ * Nodemailer v9 elige una IP al azar (IPv6 no tiene salida en Railway).
+ */
+async function enviarConSmtp(mailOptions: any): Promise<string | undefined> {
   const host = await getSmtpHost();
   const transporter = crearTransporter(host);
+  const resultado = await transporter.sendMail(mailOptions);
+  return resultado.messageId;
+}
 
+/**
+ * Envía un correo con reintentos automáticos (hasta 3 intentos).
+ * Usa Resend API si está configurada; si no, usa SMTP de Gmail.
+ */
+async function enviarConReintentos(mailOptions: any) {
+  const metodo = resendApiKey ? 'Resend' : 'SMTP';
   let lastError: any;
   for (let intento = 1; intento <= 3; intento++) {
     try {
-      const resultado = await transporter.sendMail(mailOptions);
-      return { success: true, messageId: resultado.messageId };
+      const messageId = resendApiKey
+        ? await enviarConResend(mailOptions)
+        : await enviarConSmtp(mailOptions);
+      return { success: true, messageId };
     } catch (error) {
       lastError = error;
-      console.warn(`⚠️ Intento ${intento}/3 de envío falló:`, (error as any).message);
+      console.warn(`⚠️ Intento ${intento}/3 de envío falló (${metodo}):`, (error as any).message);
       if (intento < 3) {
         // Esperar 3s, luego 6s entre reintentos
         await new Promise((r) => setTimeout(r, 3000 * intento));
@@ -132,9 +181,9 @@ export async function enviarConfirmacionRegalo({
   totalCLP: number;
   dedicatoria?: string;
 }) {
-  if (!gmailUser || !gmailPass) {
+  if (!resendApiKey && (!gmailUser || !gmailPass)) {
     console.warn(
-      `⚠️ Confirmación NO enviada a ${para}: credenciales de email no configuradas (GMAIL_USER/GMAIL_PASS o MAIL_USER/MAIL_PASS).`
+      `⚠️ Confirmación NO enviada a ${para}: credenciales de email no configuradas (RESEND_API_KEY o GMAIL_USER/GMAIL_PASS).`
     );
     return { success: false, error: new Error('Credenciales de email no configuradas') };
   }
@@ -276,9 +325,9 @@ export async function enviarNotificacionAlAdmin({
   regalos: Array<{ nombre: string; cantidad: number }>;
   totalCLP: number;
 }) {
-  if (!gmailUser || !gmailPass) {
+  if (!resendApiKey && (!gmailUser || !gmailPass)) {
     console.warn(
-      '⚠️ Notificación al admin NO enviada: credenciales de email no configuradas (GMAIL_USER/GMAIL_PASS o MAIL_USER/MAIL_PASS).'
+      '⚠️ Notificación al admin NO enviada: credenciales de email no configuradas (RESEND_API_KEY o GMAIL_USER/GMAIL_PASS).'
     );
     return { success: false, error: new Error('Credenciales de email no configuradas') };
   }
