@@ -22,8 +22,11 @@ interface ConfirmarBody {
   asistentes?: AsistenteBody[];
 }
 
-// Edad máxima considerada "niño" para la validación
-const EDAD_MAX_NINO = 17;
+// Edad máxima considerada "niño" (mayores de 15 se consideran adultos)
+const EDAD_MAX_NINO = 15;
+const EDAD_ADULTO = 16; // primer año como adulto
+// Rangos de niños para el resumen
+const EDAD_NINO_MENOR_MAX = 7; // grupo 0 a 7
 const MAX_PERSONAS = 30;
 
 /**
@@ -50,11 +53,25 @@ function validarAsistentes(asistentes: AsistenteBody[]): string | null {
         return `Debes indicar la edad de ${persona.nombre.trim()} (niño/a)`;
       }
       if (!Number.isInteger(edad) || edad < 0 || edad > EDAD_MAX_NINO) {
-        return `La edad de ${persona.nombre.trim()} debe ser un número entre 0 y ${EDAD_MAX_NINO} años`;
+        return `La edad de ${persona.nombre.trim()} debe ser un número entre 0 y ${EDAD_MAX_NINO} años (mayores de ${EDAD_MAX_NINO} se consideran adultos)`;
       }
     }
   }
   return null;
+}
+
+// Clasifica a una persona en un grupo para el resumen:
+// - adulto (tipo adulto o edad >= 16)
+// - ninoMenor (0 a 7)
+// - ninoMayor (8 a 15)
+type GrupoAsistente = 'adulto' | 'ninoMenor' | 'ninoMayor';
+
+function grupoDe(asistente: { tipo: string; edad: number | null }): GrupoAsistente {
+  if (asistente.tipo === 'adulto') return 'adulto';
+  const edad = asistente.edad ?? EDAD_ADULTO; // sin edad registrada -> adulto
+  if (edad >= EDAD_ADULTO) return 'adulto';
+  if (edad <= EDAD_NINO_MENOR_MAX) return 'ninoMenor';
+  return 'ninoMayor';
 }
 
 /**
@@ -98,11 +115,13 @@ export async function confirmarAsistencia(req: Request, res: Response) {
       include: { asistentes: true },
     });
 
-    const adultos = confirmacion.asistentes.filter((a) => a.tipo === 'adulto').length;
-    const ninos = confirmacion.asistentes.filter((a) => a.tipo === 'nino').length;
+    const adultos = confirmacion.asistentes.filter((a) => grupoDe(a) === 'adulto').length;
+    const ninosMenores = confirmacion.asistentes.filter((a) => grupoDe(a) === 'ninoMenor').length;
+    const ninosMayores = confirmacion.asistentes.filter((a) => grupoDe(a) === 'ninoMayor').length;
+    const ninos = ninosMenores + ninosMayores;
 
     console.log(
-      `💌 Confirmación de asistencia: ${confirmacion.nombreFamilia} (${adultos} adultos, ${ninos} niños)`
+      `💌 Confirmación de asistencia: ${confirmacion.nombreFamilia} (${adultos} adultos, ${ninosMenores} niños 0-${EDAD_NINO_MENOR_MAX}, ${ninosMayores} niños ${EDAD_NINO_MENOR_MAX + 1}-${EDAD_MAX_NINO})`
     );
 
     res.json({
@@ -112,6 +131,8 @@ export async function confirmarAsistencia(req: Request, res: Response) {
         nombreFamilia: confirmacion.nombreFamilia,
         adultos,
         ninos,
+        ninosMenores,
+        ninosMayores,
         total: confirmacion.asistentes.length,
       },
     });
@@ -138,18 +159,29 @@ export async function getAsistencias(req: Request, res: Response) {
 
     let familias = 0;
     let adultos = 0;
-    let ninos = 0;
+    let ninosMenores = 0;
+    let ninosMayores = 0;
 
     for (const a of lista) {
       familias++;
-      adultos += a.asistentes.filter((p) => p.tipo === 'adulto').length;
-      ninos += a.asistentes.filter((p) => p.tipo === 'nino').length;
+      for (const p of a.asistentes) {
+        const grupo = grupoDe(p);
+        if (grupo === 'adulto') adultos++;
+        else if (grupo === 'ninoMenor') ninosMenores++;
+        else ninosMayores++;
+      }
     }
 
     res.json({
       success: true,
       data: lista,
-      resumen: { familias, adultos, ninos },
+      resumen: {
+        familias,
+        adultos,
+        ninosMenores,
+        ninosMayores,
+        ninos: ninosMenores + ninosMayores,
+      },
     });
   } catch (error) {
     console.error('❌ Error al obtener asistencias:', error);

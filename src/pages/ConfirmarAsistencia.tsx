@@ -107,8 +107,8 @@ export default function ConfirmarAsistencia() {
         if (p.edad === '' || Number.isNaN(edad)) {
           return `Indica la edad de ${p.nombre.trim() || 'el niño/a'}.`;
         }
-        if (!Number.isInteger(edad) || edad < 0 || edad > 17) {
-          return `La edad de ${p.nombre.trim()} debe ser un número entre 0 y 17 años.`;
+        if (!Number.isInteger(edad) || edad < 0 || edad > 15) {
+          return `La edad de ${p.nombre.trim()} debe ser un número entre 0 y 15 años (mayores de 15 se consideran adultos).`;
         }
       }
     }
@@ -335,7 +335,7 @@ export default function ConfirmarAsistencia() {
                         <input
                           type="number"
                           min={0}
-                          max={17}
+                          max={15}
                           value={p.edad}
                           onChange={(e) =>
                             actualizarPersona(p.key, 'edad', e.target.value)
@@ -353,7 +353,7 @@ export default function ConfirmarAsistencia() {
                 ))}
               </div>
               <p className="text-xs text-gray-500 mt-2">
-                Si confirmas un niño/a, su edad es obligatoria.
+                Si confirmas un niño/a, su edad es obligatoria (0 a 15 años). Mayores de 15 se consideran adultos.
               </p>
             </div>
 

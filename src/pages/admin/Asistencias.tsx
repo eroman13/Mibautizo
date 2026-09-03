@@ -7,9 +7,27 @@ import { Link } from 'react-router-dom';
 import { adminApi } from '../../services/adminApi';
 import { ConfirmacionAsistencia } from '../../types';
 
+// Clasifica a una persona igual que el backend:
+// - adulto (tipo adulto o edad >= 16)
+// - ninoMenor (0 a 7 años)
+// - ninoMayor (8 a 15 años)
+type Grupo = 'adulto' | 'ninoMenor' | 'ninoMayor';
+function grupoDePersona(p: { tipo: string; edad?: number | null }): Grupo {
+  if (p.tipo === 'adulto') return 'adulto';
+  const edad = p.edad ?? 16; // sin edad registrada -> adulto
+  if (edad >= 16) return 'adulto';
+  if (edad <= 7) return 'ninoMenor';
+  return 'ninoMayor';
+}
+
 export default function AdminAsistencias() {
   const [asistencias, setAsistencias] = useState<ConfirmacionAsistencia[]>([]);
-  const [resumen, setResumen] = useState({ familias: 0, adultos: 0, ninos: 0 });
+  const [resumen, setResumen] = useState({
+    familias: 0,
+    adultos: 0,
+    ninosMenores: 0,
+    ninosMayores: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState('');
 
@@ -21,7 +39,14 @@ export default function AdminAsistencias() {
     try {
       const response = await adminApi.getAsistencias();
       setAsistencias(response.data || []);
-      setResumen(response.resumen || { familias: 0, adultos: 0, ninos: 0 });
+      setResumen(
+        response.resumen || {
+          familias: 0,
+          adultos: 0,
+          ninosMenores: 0,
+          ninosMayores: 0,
+        }
+      );
     } catch (error) {
       console.error('Error al cargar asistencias:', error);
     } finally {
@@ -94,7 +119,7 @@ export default function AdminAsistencias() {
 
       <div className="container mx-auto px-4 py-8">
         {/* Resumen */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-gradient-to-br from-pink-400 to-pink-600 text-white rounded-2xl shadow-card p-6">
             <h3 className="text-sm font-medium opacity-90">Familias</h3>
             <p className="text-3xl font-bold mt-1">{resumen.familias}</p>
@@ -103,9 +128,13 @@ export default function AdminAsistencias() {
             <h3 className="text-sm font-medium opacity-90">Adultos</h3>
             <p className="text-3xl font-bold mt-1">{resumen.adultos}</p>
           </div>
+          <div className="bg-gradient-to-br from-green-400 to-green-600 text-white rounded-2xl shadow-card p-6">
+            <h3 className="text-sm font-medium opacity-90">Niños (0 a 7 años)</h3>
+            <p className="text-3xl font-bold mt-1">{resumen.ninosMenores}</p>
+          </div>
           <div className="bg-gradient-to-br from-purple-400 to-purple-600 text-white rounded-2xl shadow-card p-6">
-            <h3 className="text-sm font-medium opacity-90">Niños</h3>
-            <p className="text-3xl font-bold mt-1">{resumen.ninos}</p>
+            <h3 className="text-sm font-medium opacity-90">Niños (8 a 15 años)</h3>
+            <p className="text-3xl font-bold mt-1">{resumen.ninosMayores}</p>
           </div>
         </div>
 
@@ -146,8 +175,15 @@ export default function AdminAsistencias() {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {asistenciasFiltradas.map((a) => {
-                    const adultos = a.asistentes.filter((p) => p.tipo === 'adulto').length;
-                    const ninos = a.asistentes.filter((p) => p.tipo === 'nino');
+                    const adultos = a.asistentes.filter(
+                      (p) => grupoDePersona(p) === 'adulto'
+                    ).length;
+                    const menores = a.asistentes.filter(
+                      (p) => grupoDePersona(p) === 'ninoMenor'
+                    );
+                    const mayores = a.asistentes.filter(
+                      (p) => grupoDePersona(p) === 'ninoMayor'
+                    );
                     return (
                       <tr key={a.id} className="hover:bg-pink-50/30">
                         <td className="px-6 py-4">
@@ -168,17 +204,24 @@ export default function AdminAsistencias() {
                             <span className="badge bg-blue-100 text-blue-700">
                               👤 {adultos} adulto{adultos !== 1 ? 's' : ''}
                             </span>
-                            <span className="badge bg-purple-100 text-purple-700">
-                              🧒 {ninos.length} niño{ninos.length !== 1 ? 's' : ''}
-                            </span>
+                            {menores.length > 0 && (
+                              <span className="badge bg-green-100 text-green-700">
+                                🧒 {menores.length} (0-7)
+                              </span>
+                            )}
+                            {mayores.length > 0 && (
+                              <span className="badge bg-purple-100 text-purple-700">
+                                🧑 {mayores.length} (8-15)
+                              </span>
+                            )}
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
                             {a.asistentes.map((p) => p.nombre).join(', ')}
-                            {ninos.length > 0 && (
+                            {(menores.length > 0 || mayores.length > 0) && (
                               <span className="text-gray-400">
                                 {' '}
                                 ·{' '}
-                                {ninos
+                                {[...menores, ...mayores]
                                   .map((p) => `${p.nombre} (${p.edad} años)`)
                                   .join(', ')}
                               </span>
