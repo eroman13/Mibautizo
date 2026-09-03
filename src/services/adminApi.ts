@@ -103,4 +103,14 @@ export const adminApi = {
     });
     return response.json();
   },
+
+  // Enviar correo de prueba
+  testEmail: async (email: string) => {
+    const response = await fetch(`${API_URL}/admin/test-email`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ email }),
+    });
+    return response.json();
+  },
 };

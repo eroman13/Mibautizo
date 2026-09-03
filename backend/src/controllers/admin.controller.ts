@@ -6,6 +6,7 @@ import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import bcrypt from 'bcryptjs';
 import { COMMISSION_RATE } from '../lib/mercadopago';
+import { enviarCorreoPrueba } from '../lib/email';
 
 /**
  * Login con usuario y contraseña
@@ -413,6 +414,43 @@ export async function exportarCSV(req: Request, res: Response) {
   } catch (error) {
     console.error('Error al exportar CSV:', error);
     res.status(500).json({ success: false, error: 'Error al exportar CSV' });
+  }
+}
+
+/**
+ * Enviar un correo de prueba para verificar la configuración de email.
+ * POST /api/admin/test-email
+ */
+export async function testEmail(req: Request, res: Response) {
+  try {
+    const { email } = req.body || {};
+    const para = (email || process.env.ADMIN_EMAIL || '').trim();
+
+    if (!para) {
+      return res.status(400).json({
+        success: false,
+        error: 'No se encontró un email de destino. Agrega el parámetro "email" o configura ADMIN_EMAIL.',
+      });
+    }
+
+    const resultado = await enviarCorreoPrueba({ para });
+
+    if (!resultado.success) {
+      return res.status(500).json({
+        success: false,
+        error: (resultado.error as Error)?.message || 'Error al enviar el correo de prueba',
+      });
+    }
+
+    console.log(`✅ Correo de prueba enviado a ${para}:`, resultado.messageId);
+    res.json({
+      success: true,
+      message: `Correo de prueba enviado a ${para}`,
+      messageId: resultado.messageId,
+    });
+  } catch (error) {
+    console.error('❌ Error en testEmail:', error);
+    res.status(500).json({ success: false, error: 'Error al enviar el correo de prueba' });
   }
 }
 

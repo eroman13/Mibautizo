@@ -16,6 +16,9 @@ export default function AdminConfiguracion() {
   const [mensaje, setMensaje] = useState('');
   const [subiendo, setSubiendo] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [emailPrueba, setEmailPrueba] = useState('');
+  const [enviandoPrueba, setEnviandoPrueba] = useState(false);
+  const [mensajePrueba, setMensajePrueba] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null);
   const [formData, setFormData] = useState<Partial<Evento>>({
     nombreGemela1: '',
     nombreGemela2: '',
@@ -60,6 +63,28 @@ export default function AdminConfiguracion() {
       setMensaje('Error al guardar los cambios');
     } finally {
       setGuardando(false);
+    }
+  };
+
+  const enviarCorreoPrueba = async () => {
+    if (!emailPrueba.trim()) {
+      setMensajePrueba({ tipo: 'error', texto: '❌ Ingresa un email de destino para la prueba.' });
+      return;
+    }
+    setEnviandoPrueba(true);
+    setMensajePrueba(null);
+    try {
+      const res = await adminApi.testEmail(emailPrueba.trim());
+      if (res.success) {
+        setMensajePrueba({ tipo: 'ok', texto: `✅ ${res.message}` });
+      } else {
+        setMensajePrueba({ tipo: 'error', texto: `❌ ${res.error || 'Error al enviar el correo'}` });
+      }
+    } catch (error: any) {
+      console.error('Error al enviar correo de prueba:', error);
+      setMensajePrueba({ tipo: 'error', texto: `❌ ${error.message || 'Error al enviar el correo'}` });
+    } finally {
+      setEnviandoPrueba(false);
     }
   };
 
@@ -486,6 +511,45 @@ export default function AdminConfiguracion() {
               {guardando ? 'Guardando...' : 'Guardar Cambios'}
             </button>
           </form>
+        </div>
+
+        {/* Herramientas: correo de prueba */}
+        <div className="bg-white rounded-2xl shadow-card p-8 mt-8">
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            📧 Correos electrónicos
+          </h2>
+          <p className="text-gray-600 text-sm mb-4">
+            Verifica que la configuración de email (Brevo / Resend / Gmail) esté funcionando.
+            Te llegará un correo de prueba al email que indiques.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="email"
+              value={emailPrueba}
+              onChange={(e) => setEmailPrueba(e.target.value)}
+              placeholder="tucorreo@gmail.com"
+              className="input-field flex-1"
+            />
+            <button
+              type="button"
+              onClick={enviarCorreoPrueba}
+              disabled={enviandoPrueba}
+              className="btn-primary whitespace-nowrap"
+            >
+              {enviandoPrueba ? '⏳ Enviando...' : '📨 Enviar correo de prueba'}
+            </button>
+          </div>
+          {mensajePrueba && (
+            <div
+              className={`mt-4 p-4 rounded-lg text-sm ${
+                mensajePrueba.tipo === 'ok'
+                  ? 'bg-green-50 text-green-700'
+                  : 'bg-red-50 text-red-700'
+              }`}
+            >
+              {mensajePrueba.texto}
+            </div>
+          )}
         </div>
       </div>
     </div>

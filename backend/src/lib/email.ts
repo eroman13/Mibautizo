@@ -438,3 +438,69 @@ export async function enviarNotificacionAlAdmin({
     return { success: false, error };
   }
 }
+
+/**
+ * Enviar un correo de prueba para verificar la configuración de email.
+ * Útil desde el panel de administración (POST /api/admin/test-email).
+ */
+export async function enviarCorreoPrueba({ para }: { para: string }) {
+  if (!hayCredencialesEmail) {
+    console.warn('⚠️ Correo de prueba NO enviado: no hay credenciales de email configuradas.');
+    return {
+      success: false,
+      error: new Error(
+        'No hay credenciales de email configuradas (BREVO_API_KEY, RESEND_API_KEY o GMAIL_USER/GMAIL_PASS).'
+      ),
+    };
+  }
+
+  const nombreGemelas = process.env.GEMELA1_NAME || 'Antonia';
+  const nombreGemela2 = process.env.GEMELA2_NAME || 'Emilia';
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        body { font-family: Arial, sans-serif; color: #333; line-height: 1.6; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #FFB6C1 0%, #DDA0DD 100%); color: white; padding: 30px; text-align: center; border-radius: 10px; margin-bottom: 20px; }
+        .content { background: #f9f9f9; padding: 20px; border-radius: 8px; }
+        .ok { color: #4caf50; font-weight: bold; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>📧 Correo de prueba</h1>
+          <p>Bautizo de ${nombreGemelas} y ${nombreGemela2}</p>
+        </div>
+        <div class="content">
+          <p>¡Hola! 👋</p>
+          <p>Este es un <span class="ok">correo de prueba</span> enviado desde el panel de administración.</p>
+          <p>Si estás leyendo esto, significa que la configuración de email está funcionando correctamente. ✅</p>
+          <p style="color: #999; font-size: 12px; margin-top: 20px;">
+            Este es un correo automático del sistema de mesa de regalos.
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const resultado = await enviarConReintentos({
+    from: brevoSenderEmail || gmailUser || 'tu-email@gmail.com',
+    to: para,
+    subject: '📧 Correo de prueba - Configuración de email',
+    html,
+  });
+
+  if (!resultado.success) {
+    console.error('❌ Error al enviar correo de prueba:', (resultado.error as Error)?.message);
+  } else {
+    console.log('✅ Correo de prueba enviado:', resultado.messageId);
+  }
+
+  return resultado;
+}
