@@ -31,4 +31,4 @@ ENV NODE_ENV=production
 EXPOSE 8080
 
 # Aplicar cambios de schema a la BD y luego iniciar el servidor
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node dist/index.js"]
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node --dns-result-order=ipv4first dist/index.js"]
