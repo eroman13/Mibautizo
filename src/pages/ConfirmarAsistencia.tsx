@@ -58,6 +58,23 @@ export default function ConfirmarAsistencia() {
     personas.reduce((max, p) => Math.max(max, p.key), 0) + 1;
 
   const agregarPersona = () => {
+    // No se permite agregar más invitados si alguno no tiene nombre aún
+    const incompleta = personas.find((p) => !p.nombre.trim());
+    if (incompleta) {
+      const pos = personas.indexOf(incompleta) + 1;
+      setError(
+        `Primero completa el nombre de la persona ${pos} antes de agregar a otra persona.`
+      );
+      setPersonaActiva(incompleta.key);
+      setTimeout(() => {
+        document.getElementById(`asistente-nombre-${incompleta.key}`)?.focus();
+        document.getElementById(`asistente-card-${incompleta.key}`)?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      }, 80);
+      return;
+    }
     const key = siguienteKey();
     setPersonas([...personas, { key, nombre: '', tipo: 'adulto', edad: '' }]);
     setPersonaActiva(key);
@@ -136,8 +153,10 @@ export default function ConfirmarAsistencia() {
 
   const validar = (): string => validarFamilia() || validarPersonas();
 
-  const contarAdultos = () => personas.filter((p) => p.tipo === 'adulto').length;
-  const contarNinos = () => personas.length - contarAdultos();
+  const contarAdultos = () =>
+    personas.filter((p) => p.nombre.trim() && p.tipo === 'adulto').length;
+  const contarNinos = () =>
+    personas.filter((p) => p.nombre.trim() && p.tipo === 'nino').length;
 
   const avanzarPaso = () => {
     const errorPaso = paso === 1 ? validarFamilia() : validarPersonas();
@@ -371,27 +390,18 @@ export default function ConfirmarAsistencia() {
               <>
             {/* Lista de personas */}
             <div>
-              <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-                <div>
-                  <label className="block text-gray-700 font-medium">
-                    ¿Quiénes asistirán? *
-                  </label>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">
-                      👤 {contarAdultos()} adulto{contarAdultos() !== 1 ? 's' : ''}
-                    </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-yellow-50 text-yellow-700 text-xs font-medium">
-                      🧒 {contarNinos()} niño{contarNinos() !== 1 ? 's' : ''}
-                    </span>
-                  </div>
+              <div className="mb-3">
+                <label className="block text-gray-700 font-medium">
+                  ¿Quiénes asistirán? *
+                </label>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">
+                    👤 {contarAdultos()} adulto{contarAdultos() !== 1 ? 's' : ''}
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-yellow-50 text-yellow-700 text-xs font-medium">
+                    🧒 {contarNinos()} niño{contarNinos() !== 1 ? 's' : ''}
+                  </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={agregarPersona}
-                  className="text-sm bg-pastel-pink text-white px-4 py-2 rounded-full hover:bg-pastel-lavender transition-colors shadow-sm"
-                >
-                  + Agregar persona
-                </button>
               </div>
 
               <div className="space-y-2">
@@ -520,6 +530,20 @@ export default function ConfirmarAsistencia() {
               <p className="text-xs text-gray-500 mt-2">
                 Si confirmas un niño/a, su edad es obligatoria (0 a 13 años). Mayores de 13 se consideran adultos.
               </p>
+
+              <button
+                type="button"
+                onClick={agregarPersona}
+                disabled={personas.some((per) => !per.nombre.trim())}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border-2 border-dashed border-pastel-pink/60 text-pastel-pink rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-pastel-pink/10 disabled:opacity-40 disabled:cursor-not-allowed mt-3"
+              >
+                ＋ Agregar otra persona
+              </button>
+              {personas.some((per) => !per.nombre.trim()) && (
+                <p className="text-xs text-amber-600 mt-1.5">
+                  Completa el nombre del invitado en edición para poder agregar a otro.
+                </p>
+              )}
             </div>
               </>
             )}
