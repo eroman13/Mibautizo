@@ -7,6 +7,11 @@
 
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
+import {
+  enviarConfirmacionAsistencia,
+  enviarNotificacionAsistencia,
+  obtenerEmailsNotificacion,
+} from '../lib/email';
 
 interface AsistenteBody {
   nombre: string;
@@ -119,6 +124,61 @@ export async function confirmarAsistencia(req: Request, res: Response) {
     const ninosMenores = confirmacion.asistentes.filter((a) => grupoDe(a) === 'ninoMenor').length;
     const ninosMayores = confirmacion.asistentes.filter((a) => grupoDe(a) === 'ninoMayor').length;
     const ninos = ninosMenores + ninosMayores;
+
+    // ---- Correos automáticos (sin bloquear la confirmación si fallan) ----
+    try {
+      const eventoNotif = await prisma.event.findFirst();
+      const emailInvitado = (body.email || '').trim();
+
+      // 1) Confirmación al invitado
+      if (emailInvitado) {
+        const resultadoInv = await enviarConfirmacionAsistencia({
+          para: emailInvitado,
+          nombreFamilia,
+          email: emailInvitado,
+          telefono: (body.telefono || '').trim() || undefined,
+          asistentes: confirmacion.asistentes.map((a) => ({
+            nombre: a.nombre,
+            tipo: a.tipo,
+            edad: a.edad,
+          })),
+          mensaje: (body.mensaje || '').trim() || undefined,
+          fechaEvento: eventoNotif?.fecha,
+          horaEvento: eventoNotif?.hora,
+          lugarEvento: eventoNotif?.lugar,
+          numeroConfirmacion: confirmacion.id,
+        });
+        if (!resultadoInv.success) {
+          console.warn(
+            '⚠️ No se pudo enviar confirmación de asistencia al invitado:',
+            (resultadoInv.error as Error)?.message
+          );
+        }
+      }
+
+      // 2) Notificación a los administradores/configurados
+      const destinatarios = obtenerEmailsNotificacion(eventoNotif);
+      if (destinatarios.length > 0) {
+        const resultadoAdmin = await enviarNotificacionAsistencia({
+          para: destinatarios,
+          nombreFamilia,
+          email: emailInvitado || undefined,
+          telefono: (body.telefono || '').trim() || undefined,
+          adultos,
+          ninosMenores,
+          ninosMayores,
+          mensaje: (body.mensaje || '').trim() || undefined,
+        });
+        if (!resultadoAdmin.success) {
+          console.warn(
+            '⚠️ No se pudo enviar notificación de asistencia:',
+            (resultadoAdmin.error as Error)?.message
+          );
+        }
+      }
+    } catch (errorEmail) {
+      console.error('⚠️ Error en envío de correos de asistencia:', errorEmail);
+    }
 
     console.log(
       `💌 Confirmación de asistencia: ${confirmacion.nombreFamilia} (${adultos} adultos, ${ninosMenores} niños 0-${EDAD_NINO_MENOR_MAX}, ${ninosMayores} niños ${EDAD_NINO_MENOR_MAX + 1}-${EDAD_MAX_NINO})`

@@ -9,7 +9,11 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import { paymentClient } from '../lib/mercadopago';
-import { enviarConfirmacionRegalo, enviarNotificacionAlAdmin } from '../lib/email';
+import {
+  enviarConfirmacionRegalo,
+  enviarNotificacionAlAdmin,
+  obtenerEmailsNotificacion,
+} from '../lib/email';
 
 export async function webhook(req: Request, res: Response) {
   try {
@@ -212,12 +216,11 @@ export async function webhook(req: Request, res: Response) {
       }
     }
 
-    // Enviar notificación al administrador
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@bautizo.local';
-    if (adminEmail && adminEmail !== 'admin@bautizo.local') {
-      // Solo enviar si se configuró un email real
+    // Enviar notificación a los administradores/configurados
+    const destinatarios = obtenerEmailsNotificacion(evento);
+    if (destinatarios.length > 0) {
       const adminResult = await enviarNotificacionAlAdmin({
-        para: adminEmail,
+        para: destinatarios,
         nombreInvitado: invitado.nombre,
         emailInvitado: invitado.email || 'No proporcionado',
         regalos: regalosConDetalles,

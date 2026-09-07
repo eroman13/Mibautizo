@@ -13,24 +13,25 @@ datasource db {
 
 // Configuración del evento (bautizo de las mellizas)
 model Event {
-  id                 Int      @id @default(autoincrement())
+  id                  Int      @id @default(autoincrement())
   // Nota: las columnas físicas conservan su nombre original ("nombreGemela1/2")
   // por compatibilidad con la BD existente y para evitar pérdida de datos con
   // `prisma db push` en producción. El modelo/código ya usa "Melliza".
-  nombreMelliza1     String   @map("nombreGemela1")
-  nombreMelliza2     String   @map("nombreGemela2")
-  fecha              String   // Formato: "2026-09-15"
-  hora               String   // Formato: "16:00"
-  lugar              String
-  lugarRecepcion     String? // Lugar donde se realizará la recepción después de la ceremonia
-  wazeUrlRecepcion   String? // URL de Waze para la recepción (opcional)
-  mensajeBienvenida  String
-  portadaUrl         String?
-  portadaUrlMobile   String? // Imagen optimizada para pantallas móviles
-  wazeUrl            String? // URL de Waze para la ubicación del evento
-  modoComision       String   @default("A") // "A" = invitado cubre, "B" = organizador asume
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  nombreMelliza1      String   @map("nombreGemela1")
+  nombreMelliza2      String   @map("nombreGemela2")
+  fecha               String // Formato: "2026-09-15"
+  hora                String // Formato: "16:00"
+  lugar               String
+  lugarRecepcion      String? // Lugar donde se realizará la recepción después de la ceremonia
+  wazeUrlRecepcion    String? // URL de Waze para la recepción (opcional)
+  mensajeBienvenida   String
+  portadaUrl          String?
+  portadaUrlMobile    String? // Imagen optimizada para pantallas móviles
+  wazeUrl             String? // URL de Waze para la ubicación del evento
+  modoComision        String   @default("A") // "A" = invitado cubre, "B" = organizador asume
+  emailNotificaciones String? // Emails (separados por coma o nueva línea) que reciben avisos de regalos y asistencia
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 // Intención de compra guardada antes de crear la preferencia en Mercado Pago.
@@ -40,62 +41,62 @@ model Event {
 // usamos solo el id como external_reference.
 model CheckoutIntent {
   id        Int      @id @default(autoincrement())
-  payload   String   // JSON: invitado, regalos, modoComision y cálculo de pago
+  payload   String // JSON: invitado, regalos, modoComision y cálculo de pago
   estado    String   @default("pending") // pending | approved
   createdAt DateTime @default(now())
 }
 
 // Regalos del catálogo
 model Gift {
-  id                    Int            @id @default(autoincrement())
-  nombre                String
-  descripcion           String
-  precioCLP             Int            // Precio en pesos chilenos (sin decimales)
-  imagenUrl             String
-  permiteColaborativo   Boolean        @default(false) // Si varios invitados pueden aportar
-  montoRecaudadoCLP     Int            @default(0)     // Solo para regalos colaborativos
-  estado                String         @default("disponible") // "disponible" | "reservado" | "pagado"
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
-  contributions         Contribution[]
+  id                  Int            @id @default(autoincrement())
+  nombre              String
+  descripcion         String
+  precioCLP           Int // Precio en pesos chilenos (sin decimales)
+  imagenUrl           String
+  permiteColaborativo Boolean        @default(false) // Si varios invitados pueden aportar
+  montoRecaudadoCLP   Int            @default(0) // Solo para regalos colaborativos
+  estado              String         @default("disponible") // "disponible" | "reservado" | "pagado"
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  contributions       Contribution[]
 }
 
 // Aportes/contribuciones de los invitados
 model Contribution {
-  id                 Int      @id @default(autoincrement())
-  giftId             Int?     // Null si es aporte libre
-  gift               Gift?    @relation(fields: [giftId], references: [id])
-  montoBrutoCLP      Int      // Monto que pagó el invitado
-  comisionCLP        Int      // Comisión de Mercado Pago
-  montoNetoCLP       Int      // Monto neto que recibe el organizador
-  nombreInvitado     String
-  emailInvitado      String?
-  dedicatoria        String?
-  estadoPago         String   // "pending" | "approved" | "rejected" | "cancelled"
-  mpPaymentId        String // ID del pago en Mercado Pago (puede repetirse si un pago cubre varios regalos)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  giftId         Int? // Null si es aporte libre
+  gift           Gift?    @relation(fields: [giftId], references: [id])
+  montoBrutoCLP  Int // Monto que pagó el invitado
+  comisionCLP    Int // Comisión de Mercado Pago
+  montoNetoCLP   Int // Monto neto que recibe el organizador
+  nombreInvitado String
+  emailInvitado  String?
+  dedicatoria    String?
+  estadoPago     String // "pending" | "approved" | "rejected" | "cancelled"
+  mpPaymentId    String // ID del pago en Mercado Pago (puede repetirse si un pago cubre varios regalos)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 // Usuarios administradores
 model AdminUser {
-  id                 Int      @id @default(autoincrement())
-  username           String   @unique
-  password           String   // Hasheado con bcrypt
-  nombre             String   // Nombre del administrador
-  email              String?
-  activo             Boolean  @default(true)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String // Hasheado con bcrypt
+  nombre    String // Nombre del administrador
+  email     String?
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Confirmación de asistencia al evento (una por familia)
 model Asistencia {
   id            Int         @id @default(autoincrement())
-  nombreFamilia String      // Ej: "Familia Pérez"
-  email         String?     // Contacto opcional
-  telefono      String?     // Contacto opcional
-  mensaje       String?     // Notas opcionales (alergias, silla, etc.)
+  nombreFamilia String // Ej: "Familia Pérez"
+  email         String? // Contacto opcional
+  telefono      String? // Contacto opcional
+  mensaje       String? // Notas opcionales (alergias, silla, etc.)
   createdAt     DateTime    @default(now())
   asistentes    Asistente[]
 }
@@ -106,6 +107,6 @@ model Asistente {
   asistenciaId Int
   asistencia   Asistencia @relation(fields: [asistenciaId], references: [id], onDelete: Cascade)
   nombre       String
-  tipo         String     // 'adulto' | 'nino'
-  edad         Int?       // Obligatorio si tipo = 'nino'
+  tipo         String // 'adulto' | 'nino'
+  edad         Int? // Obligatorio si tipo = 'nino'
 }

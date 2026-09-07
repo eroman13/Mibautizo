@@ -27,6 +27,7 @@ export interface Evento {
   portadaUrlMobile?: string | null;
   wazeUrl?: string | null;
   modoComision: 'A' | 'B';
+  emailNotificaciones?: string | null; // Emails que reciben avisos de regalos y asistencia
 }
 
 export interface ItemCarrito {

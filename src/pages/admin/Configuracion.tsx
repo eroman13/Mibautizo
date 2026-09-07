@@ -3,7 +3,6 @@
  */
 
 import { useEffect, useState } from 'react';
-import { api } from '../../services/api';
 import { adminApi } from '../../services/adminApi';
 import { buildApiUrl } from '../../services/config';
 import { comprimirImagen } from '../../utils/imagen';
@@ -32,6 +31,7 @@ export default function AdminConfiguracion() {
     portadaUrlMobile: '',
     wazeUrl: '',
     modoComision: 'A',
+    emailNotificaciones: '',
   });
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export default function AdminConfiguracion() {
 
   const cargarEvento = async () => {
     try {
-      const response = await api.getEvento();
+      const response = await adminApi.getEventoAdmin();
       setFormData(response.data);
     } catch (error) {
       console.error('Error al cargar evento:', error);
@@ -493,6 +493,28 @@ export default function AdminConfiguracion() {
                   </div>
                 </label>
               </div>
+            </div>
+
+            {/* Emails de notificación (regalos y asistencia) */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-1">
+                📬 Emails de notificación
+              </label>
+              <p className="text-sm text-gray-500 mb-2">
+                Aquí llegan los avisos automáticos de <strong>regalos recibidos</strong> y de{' '}
+                <strong>confirmaciones de asistencia</strong>. Separa varios correos con comas o
+                saltos de línea. Si lo dejas vacío se usará la variable{' '}
+                <code className="bg-gray-100 px-1 rounded">ADMIN_EMAIL</code> del servidor.
+              </p>
+              <textarea
+                value={formData.emailNotificaciones ?? ''}
+                onChange={(e) =>
+                  setFormData({ ...formData, emailNotificaciones: e.target.value })
+                }
+                placeholder="tucorreo@gmail.com, otrapersona@correo.cl"
+                className="input-field"
+                rows={3}
+              />
             </div>
 
             {/* Mensaje de éxito/error */}

@@ -22,6 +22,7 @@ import {
   actualizarRegalo,
   eliminarRegalo,
   actualizarEvento,
+  getEventoAdmin,
   exportarCSV,
   limpiarPagos,
   testEmail,
@@ -79,6 +80,7 @@ router.post('/admin/regalos/bulk', verificarAuth, crearRegalosMasivo);
 router.put('/admin/regalos/:id', verificarAuth, actualizarRegalo);
 router.delete('/admin/regalos/:id', verificarAuth, eliminarRegalo);
 router.put('/admin/evento', verificarAuth, actualizarEvento);
+router.get('/admin/evento', verificarAuth, getEventoAdmin);
 router.get('/admin/export-csv', verificarAuth, exportarCSV);
 router.post('/admin/limpiar-pagos', verificarAuth, limpiarPagos);
 router.post('/admin/test-email', verificarAuth, testEmail);

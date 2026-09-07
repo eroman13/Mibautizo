@@ -107,9 +107,12 @@ export async function getEvento(req: Request, res: Response) {
       });
     }
 
+    // No exponer datos internos (correos de notificación) en la API pública
+    const { emailNotificaciones: _oculto, ...datosPublicos } = evento;
+
     res.json({
       success: true,
-      data: evento,
+      data: datosPublicos,
     });
   } catch (error) {
     console.error('❌ Error al obtener evento:', error);

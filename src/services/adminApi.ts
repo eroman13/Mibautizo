@@ -67,6 +67,13 @@ export const adminApi = {
   },
 
   // Evento
+  getEventoAdmin: async () => {
+    const response = await fetch(`${API_URL}/admin/evento`, {
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  },
+
   actualizarEvento: async (data: any) => {
     const response = await fetch(`${API_URL}/admin/evento`, {
       method: 'PUT',

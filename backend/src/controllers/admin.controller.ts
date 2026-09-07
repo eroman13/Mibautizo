@@ -310,6 +310,23 @@ export async function crearRegalosMasivo(req: Request, res: Response) {
 }
 
 /**
+ * Obtener configuración completa del evento (admin, incluye emails de notificación)
+ * GET /api/admin/evento
+ */
+export async function getEventoAdmin(req: Request, res: Response) {
+  try {
+    const evento = await prisma.event.findFirst();
+    if (!evento) {
+      return res.status(404).json({ success: false, error: 'Evento no encontrado' });
+    }
+    res.json({ success: true, data: evento });
+  } catch (error) {
+    console.error('❌ Error al obtener evento (admin):', error);
+    res.status(500).json({ success: false, error: 'Error al obtener el evento' });
+  }
+}
+
+/**
  * Actualizar configuración del evento
  * PUT /api/admin/evento
  */
@@ -328,6 +345,7 @@ export async function actualizarEvento(req: Request, res: Response) {
       wazeUrl,
       wazeUrlRecepcion,
       modoComision,
+      emailNotificaciones,
     } = req.body;
 
     const evento = await prisma.event.update({
@@ -345,6 +363,7 @@ export async function actualizarEvento(req: Request, res: Response) {
         wazeUrl,
         wazeUrlRecepcion,
         modoComision,
+        emailNotificaciones: emailNotificaciones || null,
       },
     });
 

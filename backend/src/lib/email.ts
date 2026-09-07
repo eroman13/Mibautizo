@@ -114,7 +114,9 @@ async function enviarConBrevo(mailOptions: any): Promise<string> {
         email: brevoSenderEmail,
         name: brevoSenderName,
       },
-      to: [{ email: mailOptions.to }],
+      to: (Array.isArray(mailOptions.to) ? mailOptions.to : [mailOptions.to]).map(
+        (email: string) => ({ email })
+      ),
       subject: mailOptions.subject,
       htmlContent: mailOptions.html,
     }),
@@ -143,7 +145,7 @@ async function enviarConResend(mailOptions: any): Promise<string> {
     },
     body: JSON.stringify({
       from: resendFrom,
-      to: [mailOptions.to],
+      to: Array.isArray(mailOptions.to) ? mailOptions.to : [mailOptions.to],
       subject: mailOptions.subject,
       html: mailOptions.html,
     }),
@@ -394,7 +396,7 @@ export async function enviarNotificacionAlAdmin({
   regalos,
   totalCLP,
 }: {
-  para: string;
+  para: string | string[];
   nombreInvitado: string;
   emailInvitado: string;
   regalos: Array<{ nombre: string; cantidad: number }>;
@@ -463,6 +465,232 @@ export async function enviarNotificacionAlAdmin({
   } catch (error: any) {
     console.error('❌ Error al enviar notificación al admin:', error.message);
     console.error('   Código:', error.code);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Devuelve los emails que deben recibir las notificaciones (regalos y asistencia).
+ * Prioriza la lista configurada en el evento (panel admin); si no hay, usa ADMIN_EMAIL.
+ * Filtra placeholders y emails vacíos/inválidos.
+ */
+export function obtenerEmailsNotificacion(
+  evento?: { emailNotificaciones?: string | null } | null
+): string[] {
+  const crudo = (evento?.emailNotificaciones || process.env.ADMIN_EMAIL || '').split(/[\n,;]+/);
+  return [
+    ...new Set(
+      crudo
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean)
+        .filter((e) => e.includes('@'))
+        .filter((e) => !e.includes('bautizo.local'))
+    ),
+  ];
+}
+
+/**
+ * Enviar correo de confirmación al invitado tras confirmar asistencia (RSVP)
+ */
+export async function enviarConfirmacionAsistencia({
+  para,
+  nombreFamilia,
+  email,
+  telefono,
+  asistentes,
+  mensaje,
+  fechaEvento,
+  horaEvento,
+  lugarEvento,
+  numeroConfirmacion,
+}: {
+  para: string;
+  nombreFamilia: string;
+  email?: string;
+  telefono?: string;
+  asistentes: Array<{ nombre: string; tipo: string; edad?: number | null }>;
+  mensaje?: string;
+  fechaEvento?: string;
+  horaEvento?: string;
+  lugarEvento?: string;
+  numeroConfirmacion?: number;
+}) {
+  if (!brevoApiKey && !resendApiKey && (!gmailUser || !gmailPass)) {
+    console.warn(
+      `⚠️ Confirmación de asistencia NO enviada a ${para}: credenciales de email no configuradas.`
+    );
+    return { success: false, error: new Error('Credenciales de email no configuradas') };
+  }
+
+  try {
+    const nombreMellizas = process.env.MELLIZA1_NAME || 'Antonia';
+    const nombreMelliza2 = process.env.MELLIZA2_NAME || 'Emilia';
+
+    const asistentesHTML = asistentes
+      .map((a) => {
+        const detalle =
+          a.tipo === 'nino'
+            ? `Niño/a · ${a.edad ?? '?'} años`
+            : 'Adulto';
+        return `<li><strong>${escapaHtml(a.nombre)}</strong> — ${detalle}</li>`;
+      })
+      .join('');
+
+    const fechaTexto = formatearFechaBautizo(fechaEvento);
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: Arial, sans-serif; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #ffb3d9, #e0bbe4); padding: 24px; border-radius: 12px; text-align: center; color: #fff; }
+          .content { padding: 20px 0; }
+          ul { padding-left: 20px; }
+          .nota { background: #f5f5f5; padding: 12px; border-radius: 8px; margin-top: 12px; }
+          .footer { border-top: 1px solid #eee; padding-top: 12px; color: #888; font-size: 12px; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>💌 ¡Gracias, ${escapaHtml(nombreFamilia)}!</h1>
+            <p>Tu asistencia al bautizo de ${nombreMellizas} y ${nombreMelliza2} está confirmada.</p>
+          </div>
+          <div class="content">
+            <p><strong>Confirmación N°:</strong> #${numeroConfirmacion || ''}</p>
+            ${fechaTexto ? `<p><strong>Fecha:</strong> ${fechaTexto}${horaEvento ? ` a las ${horaEvento}` : ''}</p>` : ''}
+            ${lugarEvento ? `<p><strong>Lugar:</strong> ${escapaHtml(lugarEvento)}</p>` : ''}
+
+            <h3>Quiénes nos acompañan:</h3>
+            <ul>${asistentesHTML}</ul>
+
+            ${telefono ? `<p><strong>Teléfono de contacto:</strong> ${escapaHtml(telefono)}</p>` : ''}
+            ${email ? `<p><strong>Email:</strong> ${escapaHtml(email)}</p>` : ''}
+            ${mensaje ? `<div class="nota"><strong>Tu mensaje:</strong><br>${escapaHtml(mensaje).replace(/\n/g, '<br>')}</div>` : ''}
+
+            <p>¡Los esperamos con mucho cariño! 🎀</p>
+          </div>
+          <div class="footer">Este es un correo automático de confirmación.</div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const resultado = await enviarConReintentos({
+      from: gmailUser || 'tu-email@gmail.com',
+      to: para,
+      subject: `💌 Asistencia confirmada: ${nombreFamilia}`,
+      html,
+    });
+
+    if (!resultado.success) {
+      console.error('❌ Error al enviar confirmación de asistencia:', (resultado.error as Error)?.message);
+      return { success: false, error: resultado.error };
+    }
+    console.log('✅ Correo de confirmación de asistencia enviado:', resultado.messageId);
+    return { success: true, messageId: resultado.messageId };
+  } catch (error: any) {
+    console.error('❌ Error al enviar confirmación de asistencia:', error.message);
+    return { success: false, error };
+  }
+}
+
+/** Escapa caracteres HTML para evitar inyección en los correos. */
+function escapaHtml(texto: string): string {
+  return texto
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/**
+ * Enviar notificación al administrador cuando alguien confirma asistencia (RSVP)
+ */
+export async function enviarNotificacionAsistencia({
+  para,
+  nombreFamilia,
+  email,
+  telefono,
+  adultos,
+  ninosMenores,
+  ninosMayores,
+  mensaje,
+}: {
+  para: string[];
+  nombreFamilia: string;
+  email?: string;
+  telefono?: string;
+  adultos: number;
+  ninosMenores: number;
+  ninosMayores: number;
+  mensaje?: string;
+}) {
+  if (!brevoApiKey && !resendApiKey && (!gmailUser || !gmailPass)) {
+    console.warn(
+      '⚠️ Notificación de asistencia NO enviada: credenciales de email no configuradas.'
+    );
+    return { success: false, error: new Error('Credenciales de email no configuradas') };
+  }
+
+  if (!para || para.length === 0) {
+    console.warn('⚠️ Notificación de asistencia omitida: no hay destinatarios configurados.');
+    return { success: false, error: new Error('No hay destinatarios configurados') };
+  }
+
+  try {
+    const total = adultos + ninosMenores + ninosMayores;
+    const detalle =
+      `${adultos} adulto${adultos !== 1 ? 's' : ''}` +
+      (ninosMenores > 0 ? `, ${ninosMenores} niño${ninosMenores !== 1 ? 's' : ''} 0-7` : '') +
+      (ninosMayores > 0 ? `, ${ninosMayores} niño${ninosMayores !== 1 ? 's' : ''} 8-13` : '');
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: Arial, sans-serif; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .alert { background: #f3e8ff; border-left: 4px solid #c084fc; padding: 15px; border-radius: 4px; }
+          table { width: 100%; border-collapse: collapse; }
+          td, th { padding: 6px 8px; border-bottom: 1px solid #eee; text-align: left; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="alert">
+            <h2>💌 Nueva confirmación de asistencia</h2>
+            <p><strong>Familia:</strong> ${escapaHtml(nombreFamilia)}</p>
+            <p><strong>Asistentes:</strong> ${total} (${detalle})</p>
+            <p><strong>Email:</strong> ${email ? escapaHtml(email) : 'No proporcionado'}</p>
+            <p><strong>Teléfono:</strong> ${telefono ? escapaHtml(telefono) : 'No proporcionado'}</p>
+            ${mensaje ? `<p><strong>Mensaje/notas:</strong><br>${escapaHtml(mensaje).replace(/\n/g, '<br>')}</p>` : ''}
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const resultado = await enviarConReintentos({
+      from: gmailUser || 'tu-email@gmail.com',
+      to: para,
+      subject: `💌 Nueva confirmación de asistencia: ${nombreFamilia}`,
+      html,
+    });
+
+    if (!resultado.success) {
+      console.error('❌ Error al enviar notificación de asistencia:', (resultado.error as Error)?.message);
+      return { success: false, error: resultado.error };
+    }
+    console.log('✅ Notificación de asistencia enviada:', resultado.messageId);
+    return { success: true, messageId: resultado.messageId };
+  } catch (error: any) {
+    console.error('❌ Error al enviar notificación de asistencia:', error.message);
     return { success: false, error };
   }
 }
