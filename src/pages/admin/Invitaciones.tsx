@@ -14,6 +14,8 @@ interface FormInvitacion {
   telefono: string;
   asistentes: string;
   modalidad: 'familiar' | 'pareja' | 'individual';
+  parejaNombre1: string;
+  parejaNombre2: string;
 }
 
 const FORM_VACIO: FormInvitacion = {
@@ -22,6 +24,8 @@ const FORM_VACIO: FormInvitacion = {
   telefono: '',
   asistentes: '',
   modalidad: 'familiar',
+  parejaNombre1: '',
+  parejaNombre2: '',
 };
 
 type EstadoFiltro = 'todos' | Invitacion['estado'];
@@ -122,45 +126,80 @@ export default function AdminInvitaciones() {
 
   const abrirEditar = (inv: Invitacion) => {
     setEditandoId(inv.id);
+    const nombresPareja =
+      inv.modalidad === 'pareja'
+        ? (inv.asistentes || '')
+            .split('\n')
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
     setForm({
       familia: inv.familia,
       contacto: inv.contacto || '',
       telefono: inv.telefono || '',
       asistentes: inv.asistentes || '',
       modalidad: inv.modalidad || 'familiar',
+      parejaNombre1: nombresPareja[0] || '',
+      parejaNombre2: nombresPareja[1] || '',
     });
     setFormAbierto(true);
   };
 
   const guardar = async () => {
-    if (!form.familia.trim()) {
-      setMensaje({ tipo: 'error', texto: 'El nombre de la familia es obligatorio.' });
-      return;
+    let payload: any;
+    if (form.modalidad === 'individual') {
+      if (!form.familia.trim()) {
+        setMensaje({ tipo: 'error', texto: 'El nombre de la persona es obligatorio.' });
+        return;
+      }
+      payload = {
+        modalidad: 'individual',
+        familia: form.familia.trim(),
+        contacto: '',
+        telefono: form.telefono.trim(),
+        asistentes: '',
+      };
+    } else if (form.modalidad === 'pareja') {
+      const n1 = form.parejaNombre1.trim();
+      const n2 = form.parejaNombre2.trim();
+      if (!n1 || !n2) {
+        setMensaje({ tipo: 'error', texto: 'Ingresa los nombres de las dos personas de la pareja.' });
+        return;
+      }
+      payload = {
+        modalidad: 'pareja',
+        familia: `${n1} y ${n2}`,
+        contacto: n1,
+        telefono: form.telefono.trim(),
+        asistentes: `${n1}\n${n2}`,
+      };
+    } else {
+      if (!form.familia.trim()) {
+        setMensaje({ tipo: 'error', texto: 'El nombre de la familia es obligatorio.' });
+        return;
+      }
+      payload = {
+        modalidad: 'familiar',
+        familia: form.familia.trim(),
+        contacto: form.contacto.trim(),
+        telefono: form.telefono.trim(),
+        asistentes: form.asistentes.trim(),
+      };
     }
+
     setGuardando(true);
     setMensaje(null);
     try {
-      if (editandoId) {
-        const response = await adminApi.actualizarInvitacion(editandoId, {
-          familia: form.familia.trim(),
-          contacto: form.contacto.trim(),
-          telefono: form.telefono.trim(),
-          asistentes: form.asistentes.trim(),
-          modalidad: form.modalidad,
-        });
-        if (!response.success) throw new Error(response.error || 'Error');
-        setMensaje({ tipo: 'ok', texto: 'Invitación actualizada.' });
-      } else {
-        const response = await adminApi.crearInvitacion({
-          familia: form.familia.trim(),
-          contacto: form.contacto.trim(),
-          telefono: form.telefono.trim(),
-          asistentes: form.asistentes.trim(),
-          modalidad: form.modalidad,
-        });
-        if (!response.success) throw new Error(response.error || 'Error');
-        setMensaje({ tipo: 'ok', texto: 'Invitación creada. Ahora puedes enviarla por WhatsApp.' });
-      }
+      const response = editandoId
+        ? await adminApi.actualizarInvitacion(editandoId, payload)
+        : await adminApi.crearInvitacion(payload);
+      if (!response.success) throw new Error(response.error || 'Error');
+      setMensaje({
+        tipo: 'ok',
+        texto: editandoId
+          ? 'Invitación actualizada.'
+          : 'Invitación creada. Ahora puedes enviarla por WhatsApp.',
+      });
       setFormAbierto(false);
       await cargar();
     } catch (error: any) {
@@ -525,30 +564,91 @@ export default function AdminInvitaciones() {
                     </label>
                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">
-                    Familia o persona * <span className="text-gray-400">(ej: Familia Pérez)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={form.familia}
-                    onChange={(e) => setForm({ ...form, familia: e.target.value })}
-                    className="input-field"
-                    placeholder="Familia Pérez"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">
-                    Contacto <span className="text-gray-400">(opcional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={form.contacto}
-                    onChange={(e) => setForm({ ...form, contacto: e.target.value })}
-                    className="input-field"
-                    placeholder="María José"
-                  />
-                </div>
+                {form.modalidad === 'individual' && (
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">
+                      Nombre de la persona * <span className="text-gray-400">(ej: Francisco)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={form.familia}
+                      onChange={(e) => setForm({ ...form, familia: e.target.value })}
+                      className="input-field"
+                      placeholder="Francisco"
+                    />
+                  </div>
+                )}
+
+                {form.modalidad === 'pareja' && (
+                  <>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">
+                        Nombre de la persona 1 * <span className="text-gray-400">(ej: Lili)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={form.parejaNombre1}
+                        onChange={(e) => setForm({ ...form, parejaNombre1: e.target.value })}
+                        className="input-field"
+                        placeholder="Lili"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">
+                        Nombre de la persona 2 * <span className="text-gray-400">(ej: Julio)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={form.parejaNombre2}
+                        onChange={(e) => setForm({ ...form, parejaNombre2: e.target.value })}
+                        className="input-field"
+                        placeholder="Julio"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {form.modalidad === 'familiar' && (
+                  <>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">
+                        Nombre de la familia * <span className="text-gray-400">(ej: Familia Pérez)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={form.familia}
+                        onChange={(e) => setForm({ ...form, familia: e.target.value })}
+                        className="input-field"
+                        placeholder="Familia Pérez"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">
+                        Contacto <span className="text-gray-400">(opcional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={form.contacto}
+                        onChange={(e) => setForm({ ...form, contacto: e.target.value })}
+                        className="input-field"
+                        placeholder="María José"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">
+                        Personas invitadas <span className="text-gray-400">(opcional, una por línea)</span>
+                      </label>
+                      <textarea
+                        value={form.asistentes}
+                        onChange={(e) => setForm({ ...form, asistentes: e.target.value })}
+                        className="input-field"
+                        rows={3}
+                        placeholder={'Mamá\nPapá\nHijo/a (8 años)'}
+                      />
+                    </div>
+                  </>
+                )}
+
                 <div>
                   <label className="block text-sm text-gray-600 mb-1">
                     Teléfono WhatsApp <span className="text-gray-400">(opcional)</span>
@@ -563,18 +663,6 @@ export default function AdminInvitaciones() {
                   <p className="text-xs text-gray-400 mt-1">
                     Si lo agregas, el botón WhatsApp abre la conversación directa.
                   </p>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">
-                    Personas invitadas <span className="text-gray-400">(opcional, una por línea)</span>
-                  </label>
-                  <textarea
-                    value={form.asistentes}
-                    onChange={(e) => setForm({ ...form, asistentes: e.target.value })}
-                    className="input-field"
-                    rows={3}
-                    placeholder={'Mamá\nPapá\nHijo/a (8 años)'}
-                  />
                 </div>
               </div>
 

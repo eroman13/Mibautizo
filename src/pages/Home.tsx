@@ -65,28 +65,19 @@ export default function Home() {
       {/* Banner de invitación personalizada (cuando el enlace trae ?familia=&token=) */}
       {hayInvitacion && (
         <div className="bg-gradient-to-r from-pastel-pink via-pastel-peach to-pastel-lavender shadow-card">
-          <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-white text-base sm:text-lg font-medium text-center sm:text-left drop-shadow-sm">
-              {familiaParam ? (
-                <>💌 <strong>{familiaParam}</strong>, ¡te esperamos en el bautizo!</>
-              ) : (
-                <>💌 ¡Estás invitado al bautizo!</>
-              )}
-            </p>
-            <div className="flex flex-wrap justify-center gap-2">
-              <Link
-                to={linkRsvp}
-                className="bg-white text-pastel-pink px-5 py-2 rounded-full text-sm font-bold shadow hover:bg-pastel-pink hover:text-white transition-colors"
-              >
-                💌 Confirmar asistencia
-              </Link>
-              <Link
-                to="/regalos"
-                className="bg-white/90 text-gray-700 px-5 py-2 rounded-full text-sm font-bold shadow hover:bg-white transition-colors"
-              >
-                🎁 Ver regalos
-              </Link>
-            </div>
+          <div className="container mx-auto px-4 py-3 flex flex-wrap items-center justify-center gap-2">
+            <Link
+              to={linkRsvp}
+              className="bg-white text-pastel-pink px-5 py-2 rounded-full text-sm font-bold shadow hover:bg-pastel-pink hover:text-white transition-colors"
+            >
+              💌 Confirmar asistencia
+            </Link>
+            <Link
+              to="/regalos"
+              className="bg-white/90 text-gray-700 px-5 py-2 rounded-full text-sm font-bold shadow hover:bg-white transition-colors"
+            >
+              🎁 Ver regalos
+            </Link>
           </div>
         </div>
       )}
@@ -156,7 +147,7 @@ export default function Home() {
         <div className="bg-white rounded-2xl shadow-card p-8 md:p-12">
           <div className="text-center mb-8">
             <h3 className="text-3xl font-display font-bold text-gray-800 mb-2 section-decoration">
-              ¡Bienvenidos!
+              {hayInvitacion && familiaParam ? `¡${familiaParam}!` : '¡Bienvenidos!'}
             </h3>
           </div>
           <div className="prose prose-lg mx-auto text-gray-700 whitespace-pre-line">

@@ -62,6 +62,18 @@ export async function getInvitacionPublica(req: Request, res: Response) {
       return res.status(404).json({ success: false, error: 'Invitación no encontrada' });
     }
 
+    // Nombres para precargar en el RSVP según la modalidad
+    let personas: string[] = [];
+    if (invitacion.modalidad === 'individual') {
+      personas = [invitacion.familia.trim()].filter(Boolean);
+    } else if (invitacion.modalidad === 'pareja') {
+      personas = (invitacion.asistentes || '')
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .slice(0, 2);
+    }
+
     res.json({
       success: true,
       data: {
@@ -69,6 +81,7 @@ export async function getInvitacionPublica(req: Request, res: Response) {
         contacto: invitacion.contacto,
         modalidad: invitacion.modalidad,
         estado: invitacion.estado,
+        personas,
       },
     });
   } catch (error) {

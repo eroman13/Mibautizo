@@ -66,20 +66,23 @@ export default function ConfirmarAsistencia() {
       .then((response) => {
         if (!activo || !response?.success || !response.data) return;
         const info = response.data;
-        if (info.familia) setNombreFamilia((prev) => prev || info.familia);
+        if (info.familia) setNombreFamilia(info.familia);
+        const nombres = (Array.isArray(info.personas) ? info.personas : []).filter(
+          (n: string) => n
+        );
         if (info.modalidad === 'individual') {
           setEsIndividual(true);
-          const persona = (info.contacto || info.familia || '').trim();
+          setPaso(2);
+          const persona = nombres[0] || info.familia || '';
           if (persona) {
             setPersonas([{ key: 1, nombre: persona, tipo: 'adulto', edad: '' }]);
-            setPersonaActiva(1);
           }
+          setPersonaActiva(1);
         } else if (info.modalidad === 'pareja') {
           setEsPareja(true);
-          const primeraPersona = (info.contacto || '').trim();
           setPersonas([
-            { key: 1, nombre: primeraPersona, tipo: 'adulto', edad: '' },
-            { key: 2, nombre: '', tipo: 'adulto', edad: '' },
+            { key: 1, nombre: nombres[0] || '', tipo: 'adulto', edad: '' },
+            { key: 2, nombre: nombres[1] || '', tipo: 'adulto', edad: '' },
           ]);
           setPersonaActiva(1);
         }
@@ -350,6 +353,40 @@ export default function ConfirmarAsistencia() {
     );
   }
 
+  // Vista simplificada para invitación individual: solo confirmar
+  if (esIndividual) {
+    return (
+      <div className="min-h-screen bg-soft-gray py-12">
+        <div className="container mx-auto px-4 max-w-md">
+          <div className="bg-white rounded-2xl shadow-card p-8 text-center">
+            <div className="text-5xl mb-4">💌</div>
+            <h1 className="text-2xl md:text-3xl font-display font-bold text-gray-800 mb-2">
+              ¡Hola{nombreFamilia ? ` ${nombreFamilia}` : ''}!
+            </h1>
+            <p className="text-gray-600 mb-6">
+              Confirma tu asistencia al bautizo de {evento.nombreMelliza1} y {evento.nombreMelliza2}.
+            </p>
+            <form onSubmit={enviar}>
+              {error && (
+                <div className="mb-4 p-4 rounded-lg bg-red-50 text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
+              <button type="submit" disabled={enviando} className="btn-primary w-full">
+                {enviando ? 'Enviando...' : 'Confirmar asistencia 💌'}
+              </button>
+            </form>
+          </div>
+          <div className="text-center mt-6">
+            <Link to="/" className="text-gray-500 hover:text-pastel-pink text-sm">
+              ← Volver al inicio
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-soft-gray py-12">
       <div className="container mx-auto px-4 max-w-2xl">
@@ -359,7 +396,9 @@ export default function ConfirmarAsistencia() {
             Confirmar asistencia
           </h1>
           <p className="text-gray-600 max-w-xl mx-auto">
-            Cuéntanos quiénes de tu familia nos acompañarán en el bautizo de{' '}
+            {esPareja
+              ? 'Cuéntanos quiénes de la pareja nos acompañarán en el bautizo de '
+              : 'Cuéntanos quiénes de tu familia nos acompañarán en el bautizo de '}
             {evento.nombreMelliza1} y {evento.nombreMelliza2}.💝
           </p>
           <p className="text-pastel-pink font-medium mt-3">
@@ -409,7 +448,7 @@ export default function ConfirmarAsistencia() {
             {/* Datos de la familia */}
             <div>
               <label className="block text-gray-700 font-medium mb-2">
-                Nombre de la familia *
+                {esPareja ? 'Nombres de la pareja *' : 'Nombre de la familia *'}
               </label>
               <input
                 type="text"
@@ -455,7 +494,7 @@ export default function ConfirmarAsistencia() {
             <div>
               <div className="mb-3">
                 <label className="block text-gray-700 font-medium">
-                  ¿Quiénes asistirán? *
+                  {esPareja ? '¿Quiénes confirman? (máx. 2, sin niños) *' : '¿Quiénes asistirán? *'}
                 </label>
                 <div className="flex items-center gap-2 mt-1.5">
                   <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">
@@ -632,7 +671,7 @@ export default function ConfirmarAsistencia() {
                   Resumen de tu confirmación
                 </p>
                 <p className="text-sm text-gray-700">
-                  <strong>Familia:</strong> {nombreFamilia}
+                  <strong>{esPareja ? 'Pareja' : 'Familia'}:</strong> {nombreFamilia}
                 </p>
                 <div className="flex flex-wrap gap-2 text-xs">
                   <span className="px-2.5 py-0.5 rounded-full bg-white border border-pastel-pink/40 text-pastel-pink font-medium">
@@ -693,7 +732,11 @@ export default function ConfirmarAsistencia() {
             </div>
             <p className="text-center text-xs text-gray-400">
               Paso {paso} de 2 ·{' '}
-              {paso === 1 ? 'Datos de la familia' : 'Asistentes y confirmación'}
+              {paso === 1
+                ? esPareja
+                  ? 'Datos de la pareja'
+                  : 'Datos de la familia'
+                : 'Asistentes y confirmación'}
             </p>
           </form>
         </div>
