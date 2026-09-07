@@ -510,11 +510,13 @@ export default function AdminRegalos() {
             const duplicados = otrosDuplicadosDe(regalo, regalos, porRegaloDuplicados);
             return (
             <div key={regalo.id} className="bg-white rounded-2xl shadow-card overflow-hidden">
-              <img
-                src={regalo.imagenUrl}
-                alt={regalo.nombre}
-                className="w-full h-auto bg-soft-gray"
-              />
+              <div className="bg-soft-gray md:aspect-square">
+                <img
+                  src={regalo.imagenUrl}
+                  alt={regalo.nombre}
+                  className="w-full h-auto md:h-full md:object-contain"
+                />
+              </div>
               <div className="p-6">
                 {duplicados.total > 0 && (
                   <div className="mb-4 bg-yellow-50 border border-yellow-300 rounded-lg p-2.5 text-xs text-yellow-800">

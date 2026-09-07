@@ -54,11 +54,11 @@ export default function TarjetaRegalo({ regalo, melliza1, melliza2 }: TarjetaReg
         )}
 
         {/* Imagen */}
-        <div className="relative overflow-hidden bg-soft-gray">
+        <div className="relative overflow-hidden bg-soft-gray md:aspect-square">
           <img
             src={regalo.imagenUrl}
             alt={regalo.nombre}
-            className="w-full h-auto"
+            className="w-full h-auto md:h-full md:object-contain"
           />
 
           {/* Sugerencia al pasar el mouse: abrir características */}
