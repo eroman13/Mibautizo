@@ -13,9 +13,16 @@ interface FormInvitacion {
   contacto: string;
   telefono: string;
   asistentes: string;
+  modalidad: 'familiar' | 'individual';
 }
 
-const FORM_VACIO: FormInvitacion = { familia: '', contacto: '', telefono: '', asistentes: '' };
+const FORM_VACIO: FormInvitacion = {
+  familia: '',
+  contacto: '',
+  telefono: '',
+  asistentes: '',
+  modalidad: 'familiar',
+};
 
 type EstadoFiltro = 'todos' | Invitacion['estado'];
 
@@ -34,7 +41,7 @@ const COLOR_ESTADO: Record<Invitacion['estado'], string> = {
 function enlaceInvitacion(inv: Invitacion): string {
   const base = window.location.origin;
   const q = new URLSearchParams({ familia: inv.familia, token: inv.token }).toString();
-  return `${base}/invitacion?${q}`;
+  return `${base}/?${q}`;
 }
 
 function mensajeWhatsApp(inv: Invitacion): string {
@@ -108,6 +115,7 @@ export default function AdminInvitaciones() {
       contacto: inv.contacto || '',
       telefono: inv.telefono || '',
       asistentes: inv.asistentes || '',
+      modalidad: inv.modalidad || 'familiar',
     });
     setFormAbierto(true);
   };
@@ -126,6 +134,7 @@ export default function AdminInvitaciones() {
           contacto: form.contacto.trim(),
           telefono: form.telefono.trim(),
           asistentes: form.asistentes.trim(),
+          modalidad: form.modalidad,
         });
         if (!response.success) throw new Error(response.error || 'Error');
         setMensaje({ tipo: 'ok', texto: 'Invitación actualizada.' });
@@ -135,6 +144,7 @@ export default function AdminInvitaciones() {
           contacto: form.contacto.trim(),
           telefono: form.telefono.trim(),
           asistentes: form.asistentes.trim(),
+          modalidad: form.modalidad,
         });
         if (!response.success) throw new Error(response.error || 'Error');
         setMensaje({ tipo: 'ok', texto: 'Invitación creada. Ahora puedes enviarla por WhatsApp.' });
@@ -368,6 +378,15 @@ export default function AdminInvitaciones() {
                       >
                         {ETIQUETA_ESTADO[inv.estado]}
                       </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                          inv.modalidad === 'individual'
+                            ? 'bg-purple-100 text-purple-700'
+                            : 'bg-gray-100 text-gray-500'
+                        }`}
+                      >
+                        {inv.modalidad === 'individual' ? '🙋 Individual' : '👨‍👩‍👧 Familiar'}
+                      </span>
                     </div>
                     <div className="text-sm text-gray-500 mt-1">
                       {inv.contacto && <span>{inv.contacto}</span>}
@@ -449,8 +468,43 @@ export default function AdminInvitaciones() {
 
               <div className="space-y-4">
                 <div>
+                  <label className="block text-sm text-gray-600 mb-1">Tipo de invitación</label>
+                  <div className="space-y-2">
+                    <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border-2 border-gray-100 hover:border-pastel-pink transition-colors">
+                      <input
+                        type="radio"
+                        name="modalidad"
+                        checked={form.modalidad === 'familiar'}
+                        onChange={() => setForm({ ...form, modalidad: 'familiar' })}
+                        className="mt-1"
+                      />
+                      <span>
+                        <span className="block font-medium text-gray-800">👨‍👩‍👧 Familiar</span>
+                        <span className="text-xs text-gray-500">
+                          Pueden confirmar varias personas de la familia.
+                        </span>
+                      </span>
+                    </label>
+                    <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border-2 border-gray-100 hover:border-purple-300 transition-colors">
+                      <input
+                        type="radio"
+                        name="modalidad"
+                        checked={form.modalidad === 'individual'}
+                        onChange={() => setForm({ ...form, modalidad: 'individual' })}
+                        className="mt-1"
+                      />
+                      <span>
+                        <span className="block font-medium text-gray-800">🙋 Individual</span>
+                        <span className="text-xs text-gray-500">
+                          Solo confirma a la persona invitada (no podrá agregar más).
+                        </span>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+                <div>
                   <label className="block text-sm text-gray-600 mb-1">
-                    Familia * <span className="text-gray-400">(ej: Familia Pérez)</span>
+                    Familia o persona * <span className="text-gray-400">(ej: Familia Pérez)</span>
                   </label>
                   <input
                     type="text"

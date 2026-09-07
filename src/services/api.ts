@@ -38,6 +38,11 @@ export const api = {
     return fetchAPI('/evento');
   },
 
+  // Consultar una invitación por su token (modalidad, familia, persona)
+  getInvitacionPorToken: async (token: string) => {
+    return fetchAPI(`/invitacion?token=${encodeURIComponent(token)}`);
+  },
+
   // Crear preferencia de pago
   crearPreferencia: async (data: {
     regalos: Array<{ id: number; cantidad?: number; paraMelliza?: 'melliza1' | 'melliza2' }>;

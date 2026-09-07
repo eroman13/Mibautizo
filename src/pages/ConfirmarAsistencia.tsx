@@ -25,6 +25,7 @@ export default function ConfirmarAsistencia() {
   const [email, setEmail] = useState('');
   const [telefono, setTelefono] = useState('');
   const [invitacionToken, setInvitacionToken] = useState('');
+  const [esIndividual, setEsIndividual] = useState(false);
   const [personas, setPersonas] = useState<PersonaForm[]>([
     { key: 1, nombre: '', tipo: 'adulto', edad: '' },
   ]);
@@ -53,6 +54,33 @@ export default function ConfirmarAsistencia() {
     if (tokenParam) setInvitacionToken(tokenParam);
   }, []);
 
+  // Consulta la modalidad de la invitación (familiar o individual)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tokenParam = params.get('token');
+    if (!tokenParam) return;
+    let activo = true;
+    api
+      .getInvitacionPorToken(tokenParam)
+      .then((response) => {
+        if (!activo || !response?.success || !response.data) return;
+        const info = response.data;
+        if (info.familia) setNombreFamilia((prev) => prev || info.familia);
+        if (info.modalidad === 'individual') {
+          setEsIndividual(true);
+          const persona = (info.contacto || info.familia || '').trim();
+          if (persona) {
+            setPersonas([{ key: 1, nombre: persona, tipo: 'adulto', edad: '' }]);
+            setPersonaActiva(1);
+          }
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      activo = false;
+    };
+  }, []);
+
   const cargarEvento = async () => {
     try {
       const response = await api.getEvento();
@@ -68,6 +96,11 @@ export default function ConfirmarAsistencia() {
     personas.reduce((max, p) => Math.max(max, p.key), 0) + 1;
 
   const agregarPersona = () => {
+    // Las invitaciones individuales solo permiten confirmar a la persona invitada
+    if (esIndividual) {
+      setError('Esta invitación es individual: solo puedes confirmar a la persona invitada.');
+      return;
+    }
     // No se permite agregar más invitados si alguno no tiene nombre aún
     const incompleta = personas.find((p) => !p.nombre.trim());
     if (incompleta) {
@@ -475,17 +508,19 @@ export default function ConfirmarAsistencia() {
                           </span>
                         </span>
                         <span className="flex items-center gap-1 shrink-0">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              eliminarPersona(p.key);
-                            }}
-                            className="text-red-400 hover:text-red-600 text-xs font-medium px-2 py-1"
-                            title="Quitar persona"
-                          >
-                            Quitar
-                          </button>
+                          {!esIndividual && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                eliminarPersona(p.key);
+                              }}
+                              className="text-red-400 hover:text-red-600 text-xs font-medium px-2 py-1"
+                              title="Quitar persona"
+                            >
+                              Quitar
+                            </button>
+                          )}
                           <span
                             className={`text-gray-400 text-xs transition-transform ${
                               abierta ? 'rotate-180' : ''
@@ -547,17 +582,25 @@ export default function ConfirmarAsistencia() {
                 Si confirmas un niño/a, su edad es obligatoria (0 a 13 años). Mayores de 13 se consideran adultos.
               </p>
 
-              <button
-                type="button"
-                onClick={agregarPersona}
-                disabled={personas.some((per) => !per.nombre.trim())}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border-2 border-dashed border-pastel-pink/60 text-pastel-pink rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-pastel-pink/10 disabled:opacity-40 disabled:cursor-not-allowed mt-3"
-              >
-                ＋ Agregar otra persona
-              </button>
-              {personas.some((per) => !per.nombre.trim()) && (
-                <p className="text-xs text-amber-600 mt-1.5">
-                  Completa el nombre del invitado en edición para poder agregar a otro.
+              {!esIndividual && (
+                <button
+                  type="button"
+                  onClick={agregarPersona}
+                  disabled={personas.some((per) => !per.nombre.trim())}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border-2 border-dashed border-pastel-pink/60 text-pastel-pink rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-pastel-pink/10 disabled:opacity-40 disabled:cursor-not-allowed mt-3"
+                >
+                  ＋ Agregar otra persona
+                </button>
+              )}
+              {!esIndividual &&
+                personas.some((per) => !per.nombre.trim()) && (
+                  <p className="text-xs text-amber-600 mt-1.5">
+                    Completa el nombre del invitado en edición para poder agregar a otro.
+                  </p>
+                )}
+              {esIndividual && (
+                <p className="text-xs text-gray-500 mt-3">
+                  🙋 Esta invitación es individual: solo se confirma a la persona invitada.
                 </p>
               )}
 

@@ -16,6 +16,7 @@ interface InvitacionBody {
   contacto?: string;
   telefono?: string;
   estado?: 'pendiente' | 'enviada' | 'confirmada';
+  modalidad?: 'familiar' | 'individual';
   asistentes?: string;
 }
 
@@ -37,7 +38,38 @@ function validarInvitacion(body: InvitacionBody): string | null {
   if (body.familia.trim().length > 120) {
     return 'El nombre de la familia es demasiado largo';
   }
+  if (body.modalidad && body.modalidad !== 'familiar' && body.modalidad !== 'individual') {
+    return 'La modalidad debe ser "familiar" o "individual"';
+  }
   return null;
+}
+
+/** Consulta pública de una invitación por su token (datos mínimos para el RSVP) */
+export async function getInvitacionPublica(req: Request, res: Response) {
+  try {
+    const token = String(req.query.token || '').trim();
+    if (!token) {
+      return res.status(400).json({ success: false, error: 'Token requerido' });
+    }
+
+    const invitacion = await prisma.invitacion.findUnique({ where: { token } });
+    if (!invitacion) {
+      return res.status(404).json({ success: false, error: 'Invitación no encontrada' });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        familia: invitacion.familia,
+        contacto: invitacion.contacto,
+        modalidad: invitacion.modalidad,
+        estado: invitacion.estado,
+      },
+    });
+  } catch (error) {
+    console.error('❌ Error al consultar invitación pública:', error);
+    res.status(500).json({ success: false, error: 'Error al consultar invitación' });
+  }
 }
 
 /** Listar todas las invitaciones con un resumen por estado */
@@ -77,6 +109,7 @@ export async function crearInvitacion(req: Request, res: Response) {
         telefono: limpiarTelefono(body.telefono),
         token: generarToken(),
         estado: 'pendiente',
+        modalidad: body.modalidad || 'familiar',
         asistentes: (body.asistentes || '').trim() || null,
       },
     });
@@ -117,6 +150,7 @@ export async function crearInvitacionesMasivo(req: Request, res: Response) {
           telefono: limpiarTelefono(fila.telefono),
           token: generarToken(),
           estado: 'pendiente',
+          modalidad: fila.modalidad || 'familiar',
           asistentes: (fila.asistentes || '').trim() || null,
         },
       });
@@ -158,6 +192,9 @@ export async function actualizarInvitacion(req: Request, res: Response) {
     if (typeof body.contacto === 'string') data.contacto = body.contacto.trim() || null;
     if (typeof body.telefono === 'string') data.telefono = limpiarTelefono(body.telefono);
     if (typeof body.asistentes === 'string') data.asistentes = body.asistentes.trim() || null;
+    if (body.modalidad && ['familiar', 'individual'].includes(body.modalidad)) {
+      data.modalidad = body.modalidad;
+    }
 
     // Cambio de estado manual (marcar confirmada sin RSVP, o volver a pendiente)
     if (body.estado && ['pendiente', 'enviada', 'confirmada'].includes(body.estado)) {

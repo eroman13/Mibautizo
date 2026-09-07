@@ -103,6 +103,26 @@ export async function confirmarAsistencia(req: Request, res: Response) {
 
     const asistentes = body.asistentes!;
 
+    const invitacionToken = (body.invitacionToken || '').trim();
+
+    // Si la invitación es individual, solo se permite confirmar a esa persona
+    if (invitacionToken) {
+      const invitacionTokenValida = await prisma.invitacion.findUnique({
+        where: { token: invitacionToken },
+        select: { modalidad: true },
+      });
+      if (
+        invitacionTokenValida &&
+        invitacionTokenValida.modalidad === 'individual' &&
+        asistentes.length > 1
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: 'Esta invitación es individual: solo puedes confirmar a la persona invitada.',
+        });
+      }
+    }
+
     // Guardar en una transacción: la confirmación + todas sus personas
     const confirmacion = await prisma.asistencia.create({
       data: {
@@ -182,7 +202,6 @@ export async function confirmarAsistencia(req: Request, res: Response) {
     }
 
     // Vincular la confirmación con su invitación (si venía con token del enlace de WhatsApp)
-    const invitacionToken = (body.invitacionToken || '').trim();
     if (invitacionToken) {
       try {
         const invitacion = await prisma.invitacion.findUnique({

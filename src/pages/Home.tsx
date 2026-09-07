@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Evento } from '../types';
 import { api } from '../services/api';
 import { formatDate } from '../utils/format';
@@ -12,6 +12,19 @@ import { generarSrcSet } from '../utils/imagen';
 export default function Home() {
   const [evento, setEvento] = useState<Evento | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Invitación por enlace personalizado (?familia=…&token=…)
+  const [searchParams] = useSearchParams();
+  const familiaParam = (searchParams.get('familia') || '').trim();
+  const tokenParam = (searchParams.get('token') || '').trim();
+  const hayInvitacion = Boolean(familiaParam || tokenParam);
+
+  const qRsvp = new URLSearchParams();
+  if (familiaParam) qRsvp.set('familia', familiaParam);
+  if (tokenParam) qRsvp.set('token', tokenParam);
+  const linkRsvp = qRsvp.toString()
+    ? `/confirmar-asistencia?${qRsvp.toString()}`
+    : '/confirmar-asistencia';
 
   useEffect(() => {
     cargarEvento();
@@ -49,6 +62,35 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
+      {/* Banner de invitación personalizada (cuando el enlace trae ?familia=&token=) */}
+      {hayInvitacion && (
+        <div className="bg-gradient-to-r from-pastel-pink via-pastel-peach to-pastel-lavender shadow-card">
+          <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-white text-base sm:text-lg font-medium text-center sm:text-left drop-shadow-sm">
+              {familiaParam ? (
+                <>💌 <strong>{familiaParam}</strong>, ¡te esperamos en el bautizo!</>
+              ) : (
+                <>💌 ¡Estás invitado al bautizo!</>
+              )}
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              <Link
+                to={linkRsvp}
+                className="bg-white text-pastel-pink px-5 py-2 rounded-full text-sm font-bold shadow hover:bg-pastel-pink hover:text-white transition-colors"
+              >
+                💌 Confirmar asistencia
+              </Link>
+              <Link
+                to="/regalos"
+                className="bg-white/90 text-gray-700 px-5 py-2 rounded-full text-sm font-bold shadow hover:bg-white transition-colors"
+              >
+                🎁 Ver regalos
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero / Portada (full-screen) */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Imagen de fondo optimizada por dispositivo (object-fit evita cortes) */}

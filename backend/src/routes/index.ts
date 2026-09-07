@@ -34,6 +34,7 @@ import {
   actualizarInvitacion,
   marcarEnviadaInvitacion,
   eliminarInvitacion,
+  getInvitacionPublica,
 } from '../controllers/invitaciones.controller';
 import {
   getAllAdminUsers,
@@ -54,6 +55,7 @@ const verificarAuth = verificarAuthAdmin;
 router.get('/regalos', getRegalos);
 router.get('/regalos/:id', getRegaloById);
 router.get('/evento', getEvento);
+router.get('/invitacion', getInvitacionPublica);
 
 // Ruta para subir imágenes
 router.post('/upload-image', uploadImage);
