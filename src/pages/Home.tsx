@@ -64,26 +64,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-      {/* Banner de invitación personalizada (cuando el enlace trae ?familia=&token=) */}
-      {hayInvitacion && (
-        <div className="bg-gradient-to-r from-pastel-pink via-pastel-peach to-pastel-lavender shadow-card">
-          <div className="container mx-auto px-4 py-3 flex flex-wrap items-center justify-center gap-2">
-            <Link
-              to={linkRsvp}
-              className="bg-white text-pastel-pink px-5 py-2 rounded-full text-sm font-bold shadow hover:bg-pastel-pink hover:text-white transition-colors"
-            >
-              💌 Confirmar asistencia
-            </Link>
-            <Link
-              to="/regalos"
-              className="bg-white/90 text-gray-700 px-5 py-2 rounded-full text-sm font-bold shadow hover:bg-white transition-colors"
-            >
-              🎁 Ver regalos
-            </Link>
-          </div>
-        </div>
-      )}
-
       {/* Hero / Portada (full-screen) */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Imagen de fondo optimizada por dispositivo (object-fit evita cortes) */}
@@ -162,7 +142,7 @@ export default function Home() {
       <section className="container mx-auto px-4 pb-12 text-center">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            to="/confirmar-asistencia"
+            to={linkRsvp}
             className="btn-secondary inline-block text-lg md:text-xl px-10 py-4 shadow-soft"
           >
             💌 Confirmar asistencia
