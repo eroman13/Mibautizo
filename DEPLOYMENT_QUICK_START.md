@@ -63,8 +63,8 @@ NODE_ENV=production
 GMAIL_USER=regalapp.spa@gmail.com
 GMAIL_PASS=einzwdfqiwcojgew
 ADMIN_EMAIL=regalapp.spa@gmail.com
-GEMELA1_NAME=Antonia
-GEMELA2_NAME=Emilia
+MELLIZA1_NAME=Antonia
+MELLIZA2_NAME=Emilia
 EVENT_DATE=15 de septiembre de 2026
 ```
 

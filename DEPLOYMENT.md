@@ -119,7 +119,7 @@ MP_PUBLIC_KEY=APP_USR-tu-public-key-de-produccion-aqui
 MP_COMMISSION_RATE=0.038
 
 # URLs (actualizar después de deploy)
-FRONTEND_URL=https://bautizo-gemelas.vercel.app
+FRONTEND_URL=https://bautizo-mellizas.vercel.app
 BACKEND_URL=https://bautizo-api.up.railway.app
 
 # Seguridad
@@ -210,7 +210,7 @@ VITE_API_URL=https://bautizo-api-production-abc123.up.railway.app/api
 # Hace deploy en cada push a main/master
 
 # URL resultante:
-https://bautizo-gemelas.vercel.app
+https://bautizo-mellizas.vercel.app
 ```
 
 #### 2.6 Actualizar CORS en Backend
@@ -218,7 +218,7 @@ https://bautizo-gemelas.vercel.app
 Regresa a Railway y actualiza:
 
 ```env
-FRONTEND_URL=https://bautizo-gemelas.vercel.app
+FRONTEND_URL=https://bautizo-mellizas.vercel.app
 ```
 
 Guarda y Railway re-deployará automáticamente.
@@ -381,16 +381,16 @@ Para desarrolladores con experiencia en servidores Linux.
 2. **Configurar PostgreSQL:**
    ```bash
    sudo -u postgres psql
-   CREATE DATABASE bautizo_gemelas;
+   CREATE DATABASE bautizo_mellizas;
    CREATE USER bautizo WITH PASSWORD 'contraseña-segura';
-   GRANT ALL PRIVILEGES ON DATABASE bautizo_gemelas TO bautizo;
+   GRANT ALL PRIVILEGES ON DATABASE bautizo_mellizas TO bautizo;
    \q
    ```
 
 3. **Clonar proyecto:**
    ```bash
    git clone <tu-repo>
-   cd mesa-regalos-bautizo-gemelas
+   cd mesa-regalos-bautizo-mellizas
    npm run install:all
    ```
 
@@ -404,7 +404,7 @@ Para desarrolladores con experiencia en servidores Linux.
 5. **Ejecutar migraciones:**
    ```bash
    cd backend
-   DATABASE_URL="postgresql://bautizo:contraseña@localhost:5432/bautizo_gemelas" npx prisma migrate deploy
+   DATABASE_URL="postgresql://bautizo:contraseña@localhost:5432/bautizo_mellizas" npx prisma migrate deploy
    npx prisma db seed
    ```
 
@@ -432,7 +432,7 @@ Para desarrolladores con experiencia en servidores Linux.
        server_name tu-dominio.com www.tu-dominio.com;
        
        # Frontend
-       root /home/usuario/mesa-regalos-bautizo-gemelas/frontend/dist;
+       root /home/usuario/mesa-regalos-bautizo-mellizas/frontend/dist;
        index index.html;
        
        location / {
@@ -592,7 +592,7 @@ Railway Dashboard → Deployments → Redeploy
 
 1. **URL final:**
    ```
-   https://bautizo-gemelas.vercel.app
+   https://bautizo-mellizas.vercel.app
    ```
 
 2. **Crear QR Code:**
@@ -603,10 +603,10 @@ Railway Dashboard → Deployments → Redeploy
 
 3. **Enviar por WhatsApp:**
    ```
-   🍼 ¡Nos casamos/bautizamos a nuestras gemelas! 💕
+   🍼 ¡Nos casamos/bautizamos a nuestras mellizas! 💕
    
    Aquí está nuestra mesa de regalos:
-   https://bautizo-gemelas.vercel.app
+   https://bautizo-mellizas.vercel.app
    
    ¡Gracias por acompañarnos! 🎀
    ```

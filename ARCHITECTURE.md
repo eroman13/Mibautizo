@@ -20,7 +20,7 @@ Documentación técnica detallada de la arquitectura de la Mesa de Regalos Digit
 ## 🎯 Visión General
 
 ### Objetivo
-Aplicación web full-stack para gestionar regalos en dinero para el bautizo de gemelas, con pagos electrónicos y panel administrativo.
+Aplicación web full-stack para gestionar regalos en dinero para el bautizo de mellizas, con pagos electrónicos y panel administrativo.
 
 ### Arquitectura Elegida
 **Monorepo con separación frontend/backend**
@@ -356,8 +356,8 @@ app.use(cors({
 // Configuración del evento
 model Event {
   id                 Int      @id @default(autoincrement())
-  nombreGemela1      String
-  nombreGemela2      String
+  nombreMelliza1      String
+  nombreMelliza2      String
   fecha              DateTime
   hora               String
   lugar              String

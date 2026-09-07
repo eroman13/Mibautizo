@@ -39,7 +39,7 @@ Las siguientes URLs se configurarán en las preferencias de pago:
 | **Error** | `http://localhost:5173/pago-fallido` | Pago rechazado ❌ |
 | **Pendiente** | `http://localhost:5173/pago-pendiente` | Pago en proceso ⏳ |
 
-En producción, cambiar a tu dominio real (ej: `https://bautizo-gemelas.com/pago-exitoso`)
+En producción, cambiar a tu dominio real (ej: `https://bautizo-mellizas.com/pago-exitoso`)
 
 ---
 

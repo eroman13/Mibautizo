@@ -13,8 +13,8 @@ GMAIL_PASS=your-16-char-app-password
 ADMIN_EMAIL=admin@example.com
 
 # Datos del evento
-GEMELA1_NAME=Antonia
-GEMELA2_NAME=Emilia
+MELLIZA1_NAME=Antonia
+MELLIZA2_NAME=Emilia
 EVENT_DATE=15 de septiembre de 2026
 ```
 

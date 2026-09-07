@@ -7,12 +7,12 @@ import { ItemCarrito, Regalo } from '../types';
 
 interface CarritoContextType {
   items: ItemCarrito[];
-  agregarAlCarrito: (regalo: Regalo, paraGemela: 'gemela1' | 'gemela2', montoLibre?: number) => void;
+  agregarAlCarrito: (regalo: Regalo, paraMelliza: 'melliza1' | 'melliza2', montoLibre?: number) => void;
   eliminarDelCarrito: (index: number) => void;
   limpiarCarrito: () => void;
   totalItems: number;
-  regalosGemela1: number;
-  regalosGemela2: number;
+  regalosMelliza1: number;
+  regalosMelliza2: number;
 }
 
 const CarritoContext = createContext<CarritoContextType | undefined>(undefined);
@@ -20,9 +20,9 @@ const CarritoContext = createContext<CarritoContextType | undefined>(undefined);
 export function CarritoProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ItemCarrito[]>([]);
 
-  const agregarAlCarrito = (regalo: Regalo, paraGemela: 'gemela1' | 'gemela2', montoLibre?: number) => {
-    // Permitir múltiples aportes del mismo regalo para la misma o diferente gemela
-    setItems([...items, { regalo, montoLibre, paraGemela }]);
+  const agregarAlCarrito = (regalo: Regalo, paraMelliza: 'melliza1' | 'melliza2', montoLibre?: number) => {
+    // Permitir múltiples aportes del mismo regalo para la misma o diferente melliza
+    setItems([...items, { regalo, montoLibre, paraMelliza }]);
   };
 
   const eliminarDelCarrito = (index: number) => {
@@ -34,8 +34,8 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
     setItems([]);
   };
 
-  const regalosGemela1 = items.filter(item => item.paraGemela === 'gemela1').length;
-  const regalosGemela2 = items.filter(item => item.paraGemela === 'gemela2').length;
+  const regalosMelliza1 = items.filter(item => item.paraMelliza === 'melliza1').length;
+  const regalosMelliza2 = items.filter(item => item.paraMelliza === 'melliza2').length;
 
   return (
     <CarritoContext.Provider
@@ -45,8 +45,8 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
         eliminarDelCarrito,
         limpiarCarrito,
         totalItems: items.length,
-        regalosGemela1,
-        regalosGemela2,
+        regalosMelliza1,
+        regalosMelliza2,
       }}
     >
       {children}

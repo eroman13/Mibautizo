@@ -9,16 +9,16 @@ import { formatCLP } from '../../utils/format';
 
 interface DetalleRegaloModalProps {
   regalo: Regalo;
-  gemela1: string;
-  gemela2: string;
+  melliza1: string;
+  melliza2: string;
   onCerrar: () => void;
-  onAgregar: (paraGemela: 'gemela1' | 'gemela2') => void;
+  onAgregar: (paraMelliza: 'melliza1' | 'melliza2') => void;
 }
 
 export default function DetalleRegaloModal({
   regalo,
-  gemela1,
-  gemela2,
+  melliza1,
+  melliza2,
   onCerrar,
   onAgregar,
 }: DetalleRegaloModalProps) {
@@ -64,11 +64,11 @@ export default function DetalleRegaloModal({
         </button>
 
         {/* Imagen */}
-        <div className="relative h-60 md:h-72">
+        <div className="relative bg-soft-gray">
           <img
             src={regalo.imagenUrl}
             alt={regalo.nombre}
-            className="w-full h-full object-cover"
+            className="w-full h-auto max-h-[60vh] object-contain"
           />
           {regalo.permiteColaborativo && (
             <div className="absolute top-3 left-3 bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
@@ -126,16 +126,16 @@ export default function DetalleRegaloModal({
               ¿Para quién quieres regalar?
             </p>
             <button
-              onClick={() => onAgregar('gemela1')}
+              onClick={() => onAgregar('melliza1')}
               className="w-full py-3 px-4 rounded-full font-semibold transition-all duration-300 bg-pastel-pink/20 text-pastel-pink hover:bg-pastel-pink/40"
             >
-              🎁 Para {gemela1}
+              🎁 Para {melliza1}
             </button>
             <button
-              onClick={() => onAgregar('gemela2')}
+              onClick={() => onAgregar('melliza2')}
               className="w-full py-3 px-4 rounded-full font-semibold transition-all duration-300 bg-pastel-lavender/20 text-pastel-lavender hover:bg-pastel-lavender/40"
             >
-              🎁 Para {gemela2}
+              🎁 Para {melliza2}
             </button>
           </div>
         </div>

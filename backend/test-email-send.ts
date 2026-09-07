@@ -18,7 +18,7 @@ async function testEmailSystem() {
         { nombre: 'Aporte libre', cantidad: 1, precio: 55000 },
       ],
       totalCLP: 100000,
-      dedicatoria: 'Felicidades por el bautizo de las gemelas! 🎉',
+      dedicatoria: 'Felicidades por el bautizo de las mellizas! 🎉',
     };
 
     console.log('📧 Prueba 1: Enviando correo de confirmación al invitado...');

@@ -30,7 +30,7 @@
 ### Seguridad
 - [ ] `.env` no está en Git (usar `.env.example`)
 - [ ] Database PASSWORD es fuerte (mínimo 16 caracteres)
-- [ ] Admin PASSWORD es único (no "gemelas2026")
+- [ ] Admin PASSWORD es único (no "mellizas2026")
 - [ ] CORS está configurado para dominio específico
 - [ ] JWT/tokens tienen expiración (si aplica)
 - [ ] SQL Injection: Usar Prisma (✅ ya se hace)
@@ -98,8 +98,8 @@
   - GMAIL_USER
   - GMAIL_PASS
   - ADMIN_EMAIL
-  - GEMELA1_NAME
-  - GEMELA2_NAME
+  - MELLIZA1_NAME
+  - MELLIZA2_NAME
   - EVENT_DATE
   - NODE_ENV=production
 - [ ] Trigger deploy

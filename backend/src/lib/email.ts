@@ -258,8 +258,8 @@ export async function enviarConfirmacionRegalo({
   }
 
   try {
-    const nombreGemelas = process.env.GEMELA1_NAME || 'Antonia';
-    const nombreGemela2 = process.env.GEMELA2_NAME || 'Emilia';
+    const nombreMellizas = process.env.MELLIZA1_NAME || 'Antonia';
+    const nombreMelliza2 = process.env.MELLIZA2_NAME || 'Emilia';
 
     // La fecha real del evento viene desde la BD (admin > Configuración) y la
     // envía el webhook. Respaldo: variable EVENT_DATE del entorno.
@@ -307,7 +307,7 @@ export async function enviarConfirmacionRegalo({
         <div class="container">
           <div class="header">
             <h1>🎁 ¡Gracias por tu regalo! 💝</h1>
-            <p>Confirmación de contribución al bautizo de ${nombreGemelas} y ${nombreGemela2}</p>
+            <p>Confirmación de contribución al bautizo de ${nombreMellizas} y ${nombreMelliza2}</p>
           </div>
 
           <div class="content">
@@ -348,13 +348,13 @@ export async function enviarConfirmacionRegalo({
             <p>
               <strong>Detalles del evento:</strong><br>
               📅 ${fechaTexto}<br>
-              👶 Bautizo de ${nombreGemelas} y ${nombreGemela2}
+              👶 Bautizo de ${nombreMellizas} y ${nombreMelliza2}
             </p>
           </div>
 
           <div class="footer">
             <p>Este es un correo automático. Por favor no responder a este mensaje.</p>
-            <p>Bautizo de las Gemelas 💝 - Mesa de Regalos</p>
+            <p>Bautizo de las Mellizas 💝 - Mesa de Regalos</p>
           </div>
         </div>
       </body>
@@ -365,7 +365,7 @@ export async function enviarConfirmacionRegalo({
     const resultado = await enviarConReintentos({
       from: gmailUser || 'tu-email@gmail.com',
       to: para,
-      subject: `✅ Confirmación de regalo para ${nombreGemelas} y ${nombreGemela2}`,
+      subject: `✅ Confirmación de regalo para ${nombreMellizas} y ${nombreMelliza2}`,
       html,
     });
 
@@ -408,8 +408,8 @@ export async function enviarNotificacionAlAdmin({
   }
 
   try {
-    const nombreGemelas = process.env.GEMELA1_NAME || 'Antonia';
-    const nombreGemela2 = process.env.GEMELA2_NAME || 'Emilia';
+    const nombreMellizas = process.env.MELLIZA1_NAME || 'Antonia';
+    const nombreMelliza2 = process.env.MELLIZA2_NAME || 'Emilia';
 
     const regalosHTML = regalos
       .map((r) => `<li>${r.nombre} (x${r.cantidad})</li>`)
@@ -429,7 +429,7 @@ export async function enviarNotificacionAlAdmin({
       <body>
         <div class="container">
           <div class="alert">
-            <h2>🎉 Nuevo regalo recibido para ${nombreGemelas} y ${nombreGemela2}</h2>
+            <h2>🎉 Nuevo regalo recibido para ${nombreMellizas} y ${nombreMelliza2}</h2>
             
             <p><strong>De:</strong> ${nombreInvitado} (${emailInvitado})</p>
             <p><strong>Monto:</strong> $${totalCLP.toLocaleString('es-CL')} CLP</p>
@@ -482,8 +482,8 @@ export async function enviarCorreoPrueba({ para }: { para: string }) {
     };
   }
 
-  const nombreGemelas = process.env.GEMELA1_NAME || 'Antonia';
-  const nombreGemela2 = process.env.GEMELA2_NAME || 'Emilia';
+  const nombreMellizas = process.env.MELLIZA1_NAME || 'Antonia';
+  const nombreMelliza2 = process.env.MELLIZA2_NAME || 'Emilia';
 
   const html = `
     <!DOCTYPE html>
@@ -502,7 +502,7 @@ export async function enviarCorreoPrueba({ para }: { para: string }) {
       <div class="container">
         <div class="header">
           <h1>📧 Correo de prueba</h1>
-          <p>Bautizo de ${nombreGemelas} y ${nombreGemela2}</p>
+          <p>Bautizo de ${nombreMellizas} y ${nombreMelliza2}</p>
         </div>
         <div class="content">
           <p>¡Hola! 👋</p>

@@ -37,7 +37,7 @@ export default function AdminLogin() {
             🔐 Panel Admin
           </h1>
           <p className="text-gray-600">
-            Mesa de Regalos - Bautizo de las Gemelas
+            Mesa de Regalos - Bautizo de las Mellizas
           </p>
         </div>
 

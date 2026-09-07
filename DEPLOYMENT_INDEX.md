@@ -1,4 +1,4 @@
-# 📚 Índice de Deployment - Bautizo de las Gemelas
+# 📚 Índice de Deployment - Bautizo de las Mellizas
 
 ## 🎯 Tu Aplicación Vivirá 50 Días
 

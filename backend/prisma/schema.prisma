@@ -1,4 +1,4 @@
-// Schema de base de datos para Mesa de Regalos - Bautizo de Gemelas
+// Schema de base de datos para Mesa de Regalos - Bautizo de Mellizas
 // Configurado para PostgreSQL en producción (Railway)
 // En desarrollo local, configura DATABASE_URL en .env
 
@@ -11,11 +11,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Configuración del evento (bautizo de las gemelas)
+// Configuración del evento (bautizo de las mellizas)
 model Event {
   id                 Int      @id @default(autoincrement())
-  nombreGemela1      String
-  nombreGemela2      String
+  // Nota: las columnas físicas conservan su nombre original ("nombreGemela1/2")
+  // por compatibilidad con la BD existente y para evitar pérdida de datos con
+  // `prisma db push` en producción. El modelo/código ya usa "Melliza".
+  nombreMelliza1     String   @map("nombreGemela1")
+  nombreMelliza2     String   @map("nombreGemela2")
   fecha              String   // Formato: "2026-09-15"
   hora               String   // Formato: "16:00"
   lugar              String

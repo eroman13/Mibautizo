@@ -8,12 +8,12 @@ import { formatCLP } from '../../utils/format';
 import { useNavigate } from 'react-router-dom';
 
 interface CarritoFlotanteProps {
-  gemela1: string;
-  gemela2: string;
+  melliza1: string;
+  melliza2: string;
 }
 
-export default function CarritoFlotante({ gemela1, gemela2 }: CarritoFlotanteProps) {
-  const { items, eliminarDelCarrito, totalItems, regalosGemela1, regalosGemela2 } = useCarrito();
+export default function CarritoFlotante({ melliza1, melliza2 }: CarritoFlotanteProps) {
+  const { items, eliminarDelCarrito, totalItems, regalosMelliza1, regalosMelliza2 } = useCarrito();
   const [abierto, setAbierto] = useState(false);
   const navigate = useNavigate();
 
@@ -30,16 +30,16 @@ export default function CarritoFlotante({ gemela1, gemela2 }: CarritoFlotantePro
     return sum + (item.montoLibre || item.regalo.precioCLP);
   }, 0);
 
-  const itemsGemela1 = items
+  const itemsMelliza1 = items
     .map((item, index) => ({ item, index }))
-    .filter(({ item }) => item.paraGemela === 'gemela1');
+    .filter(({ item }) => item.paraMelliza === 'melliza1');
   
-  const itemsGemela2 = items
+  const itemsMelliza2 = items
     .map((item, index) => ({ item, index }))
-    .filter(({ item }) => item.paraGemela === 'gemela2');
+    .filter(({ item }) => item.paraMelliza === 'melliza2');
 
-  // Validar si hay regalos para ambas gemelas
-  const puedeCheckout = regalosGemela1 > 0 && regalosGemela2 > 0;
+  // Validar si hay regalos para ambas mellizas
+  const puedeCheckout = regalosMelliza1 > 0 && regalosMelliza2 > 0;
 
   return (
     <>
@@ -85,32 +85,32 @@ export default function CarritoFlotante({ gemela1, gemela2 }: CarritoFlotantePro
                 </button>
               </div>
 
-              {/* Validación de ambas gemelas */}
+              {/* Validación de ambas mellizas */}
               {!puedeCheckout && (
                 <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
                   <p className="text-sm text-yellow-700">
-                    <strong>⚠️ Debes seleccionar al menos 1 regalo para cada gemela</strong>
+                    <strong>⚠️ Debes seleccionar al menos 1 regalo para cada melliza</strong>
                     <br />
-                    Para {gemela1}: {regalosGemela1} regalo{regalosGemela1 !== 1 ? 's' : ''}
+                    Para {melliza1}: {regalosMelliza1} regalo{regalosMelliza1 !== 1 ? 's' : ''}
                     <br />
-                    Para {gemela2}: {regalosGemela2} regalo{regalosGemela2 !== 1 ? 's' : ''}
+                    Para {melliza2}: {regalosMelliza2} regalo{regalosMelliza2 !== 1 ? 's' : ''}
                   </p>
                 </div>
               )}
 
-              {/* Regalos para Gemela 1 */}
-              {itemsGemela1.length > 0 && (
+              {/* Regalos para Melliza 1 */}
+              {itemsMelliza1.length > 0 && (
                 <div className="mb-6">
                   <h3 className="font-semibold text-pastel-pink mb-3 flex items-center gap-2">
-                    👧 Para {gemela1} ({itemsGemela1.length})
+                    👧 Para {melliza1} ({itemsMelliza1.length})
                   </h3>
                   <div className="space-y-3">
-                    {itemsGemela1.map(({ item, index }) => (
-                      <div key={`${item.regalo.id}-gemela1-${index}`} className="flex gap-3 bg-gray-50 p-3 rounded-lg">
+                    {itemsMelliza1.map(({ item, index }) => (
+                      <div key={`${item.regalo.id}-melliza1-${index}`} className="flex gap-3 bg-gray-50 p-3 rounded-lg">
                         <img
                           src={item.regalo.imagenUrl}
                           alt={item.regalo.nombre}
-                          className="w-16 h-16 object-cover rounded-lg"
+                          className="w-16 h-16 object-contain rounded-lg bg-white"
                         />
                         <div className="flex-1">
                           <h4 className="font-semibold text-gray-800 text-sm mb-1">
@@ -134,19 +134,19 @@ export default function CarritoFlotante({ gemela1, gemela2 }: CarritoFlotantePro
                 </div>
               )}
 
-              {/* Regalos para Gemela 2 */}
-              {itemsGemela2.length > 0 && (
+              {/* Regalos para Melliza 2 */}
+              {itemsMelliza2.length > 0 && (
                 <div className="mb-6">
                   <h3 className="font-semibold text-pastel-lavender mb-3 flex items-center gap-2">
-                    👧 Para {gemela2} ({itemsGemela2.length})
+                    👧 Para {melliza2} ({itemsMelliza2.length})
                   </h3>
                   <div className="space-y-3">
-                    {itemsGemela2.map(({ item, index }) => (
-                      <div key={`${item.regalo.id}-gemela2-${index}`} className="flex gap-3 bg-gray-50 p-3 rounded-lg">
+                    {itemsMelliza2.map(({ item, index }) => (
+                      <div key={`${item.regalo.id}-melliza2-${index}`} className="flex gap-3 bg-gray-50 p-3 rounded-lg">
                         <img
                           src={item.regalo.imagenUrl}
                           alt={item.regalo.nombre}
-                          className="w-16 h-16 object-cover rounded-lg"
+                          className="w-16 h-16 object-contain rounded-lg bg-white"
                         />
                         <div className="flex-1">
                           <h4 className="font-semibold text-gray-800 text-sm mb-1">

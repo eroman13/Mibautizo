@@ -20,8 +20,8 @@ export default function AdminConfiguracion() {
   const [enviandoPrueba, setEnviandoPrueba] = useState(false);
   const [mensajePrueba, setMensajePrueba] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null);
   const [formData, setFormData] = useState<Partial<Evento>>({
-    nombreGemela1: '',
-    nombreGemela2: '',
+    nombreMelliza1: '',
+    nombreMelliza2: '',
     fecha: '',
     hora: '',
     lugar: '',
@@ -203,29 +203,29 @@ export default function AdminConfiguracion() {
       <div className="container mx-auto px-4 py-8 max-w-3xl">
         <div className="bg-white rounded-2xl shadow-card p-8">
           <form onSubmit={guardarCambios} className="space-y-6">
-            {/* Nombres de las gemelas */}
+            {/* Nombres de las mellizas */}
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-gray-700 font-medium mb-2">
-                  Nombre Gemela 1
+                  Nombre Melliza 1
                 </label>
                 <input
                   type="text"
                   required
-                  value={formData.nombreGemela1}
-                  onChange={(e) => setFormData({ ...formData, nombreGemela1: e.target.value })}
+                  value={formData.nombreMelliza1}
+                  onChange={(e) => setFormData({ ...formData, nombreMelliza1: e.target.value })}
                   className="input-field"
                 />
               </div>
               <div>
                 <label className="block text-gray-700 font-medium mb-2">
-                  Nombre Gemela 2
+                  Nombre Melliza 2
                 </label>
                 <input
                   type="text"
                   required
-                  value={formData.nombreGemela2}
-                  onChange={(e) => setFormData({ ...formData, nombreGemela2: e.target.value })}
+                  value={formData.nombreMelliza2}
+                  onChange={(e) => setFormData({ ...formData, nombreMelliza2: e.target.value })}
                   className="input-field"
                 />
               </div>

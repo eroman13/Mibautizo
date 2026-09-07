@@ -280,7 +280,7 @@ Guía rápida para navegar toda la documentación del proyecto.
 ```bash
 # Clonar el repo incluye toda la documentación
 git clone <url-del-repo>
-cd mesa-regalos-bautizo-gemelas
+cd mesa-regalos-bautizo-mellizas
 
 # Los archivos .md se pueden abrir con cualquier editor
 ```

@@ -1,4 +1,4 @@
-# 🚀 Guía Completa de Deployment - Bautizo de las Gemelas
+# 🚀 Guía Completa de Deployment - Bautizo de las Mellizas
 
 ## 📋 Opciones Recomendadas (Calidad/Precio Óptimo)
 
@@ -34,8 +34,8 @@ FRONTEND_URL=https://tu-dominio.vercel.app
 GMAIL_USER=regalapp.spa@gmail.com
 GMAIL_PASS=einzwdfqiwcojgew
 ADMIN_EMAIL=regalapp.spa@gmail.com
-GEMELA1_NAME=Antonia
-GEMELA2_NAME=Emilia
+MELLIZA1_NAME=Antonia
+MELLIZA2_NAME=Emilia
 EVENT_DATE=15 de septiembre de 2026
 ```
 
@@ -102,8 +102,8 @@ BACKEND_URL=https://mibautizo-backend.onrender.com
 GMAIL_USER=regalapp.spa@gmail.com
 GMAIL_PASS=einzwdfqiwcojgew
 ADMIN_EMAIL=regalapp.spa@gmail.com
-GEMELA1_NAME=Antonia
-GEMELA2_NAME=Emilia
+MELLIZA1_NAME=Antonia
+MELLIZA2_NAME=Emilia
 EVENT_DATE=15 de septiembre de 2026
 NODE_ENV=production
 ```

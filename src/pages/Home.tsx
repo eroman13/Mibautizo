@@ -58,7 +58,7 @@ export default function Home() {
             src={evento.portadaUrlMobile}
             srcSet={generarSrcSet(evento.portadaUrlMobile)}
             sizes="100vw"
-            alt={`Bautizo de ${evento.nombreGemela1} y ${evento.nombreGemela2}`}
+            alt={`Bautizo de ${evento.nombreMelliza1} y ${evento.nombreMelliza2}`}
             className="absolute inset-0 w-full h-full object-cover object-center md:hidden"
             style={{ filter: 'brightness(0.65)' }}
           />
@@ -70,7 +70,7 @@ export default function Home() {
             src={evento.portadaUrl}
             srcSet={generarSrcSet(evento.portadaUrl)}
             sizes="100vw"
-            alt={`Bautizo de ${evento.nombreGemela1} y ${evento.nombreGemela2}`}
+            alt={`Bautizo de ${evento.nombreMelliza1} y ${evento.nombreMelliza2}`}
             className="absolute inset-0 w-full h-full object-cover object-center hidden md:block"
             style={{ filter: 'brightness(0.65)' }}
           />
@@ -85,7 +85,7 @@ export default function Home() {
             🍼 Bautizo de
           </h1>
           <h2 className="text-5xl md:text-7xl font-display font-bold text-white mb-6 drop-shadow-lg">
-            {evento.nombreGemela1} & {evento.nombreGemela2}
+            {evento.nombreMelliza1} & {evento.nombreMelliza2}
           </h2>
           <div className="flex flex-col md:flex-row items-center justify-center gap-4 text-white text-lg md:text-xl drop-shadow">
             <span className="flex items-center gap-2">

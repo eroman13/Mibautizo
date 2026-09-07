@@ -1,6 +1,6 @@
 /**
  * Seed para poblar la base de datos con datos iniciales
- * Incluye: configuración del evento y regalos de ejemplo para gemelas
+ * Incluye: configuración del evento y regalos de ejemplo para mellizas
  */
 
 import { PrismaClient } from '@prisma/client';
@@ -16,38 +16,38 @@ async function main() {
   const event = await prisma.event.upsert({
     where: { id: 1 },
     update: {
-      nombreGemela1: 'Antonia',
-      nombreGemela2: 'Emilia',
-      mensajeBienvenida: '¡Bienvenidos a la celebración del bautizo de nuestras hermosas gemelas! 🎀✨\n\nNos llena de alegría poder compartir este día tan especial con ustedes. Su presencia es el mejor regalo, pero si desean hacernos un presente, hemos preparado esta lista de deseos para las pequeñas.\n\nCada aporte nos ayudará a darles lo mejor a Antonia y Emilia en sus primeros meses de vida.\n\n¡Gracias por ser parte de este momento único! 💝',
+      nombreMelliza1: 'Antonia',
+      nombreMelliza2: 'Emilia',
+      mensajeBienvenida: '¡Bienvenidos a la celebración del bautizo de nuestras hermosas mellizas! 🎀✨\n\nNos llena de alegría poder compartir este día tan especial con ustedes. Su presencia es el mejor regalo, pero si desean hacernos un presente, hemos preparado esta lista de deseos para las pequeñas.\n\nCada aporte nos ayudará a darles lo mejor a Antonia y Emilia en sus primeros meses de vida.\n\n¡Gracias por ser parte de este momento único! 💝',
     },
     create: {
-      nombreGemela1: 'Antonia',
-      nombreGemela2: 'Emilia',
+      nombreMelliza1: 'Antonia',
+      nombreMelliza2: 'Emilia',
       fecha: '2026-10-10',
       hora: '16:00',
       lugar: 'Parroquia San Francisco, Santiago',
-      mensajeBienvenida: '¡Bienvenidos a la celebración del bautizo de nuestras hermosas gemelas! 🎀✨\n\nNos llena de alegría poder compartir este día tan especial con ustedes. Su presencia es el mejor regalo, pero si desean hacernos un presente, hemos preparado esta lista de deseos para las pequeñas.\n\nCada aporte nos ayudará a darles lo mejor a Antonia y Emilia en sus primeros meses de vida.\n\n¡Gracias por ser parte de este momento único! 💝',
+      mensajeBienvenida: '¡Bienvenidos a la celebración del bautizo de nuestras hermosas mellizas! 🎀✨\n\nNos llena de alegría poder compartir este día tan especial con ustedes. Su presencia es el mejor regalo, pero si desean hacernos un presente, hemos preparado esta lista de deseos para las pequeñas.\n\nCada aporte nos ayudará a darles lo mejor a Antonia y Emilia en sus primeros meses de vida.\n\n¡Gracias por ser parte de este momento único! 💝',
       portadaUrl: 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=1200',
       modoComision: 'A', // Por defecto, el invitado cubre la comisión
     },
   });
 
-  console.log(`✅ Evento creado: Bautizo de ${event.nombreGemela1} y ${event.nombreGemela2}`);
+  console.log(`✅ Evento creado: Bautizo de ${event.nombreMelliza1} y ${event.nombreMelliza2}`);
 
-  // 2. Crear regalos de ejemplo para gemelas
+  // 2. Crear regalos de ejemplo para mellizas
   console.log('🎁 Creando catálogo de regalos...');
 
   const regalos = [
     {
       nombre: 'Pack de 4 bodies de algodón',
-      descripcion: '2 bodies para cada gemela, 100% algodón suave, tallas 3-6 meses',
+      descripcion: '2 bodies para cada melliza, 100% algodón suave, tallas 3-6 meses',
       precioCLP: 18000,
       imagenUrl: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=600',
       permiteColaborativo: false,
     },
     {
-      nombre: 'Coche doble para gemelas',
-      descripcion: 'Coche gemelar liviano, con capota ajustable y frenos de seguridad',
+      nombre: 'Coche doble para mellizas',
+      descripcion: 'Coche doble liviano, con capota ajustable y frenos de seguridad',
       precioCLP: 180000,
       imagenUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=600',
       permiteColaborativo: true,
@@ -68,7 +68,7 @@ async function main() {
     },
     {
       nombre: '2 mamaderas anticólicos',
-      descripcion: 'Kit de 4 mamaderas (2 para cada gemela) con sistema anticólicos',
+      descripcion: 'Kit de 4 mamaderas (2 para cada melliza) con sistema anticólicos',
       precioCLP: 22000,
       imagenUrl: 'https://images.unsplash.com/photo-1587735243474-306e9e1c3c6c?w=600',
       permiteColaborativo: false,
@@ -82,7 +82,7 @@ async function main() {
     },
     {
       nombre: 'Pack de 4 pijamas de invierno',
-      descripcion: '2 pijamas para cada gemela, abrigaditos para el invierno',
+      descripcion: '2 pijamas para cada melliza, abrigaditos para el invierno',
       precioCLP: 28000,
       imagenUrl: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=600',
       permiteColaborativo: false,
@@ -96,7 +96,7 @@ async function main() {
     },
     {
       nombre: '2 peluches de regalo',
-      descripcion: 'Ositos de peluche suaves, uno para cada gemela',
+      descripcion: 'Ositos de peluche suaves, uno para cada melliza',
       precioCLP: 20000,
       imagenUrl: 'https://images.unsplash.com/photo-1530325553241-4f6e7690cf36?w=600',
       permiteColaborativo: false,
@@ -109,7 +109,7 @@ async function main() {
       permiteColaborativo: true,
     },
     {
-      nombre: 'Aporte libre para las gemelas',
+      nombre: 'Aporte libre para las mellizas',
       descripcion: 'El monto que tú elijas para ayudarnos con lo que las pequeñas necesiten 💝',
       precioCLP: 0, // Se usará como "monto libre"
       imagenUrl: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=600',

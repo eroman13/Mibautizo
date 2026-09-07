@@ -16,7 +16,7 @@ import { Regalo } from '../../types';
 const STOP_WORDS = new Set([
   'de', 'del', 'el', 'la', 'los', 'las', 'un', 'una', 'unos', 'unas',
   'y', 'o', 'a', 'al', 'con', 'sin', 'para', 'por', 'en', 'e', 'u',
-  'bebe', 'bebes', 'gemela', 'gemelas', 'cada', 'su', 'sus',
+  'bebe', 'bebes', 'melliza', 'mellizas', 'cada', 'su', 'sus',
   'set', 'pack', 'kit', 'x', 'mas',
 ]);
 
@@ -513,7 +513,7 @@ export default function AdminRegalos() {
               <img
                 src={regalo.imagenUrl}
                 alt={regalo.nombre}
-                className="w-full h-48 object-cover"
+                className="w-full h-auto bg-soft-gray"
               />
               <div className="p-6">
                 {duplicados.total > 0 && (
@@ -711,11 +711,11 @@ export default function AdminRegalos() {
                   
                   {/* Vista previa de imagen */}
                   {formData.imagenUrl && (
-                    <div className="mb-4 rounded-lg overflow-hidden border-2 border-pastel-pink">
+                    <div className="mb-4 rounded-lg overflow-hidden border-2 border-pastel-pink bg-soft-gray">
                       <img 
                         src={formData.imagenUrl} 
                         alt="Preview" 
-                        className="w-full h-40 object-cover"
+                        className="w-full h-auto max-h-72 object-contain"
                       />
                     </div>
                   )}
@@ -929,7 +929,7 @@ export default function AdminRegalos() {
                               <img
                                 src={fila.imagenBase64 || fila.imagenUrl}
                                 alt="preview"
-                                className="w-16 h-16 object-cover rounded-lg border"
+                                className="w-16 h-16 object-contain rounded-lg border bg-gray-50"
                               />
                             ) : (
                               <div className="w-16 h-16 bg-gray-100 rounded-lg border flex items-center justify-center text-gray-400 text-2xl">

@@ -228,7 +228,7 @@ export default function ConfirmarAsistencia() {
           </h1>
           <p className="text-gray-600 max-w-xl mx-auto">
             Cuéntanos quiénes de tu familia nos acompañarán en el bautizo de{' '}
-            {evento.nombreGemela1} y {evento.nombreGemela2}.💝
+            {evento.nombreMelliza1} y {evento.nombreMelliza2}.💝
           </p>
           <p className="text-pastel-pink font-medium mt-3">
             📅 {formatDate(evento.fecha)} · 🕐 {evento.hora} · 📍 {evento.lugar}

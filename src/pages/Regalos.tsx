@@ -88,7 +88,7 @@ export default function Regalos() {
             Lista de Regalos
           </h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Elige el regalo que quieres hacerle a {evento.nombreGemela1} y {evento.nombreGemela2}. 
+            Elige el regalo que quieres hacerle a {evento.nombreMelliza1} y {evento.nombreMelliza2}. 
             Puedes seleccionar entre varios regalos, elige uno para cada bebe 💝
           </p>
         </div>
@@ -120,14 +120,14 @@ export default function Regalos() {
             <TarjetaRegalo 
               key={regalo.id} 
               regalo={regalo}
-              gemela1={evento.nombreGemela1}
-              gemela2={evento.nombreGemela2}
+              melliza1={evento.nombreMelliza1}
+              melliza2={evento.nombreMelliza2}
             />
           ))}
         </div>
 
         {/* Carrito flotante */}
-        <CarritoFlotante gemela1={evento.nombreGemela1} gemela2={evento.nombreGemela2} />
+        <CarritoFlotante melliza1={evento.nombreMelliza1} melliza2={evento.nombreMelliza2} />
       </div>
     </div>
   );

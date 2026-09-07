@@ -316,8 +316,8 @@ export async function crearRegalosMasivo(req: Request, res: Response) {
 export async function actualizarEvento(req: Request, res: Response) {
   try {
     const {
-      nombreGemela1,
-      nombreGemela2,
+      nombreMelliza1,
+      nombreMelliza2,
       fecha,
       hora,
       lugar,
@@ -333,8 +333,8 @@ export async function actualizarEvento(req: Request, res: Response) {
     const evento = await prisma.event.update({
       where: { id: 1 },
       data: {
-        nombreGemela1,
-        nombreGemela2,
+        nombreMelliza1,
+        nombreMelliza2,
         fecha,
         hora,
         lugar,

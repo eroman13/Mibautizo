@@ -11,30 +11,30 @@ import DetalleRegaloModal from './DetalleRegaloModal';
 
 interface TarjetaRegaloProps {
   regalo: Regalo;
-  gemela1: string;
-  gemela2: string;
+  melliza1: string;
+  melliza2: string;
 }
 
-export default function TarjetaRegalo({ regalo, gemela1, gemela2 }: TarjetaRegaloProps) {
+export default function TarjetaRegalo({ regalo, melliza1, melliza2 }: TarjetaRegaloProps) {
   const { agregarAlCarrito } = useCarrito();
-  const [notificacion, setNotificacion] = useState<{ visible: boolean; gemela: string }>({ visible: false, gemela: '' });
+  const [notificacion, setNotificacion] = useState<{ visible: boolean; melliza: string }>({ visible: false, melliza: '' });
   const [detalleAbierto, setDetalleAbierto] = useState(false);
 
   const porcentajeRecaudado = regalo.permiteColaborativo
     ? Math.min((regalo.montoRecaudadoCLP / regalo.precioCLP) * 100, 100)
     : 0;
 
-  const mostrarNotificacion = (gemela: string) => {
-    setNotificacion({ visible: true, gemela });
+  const mostrarNotificacion = (melliza: string) => {
+    setNotificacion({ visible: true, melliza });
     setTimeout(() => {
-      setNotificacion({ visible: false, gemela: '' });
+      setNotificacion({ visible: false, melliza: '' });
     }, 2000);
   };
 
-  const agregarPara = (gemela: 'gemela1' | 'gemela2') => {
-    agregarAlCarrito(regalo, gemela);
+  const agregarPara = (melliza: 'melliza1' | 'melliza2') => {
+    agregarAlCarrito(regalo, melliza);
     setDetalleAbierto(false);
-    mostrarNotificacion(gemela === 'gemela1' ? gemela1 : gemela2);
+    mostrarNotificacion(melliza === 'melliza1' ? melliza1 : melliza2);
   };
 
   return (
@@ -48,17 +48,17 @@ export default function TarjetaRegalo({ regalo, gemela1, gemela2 }: TarjetaRegal
           <div className="absolute inset-0 bg-black/70 rounded-xl flex items-center justify-center z-50 backdrop-blur-sm pointer-events-none">
             <div className="text-center text-white">
               <div className="text-4xl mb-2">✓</div>
-              <p className="font-semibold">¡Agregado para {notificacion.gemela}!</p>
+              <p className="font-semibold">¡Agregado para {notificacion.melliza}!</p>
             </div>
           </div>
         )}
 
         {/* Imagen */}
-        <div className="relative overflow-hidden h-48">
+        <div className="relative overflow-hidden bg-soft-gray">
           <img
             src={regalo.imagenUrl}
             alt={regalo.nombre}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            className="w-full h-auto"
           />
 
           {/* Sugerencia al pasar el mouse: abrir características */}
@@ -117,25 +117,25 @@ export default function TarjetaRegalo({ regalo, gemela1, gemela2 }: TarjetaRegal
             </div>
           )}
 
-          {/* Botones para cada gemela */}
+          {/* Botones para cada melliza */}
           <div className="space-y-2">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                agregarPara('gemela1');
+                agregarPara('melliza1');
               }}
               className="w-full py-2 px-4 rounded-full font-semibold transition-all duration-300 text-sm bg-pastel-pink/20 text-pastel-pink hover:bg-pastel-pink/40"
             >
-              🎁 Para {gemela1}
+              🎁 Para {melliza1}
             </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                agregarPara('gemela2');
+                agregarPara('melliza2');
               }}
               className="w-full py-2 px-4 rounded-full font-semibold transition-all duration-300 text-sm bg-pastel-lavender/20 text-pastel-lavender hover:bg-pastel-lavender/40"
             >
-              🎁 Para {gemela2}
+              🎁 Para {melliza2}
             </button>
           </div>
         </div>
@@ -145,8 +145,8 @@ export default function TarjetaRegalo({ regalo, gemela1, gemela2 }: TarjetaRegal
       {detalleAbierto && (
         <DetalleRegaloModal
           regalo={regalo}
-          gemela1={gemela1}
-          gemela2={gemela2}
+          melliza1={melliza1}
+          melliza2={melliza2}
           onCerrar={() => setDetalleAbierto(false)}
           onAgregar={agregarPara}
         />

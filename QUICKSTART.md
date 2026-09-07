@@ -28,7 +28,7 @@ npm -v     # Debe ser v10.0.0 o superior
 ```bash
 # Clona el proyecto
 git clone <url-del-repositorio>
-cd mesa-regalos-bautizo-gemelas
+cd mesa-regalos-bautizo-mellizas
 ```
 
 ### Paso 2: Instalar Dependencias
@@ -66,7 +66,7 @@ nano .env          # Terminal
 ```env
 # En .env y backend/.env:
 DATABASE_URL="file:./dev.db"
-ADMIN_PASSWORD="gemelas2026"
+ADMIN_PASSWORD="mellizas2026"
 FRONTEND_URL="http://localhost:5173"
 BACKEND_URL="http://localhost:3000"
 
@@ -150,7 +150,7 @@ curl http://localhost:3000/api/regalos | jq
 ### Panel Admin
 
 1. Ve a: **http://localhost:5173/admin/login**
-2. Contraseña: `gemelas2026`
+2. Contraseña: `mellizas2026`
 3. Deberías ver el dashboard con estadísticas
 
 ---
@@ -171,7 +171,7 @@ http://localhost:5173
 
 ```
 http://localhost:5173/admin/login
-Contraseña: gemelas2026
+Contraseña: mellizas2026
 ```
 
 - Ve las estadísticas (estarán en 0 por ahora)
@@ -209,7 +209,7 @@ Para probar pagos necesitas:
 
 En el panel admin → Configuración:
 
-- Cambia los nombres de las gemelas
+- Cambia los nombres de las mellizas
 - Ajusta fecha y hora
 - Modifica el mensaje de bienvenida
 - Cambia la imagen de portada
@@ -270,7 +270,7 @@ npx prisma db seed       # Re-ejecutar seed
 ## 🔍 Estructura Básica
 
 ```
-mesa-regalos-bautizo-gemelas/
+mesa-regalos-bautizo-mellizas/
 ├── frontend/           # React app
 │   ├── src/
 │   │   ├── pages/      # Páginas

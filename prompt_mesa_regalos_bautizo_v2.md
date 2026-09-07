@@ -1,4 +1,4 @@
-# 🍼 Prompt Definitivo para GitHub Copilot — Mesa de Regalos Digital para Bautizo de Gemelas
+# 🍼 Prompt Definitivo para GitHub Copilot — Mesa de Regalos Digital para Bautizo de Mellizas
 
 > **Cómo usarlo:** Abre GitHub Copilot Chat en VS Code y pega este documento completo. Pídele que empiece por la **Etapa 1** y avance solo cuando confirmes. Está optimizado para el caso chileno (CLP, español), con Mercado Pago y lógica de comisión configurable.
 
@@ -6,7 +6,7 @@
 
 ## 1. CONTEXTO Y OBJETIVO
 
-Construye conmigo, **paso a paso**, una **aplicación web de "mesa de regalos" (lista de regalos en dinero)** para el **bautizo de mis hijas gemelas**.
+Construye conmigo, **paso a paso**, una **aplicación web de "mesa de regalos" (lista de regalos en dinero)** para el **bautizo de mis hijas mellizas**.
 
 La idea central:
 - Mis invitados entran a un **link único**, ven una lista de regalos de bebé (foto referencial, nombre, precio en CLP).
@@ -25,7 +25,7 @@ La idea central:
 ## 2. STACK TECNOLÓGICO
 
 - **Monorepo** con dos carpetas: `/frontend` y `/backend`.
-- **Frontend:** React + Vite + TypeScript + **Tailwind CSS**. Diseño responsive (mobile-first), tierno y elegante, temática de bautizo de gemelas (tonos pastel: celeste, rosa suave, durazno, blanco; tipografía delicada; detalles como nubes, estrellas o angelitos).
+- **Frontend:** React + Vite + TypeScript + **Tailwind CSS**. Diseño responsive (mobile-first), tierno y elegante, temática de bautizo de mellizas (tonos pastel: celeste, rosa suave, durazno, blanco; tipografía delicada; detalles como nubes, estrellas o angelitos).
 - **Backend:** Node.js + Express + TypeScript. Es **obligatorio** para (a) proteger el Access Token de Mercado Pago, (b) crear las preferencias de pago y (c) recibir los webhooks. El Access Token **NUNCA** debe estar en el frontend.
 - **Base de datos:** SQLite + **Prisma ORM** (simple, sin servidor). Deja el schema preparado para migrar a PostgreSQL.
 - **Pasarela de pago:** Mercado Pago Chile, **Checkout Pro** vía SDK oficial de Node (`mercadopago`), usando **Preferences API**. Deja comentado y con interfaz preparada para agregar después **Khipu/transferencia** como método alternativo más barato.
@@ -56,10 +56,10 @@ En el panel admin, muéstrame siempre: monto aportado, comisión pasarela, y net
 ## 4. FUNCIONALIDADES (MVP)
 
 ### Vista pública (invitados) — sin necesidad de crear cuenta
-1. **Landing del evento:** foto/portada, nombres de las gemelas, fecha, hora y lugar del bautizo, mensaje de bienvenida cálido.
+1. **Landing del evento:** foto/portada, nombres de las mellizas, fecha, hora y lugar del bautizo, mensaje de bienvenida cálido.
 2. **Catálogo de regalos:** grid de tarjetas (imagen referencial, nombre, descripción corta, precio CLP, botón "Regalar esto"). Los ya regalados se muestran como **"Ya regalado 💝"** y deshabilitados, para evitar repetidos.
 3. **Regalos colaborativos** (opcional pero deseable): varios invitados aportan a un regalo de mayor valor, con **barra de progreso** en tiempo real.
-4. **Aporte con monto libre:** opción "Quiero aportar el monto que yo elija" para las gemelas.
+4. **Aporte con monto libre:** opción "Quiero aportar el monto que yo elija" para las mellizas.
 5. **Carrito simple:** permite elegir uno o varios regalos.
 6. **Checkout:** formulario mínimo (nombre del invitado, email opcional, dedicatoria/mensaje para los papás). Muestra el desglose (sección 3) y, al confirmar, el backend crea la **preferencia de Mercado Pago** con **cuotas habilitadas** y redirige a Checkout Pro.
 7. **Páginas de retorno:** `/pago-exitoso`, `/pago-pendiente`, `/pago-fallido` (configuradas como `back_urls` con `auto_return`).
@@ -82,11 +82,11 @@ En el panel admin, muéstrame siempre: monto aportado, comisión pasarela, y net
 
 ## 5. MODELO DE DATOS (Prisma)
 
-- **Event:** id, nombreGemela1, nombreGemela2, fecha, hora, lugar, mensajeBienvenida, portadaUrl, modoComision ("A" | "B").
+- **Event:** id, nombreMelliza1, nombreMelliza2, fecha, hora, lugar, mensajeBienvenida, portadaUrl, modoComision ("A" | "B").
 - **Gift:** id, nombre, descripcion, precioCLP, imagenUrl, permiteColaborativo (bool), montoRecaudadoCLP, estado ("disponible" | "reservado" | "pagado").
 - **Contribution:** id, giftId (nullable si es aporte libre), montoBrutoCLP, comisionCLP, montoNetoCLP, nombreInvitado, emailInvitado, dedicatoria, estadoPago, mpPaymentId (único), createdAt.
 
-Incluye un **seed** con ~10 regalos de bebé de ejemplo para gemelas (ver sección 8).
+Incluye un **seed** con ~10 regalos de bebé de ejemplo para mellizas (ver sección 8).
 
 ---
 
@@ -111,11 +111,11 @@ Incluye un **seed** con ~10 regalos de bebé de ejemplo para gemelas (ver secci�
 
 ---
 
-## 8. DATOS DE EJEMPLO (seed de regalos para gemelas)
+## 8. DATOS DE EJEMPLO (seed de regalos para mellizas)
 
 Usa regalos duplicados o pensados para dos bebés, con precios realistas en CLP:
 1. Pack de 2 bodies de algodón — $18.000
-2. Coche doble para gemelas — $180.000 (permite colaborativo)
+2. Coche doble para mellizas — $180.000 (permite colaborativo)
 3. 2 mantitas de apego — $25.000
 4. Set de mudador + pañales — $30.000
 5. 2 mamaderas anticólicos — $22.000
@@ -123,7 +123,7 @@ Usa regalos duplicados o pensados para dos bebés, con precios realistas en CLP:
 7. Pack de 2 pijamas de invierno — $28.000
 8. Bañera para bebé — $35.000
 9. 2 peluches de regalo — $20.000
-10. Aporte libre "Para el futuro de las gemelas" — monto a elección
+10. Aporte libre "Para el futuro de las mellizas" — monto a elección
 
 ---
 

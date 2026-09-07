@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Paleta de colores tiernos para bautizo de gemelas
+        // Paleta de colores tiernos para bautizo de mellizas
         'pastel-blue': '#A8D8EA',
         'pastel-pink': '#FFB3D9',
         'pastel-peach': '#FFD4A3',

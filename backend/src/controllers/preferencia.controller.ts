@@ -12,7 +12,7 @@ interface CrearPreferenciaBody {
   regalos: Array<{
     id: number;
     cantidad?: number; // Para regalos colaborativos
-    paraGemela?: 'gemela1' | 'gemela2'; // Para quién es el regalo
+    paraMelliza?: 'melliza1' | 'melliza2'; // Para quién es el regalo
   }>;
   invitado: {
     nombre: string;
@@ -89,7 +89,7 @@ export async function crearPreferencia(req: Request, res: Response) {
       contributionsData.push({
         giftId: regalo.id,
         baseAmount: montoRegalo,
-        paraGemela: regaloReq.paraGemela || 'gemela1', // Por defecto gemela1
+        paraMelliza: regaloReq.paraMelliza || 'melliza1', // Por defecto melliza1
       });
     }
 
@@ -121,7 +121,7 @@ export async function crearPreferencia(req: Request, res: Response) {
     // Si tenemos items, usarlos; si no, usar un item genérico
     const finalItems = items.length > 0 ? items : [
       {
-        title: `Bautizo de ${evento.nombreGemela1} y ${evento.nombreGemela2}`,
+        title: `Bautizo de ${evento.nombreMelliza1} y ${evento.nombreMelliza2}`,
         description: `${body.regalos.length} regalo${body.regalos.length !== 1 ? 's' : ''}`,
         quantity: 1,
         unit_price: payment.totalCharge,
@@ -191,7 +191,7 @@ export async function crearPreferencia(req: Request, res: Response) {
           },
           auto_return: 'all',
           notification_url: `${backendUrl}/api/webhook`,
-          statement_descriptor: 'BAUTIZO GEMELAS',
+          statement_descriptor: 'BAUTIZO MELLIZAS',
           external_reference: checkoutIntent.id.toString(),
         },
       });

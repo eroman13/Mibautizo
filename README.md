@@ -1,6 +1,6 @@
-# 🍼 Mesa de Regalos Digital - Bautizo de Gemelas 💝
+# 🍼 Mesa de Regalos Digital - Bautizo de Mellizas 💝
 
-Aplicación web completa para gestionar una mesa de regalos en dinero para el bautizo de gemelas Antonia y Emilia, con integración de **Mercado Pago Chile** para pagos con tarjeta de crédito/débito y en cuotas.
+Aplicación web completa para gestionar una mesa de regalos en dinero para el bautizo de mellizas Antonia y Emilia, con integración de **Mercado Pago Chile** para pagos con tarjeta de crédito/débito y en cuotas.
 
 ## 🎯 Características Principales
 
@@ -50,7 +50,7 @@ Aplicación web completa para gestionar una mesa de regalos en dinero para el ba
 ## 📦 Estructura del Proyecto
 
 ```
-mesa-regalos-bautizo-gemelas/
+mesa-regalos-bautizo-mellizas/
 ├── frontend/                    # Aplicación React
 │   ├── src/
 │   │   ├── pages/               # Páginas de la app
@@ -128,7 +128,7 @@ mesa-regalos-bautizo-gemelas/
 
 ```bash
 git clone <url-del-repo>
-cd mesa-regalos-bautizo-gemelas
+cd mesa-regalos-bautizo-mellizas
 ```
 
 ### Paso 2: Instalar Dependencias
@@ -167,7 +167,7 @@ npm install --prefix backend
    MP_PUBLIC_KEY="TEST-tu-public-key-real-aqui"
    
    # Contraseña del panel admin (cámbiala)
-   ADMIN_PASSWORD="gemelas2026"
+   ADMIN_PASSWORD="mellizas2026"
    
    # URLs por defecto
    FRONTEND_URL="http://localhost:5173"
@@ -314,8 +314,8 @@ GET /evento
 **Respuesta:**
 ```json
 {
-  "nombreGemela1": "Sofía",
-  "nombreGemela2": "Valentina",
+  "nombreMelliza1": "Sofía",
+  "nombreMelliza2": "Valentina",
   "fecha": "2026-09-15",
   "hora": "11:00",
   "lugar": "Iglesia San Francisco",
@@ -337,7 +337,7 @@ Content-Type: application/json
   "invitado": {
     "nombre": "Juan Pérez",
     "email": "juan@example.com",
-    "dedicatoria": "Felicidades por sus gemelas"
+    "dedicatoria": "Felicidades por sus mellizas"
   },
   "regalos": [
     {
@@ -381,7 +381,7 @@ Content-Type: application/json
 **Body:**
 ```json
 {
-  "password": "gemelas2026"
+  "password": "mellizas2026"
 }
 ```
 
@@ -494,8 +494,8 @@ Content-Type: application/json
 **Body:**
 ```json
 {
-  "nombreGemela1": "Antonia",
-  "nombreGemela2": "Emilia",
+  "nombreMelliza1": "Antonia",
+  "nombreMelliza2": "Emilia",
   "fecha": "2026-09-15",
   "hora": "11:00",
   "lugar": "Iglesia San Francisco",
@@ -522,7 +522,7 @@ Authorization: Bearer admin-authenticated
 **URL:** http://localhost:5173/admin/login
 
 **Credenciales por defecto:**
-- Contraseña: `gemelas2026` (definida en `.env`)
+- Contraseña: `mellizas2026` (definida en `.env`)
 
 ### Secciones
 
@@ -554,7 +554,7 @@ Authorization: Bearer admin-authenticated
 
 #### 4. Configuración ⚙️
 - Información del evento:
-  - Nombres de las gemelas
+  - Nombres de las mellizas
   - Fecha y hora
   - Lugar
   - URL de imagen de portada
@@ -754,7 +754,7 @@ Si prefieres control total:
 2. **Clonar y configurar:**
    ```bash
    git clone <tu-repo>
-   cd mesa-regalos-bautizo-gemelas
+   cd mesa-regalos-bautizo-mellizas
    npm run install:all
    
    # Configurar .env con credenciales de producción
@@ -825,7 +825,7 @@ PORT=3001
 **Solución:**
 ```bash
 # Asegúrate de que backend/.env tenga:
-ADMIN_PASSWORD="gemelas2026"
+ADMIN_PASSWORD="mellizas2026"
 
 # Y reinicia el backend
 ```
@@ -894,8 +894,8 @@ FRONTEND_URL="https://tu-dominio-frontend.com"
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
 | id | Int | ID único (auto) |
-| nombreGemela1 | String | Nombre de la primera gemela |
-| nombreGemela2 | String | Nombre de la segunda gemela |
+| nombreMelliza1 | String | Nombre de la primera melliza |
+| nombreMelliza2 | String | Nombre de la segunda melliza |
 | fecha | DateTime | Fecha del bautizo |
 | hora | String | Hora del evento (formato "HH:mm") |
 | lugar | String | Ubicación del evento |
@@ -1083,7 +1083,7 @@ Este proyecto incluye documentación extensa para todos los aspectos del desarro
 ```bash
 # Clonar el repositorio
 git clone <tu-repo>
-cd mesa-regalos-bautizo-gemelas
+cd mesa-regalos-bautizo-mellizas
 
 # Instalar dependencias de todos los workspaces
 npm run install:all
@@ -1345,4 +1345,4 @@ Para dudas sobre Mercado Pago:
 
 ---
 
-Hecho con 💝 para el bautizo de nuestras gemelas
+Hecho con 💝 para el bautizo de nuestras mellizas

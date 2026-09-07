@@ -40,7 +40,7 @@ export const api = {
 
   // Crear preferencia de pago
   crearPreferencia: async (data: {
-    regalos: Array<{ id: number; cantidad?: number; paraGemela?: 'gemela1' | 'gemela2' }>;
+    regalos: Array<{ id: number; cantidad?: number; paraMelliza?: 'melliza1' | 'melliza2' }>;
     invitado: {
       nombre: string;
       email?: string;

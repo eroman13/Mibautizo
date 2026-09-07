@@ -11,8 +11,8 @@ GMAIL_PASS=tu-contraseña-app-de-gmail
 ADMIN_EMAIL=tu-email@gmail.com
 
 # Información del evento (para los correos)
-GEMELA1_NAME=Antonia
-GEMELA2_NAME=Emilia
+MELLIZA1_NAME=Antonia
+MELLIZA2_NAME=Emilia
 EVENT_DATE=15 de septiembre de 2026
 ```
 

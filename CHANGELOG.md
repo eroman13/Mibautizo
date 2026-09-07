@@ -18,7 +18,7 @@ Primera versión completa y funcional de la Mesa de Regalos Digital para el baut
 #### Frontend Público
 - **Landing Page (Home)** con información del evento
   - Imagen de portada personalizable
-  - Nombres de las gemelas
+  - Nombres de las mellizas
   - Fecha, hora y lugar del bautizo
   - Mensaje de bienvenida personalizable
   - Botón CTA a catálogo
@@ -78,7 +78,7 @@ Primera versión completa y funcional de la Mesa de Regalos Digital para el baut
   - Campos: nombre, descripción, precio, imagen, colaborativo
 
 - **Configuración del Evento**
-  - Editar nombres de las gemelas
+  - Editar nombres de las mellizas
   - Configurar fecha, hora y lugar
   - URL de imagen de portada
   - Mensaje de bienvenida

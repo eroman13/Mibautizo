@@ -258,7 +258,7 @@ curl -X POST http://localhost:3000/api/webhook \
 
 **Prueba:**
 ```
-Contraseña correcta: (la de tu .env, default: "gemelas2026")
+Contraseña correcta: (la de tu .env, default: "mellizas2026")
   → Redirige a /admin/dashboard
   → Token guardado en localStorage
 
@@ -359,7 +359,7 @@ open http://localhost:5173/regalos
 
 | Campo | Acción | Verificación |
 |-------|--------|--------------|
-| Nombre Gemela 1 | Cambiar "Antonia" → "Isabella" | Guardar → Ver en Home |
+| Nombre Melliza 1 | Cambiar "Antonia" → "Isabella" | Guardar → Ver en Home |
 | Fecha | Cambiar a 2026-10-15 | Guardar → Ver en Home |
 | Mensaje Bienvenida | Editar texto | Guardar → Ver en Home |
 | Modo Comisión | Cambiar A → B | Guardar → Ver en `/api/evento` |
@@ -389,7 +389,7 @@ Regalo $100.000 → Invitado paga $100.000 (tú recibes ~$96.200)
 
 - [ ] **Home Page**
   - [ ] Imagen de portada carga
-  - [ ] Nombres de gemelas se muestran
+  - [ ] Nombres de mellizas se muestran
   - [ ] Fecha/hora/lugar correctos
   - [ ] Mensaje de bienvenida correcto
   - [ ] Botón "Ver Regalos" funciona
@@ -672,7 +672,7 @@ Colección de requests:
       "name": "Admin Login",
       "method": "POST",
       "url": "http://localhost:3000/api/admin/login",
-      "body": { "password": "gemelas2026" }
+      "body": { "password": "mellizas2026" }
     },
     {
       "name": "Get Stats",

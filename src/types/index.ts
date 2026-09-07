@@ -15,8 +15,8 @@ export interface Regalo {
 
 export interface Evento {
   id: number;
-  nombreGemela1: string;
-  nombreGemela2: string;
+  nombreMelliza1: string;
+  nombreMelliza2: string;
   fecha: string;
   hora: string;
   lugar: string;
@@ -32,7 +32,7 @@ export interface Evento {
 export interface ItemCarrito {
   regalo: Regalo;
   montoLibre?: number; // Para aportes libres
-  paraGemela: 'gemela1' | 'gemela2'; // Para quién es el regalo
+  paraMelliza: 'melliza1' | 'melliza2'; // Para quién es el regalo
 }
 
 export interface Invitado {

@@ -10,7 +10,7 @@ import { formatCLP } from '../utils/format';
 import { Evento } from '../types';
 
 export default function Checkout() {
-  const { items, regalosGemela1, regalosGemela2 } = useCarrito();
+  const { items, regalosMelliza1, regalosMelliza2 } = useCarrito();
   const navigate = useNavigate();
   const [evento, setEvento] = useState<Evento | null>(null);
   const [loading, setLoading] = useState(false);
@@ -26,10 +26,10 @@ export default function Checkout() {
   useEffect(() => {
     cargarEvento();
     
-    if (items.length === 0 || regalosGemela1 === 0 || regalosGemela2 === 0) {
+    if (items.length === 0 || regalosMelliza1 === 0 || regalosMelliza2 === 0) {
       navigate('/regalos');
     }
-  }, [items, navigate, regalosGemela1, regalosGemela2]);
+  }, [items, navigate, regalosMelliza1, regalosMelliza2]);
 
   const cargarEvento = async () => {
     try {
@@ -65,14 +65,14 @@ export default function Checkout() {
         throw new Error('El nombre es obligatorio');
       }
 
-      if (regalosGemela1 === 0 || regalosGemela2 === 0) {
-        throw new Error('Debes seleccionar al menos un regalo para cada gemela');
+      if (regalosMelliza1 === 0 || regalosMelliza2 === 0) {
+        throw new Error('Debes seleccionar al menos un regalo para cada melliza');
       }
 
       // Preparar datos para el backend
       const regalos = items.map(item => ({
         id: item.regalo.id,
-        paraGemela: item.paraGemela,
+        paraMelliza: item.paraMelliza,
       }));
 
       // Validar si hay regalo de aporte libre y si se ingresó un monto
@@ -110,8 +110,8 @@ export default function Checkout() {
   if (items.length === 0 || !evento) return null;
 
   const total = calcularTotal();
-  const itemsGemela1 = items.filter(item => item.paraGemela === 'gemela1');
-  const itemsGemela2 = items.filter(item => item.paraGemela === 'gemela2');
+  const itemsMelliza1 = items.filter(item => item.paraMelliza === 'melliza1');
+  const itemsMelliza2 = items.filter(item => item.paraMelliza === 'melliza2');
 
   return (
     <div className="min-h-screen bg-soft-gray py-12">
@@ -222,19 +222,19 @@ export default function Checkout() {
               Resumen
             </h2>
 
-            {/* Regalos para Gemela 1 */}
-            {itemsGemela1.length > 0 && (
+            {/* Regalos para Melliza 1 */}
+            {itemsMelliza1.length > 0 && (
               <div className="mb-6">
                 <h3 className="font-semibold text-pastel-pink mb-3 flex items-center gap-2">
-                  👧 Para {evento.nombreGemela1} ({itemsGemela1.length})
+                  👧 Para {evento.nombreMelliza1} ({itemsMelliza1.length})
                 </h3>
                 <div className="space-y-3">
-                  {itemsGemela1.map((item, index) => (
-                    <div key={`${item.regalo.id}-gemela1-${index}`} className="flex gap-3 bg-gray-50 p-3 rounded-lg">
+                  {itemsMelliza1.map((item, index) => (
+                    <div key={`${item.regalo.id}-melliza1-${index}`} className="flex gap-3 bg-gray-50 p-3 rounded-lg">
                       <img
                         src={item.regalo.imagenUrl}
                         alt={item.regalo.nombre}
-                        className="w-14 h-14 object-cover rounded-lg"
+                        className="w-14 h-14 object-contain rounded-lg bg-white"
                       />
                       <div className="flex-1">
                         <p className="font-medium text-gray-800 text-sm">
@@ -250,19 +250,19 @@ export default function Checkout() {
               </div>
             )}
 
-            {/* Regalos para Gemela 2 */}
-            {itemsGemela2.length > 0 && (
+            {/* Regalos para Melliza 2 */}
+            {itemsMelliza2.length > 0 && (
               <div className="mb-6">
                 <h3 className="font-semibold text-pastel-lavender mb-3 flex items-center gap-2">
-                  👧 Para {evento.nombreGemela2} ({itemsGemela2.length})
+                  👧 Para {evento.nombreMelliza2} ({itemsMelliza2.length})
                 </h3>
                 <div className="space-y-3">
-                  {itemsGemela2.map((item, index) => (
-                    <div key={`${item.regalo.id}-gemela2-${index}`} className="flex gap-3 bg-gray-50 p-3 rounded-lg">
+                  {itemsMelliza2.map((item, index) => (
+                    <div key={`${item.regalo.id}-melliza2-${index}`} className="flex gap-3 bg-gray-50 p-3 rounded-lg">
                       <img
                         src={item.regalo.imagenUrl}
                         alt={item.regalo.nombre}
-                        className="w-14 h-14 object-cover rounded-lg"
+                        className="w-14 h-14 object-contain rounded-lg bg-white"
                       />
                       <div className="flex-1">
                         <p className="font-medium text-gray-800 text-sm">

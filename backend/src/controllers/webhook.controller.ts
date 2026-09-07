@@ -187,7 +187,7 @@ export async function webhook(req: Request, res: Response) {
           };
         }
         return {
-          nombre: 'Aporte libre para las gemelas',
+          nombre: 'Aporte libre para las mellizas',
           cantidad: 1,
           precio: r.baseAmount,
         };

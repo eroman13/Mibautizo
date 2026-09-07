@@ -105,12 +105,12 @@
 - Name: `ADMIN_EMAIL`
 - Value: `regalapp.spa@gmail.com`
 
-**Variable 9: GEMELA1_NAME**
-- Name: `GEMELA1_NAME`
+**Variable 9: MELLIZA1_NAME**
+- Name: `MELLIZA1_NAME`
 - Value: `Antonia`
 
-**Variable 10: GEMELA2_NAME**
-- Name: `GEMELA2_NAME`
+**Variable 10: MELLIZA2_NAME**
+- Name: `MELLIZA2_NAME`
 - Value: `Emilia`
 
 **Variable 11: EVENT_DATE**
@@ -216,7 +216,7 @@
 
 ### Credenciales Admin
 - Usuario: `admin`
-- Password: `gemelas2026`
+- Password: `mellizas2026`
 
 ---
 
