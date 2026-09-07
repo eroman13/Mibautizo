@@ -708,7 +708,7 @@ export default function ConfirmarAsistencia() {
                         abierta
                           ? 'border-pastel-pink bg-white shadow-sm'
                           : 'border-gray-100 bg-gray-50/60'
-                      }`}
+                      } ${esPareja && p.asiste === false ? 'opacity-60' : ''}`}
                     >
                       <div
                         role="button"
@@ -742,26 +742,36 @@ export default function ConfirmarAsistencia() {
                             </span>
                             <span className="block text-xs text-gray-500">
                               {resumen}
+                              {esPareja && p.asiste === false ? ' · no asistirá' : ''}
                               {abierta ? ' · completando…' : ''}
                             </span>
                           </span>
                         </span>
                         <span className="flex items-center gap-1 shrink-0">
                           {esPareja ? (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleAsiste(p.key);
-                              }}
-                              className={`px-2 py-1 rounded-full text-xs font-semibold transition-colors ${
-                                p.asiste !== false
-                                  ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                  : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                              }`}
-                            >
-                              {p.asiste !== false ? '✓ Asistirá' : '✗ No asistirá'}
-                            </button>
+                            p.asiste !== false ? (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleAsiste(p.key);
+                                }}
+                                className="px-2 py-1 rounded-full text-xs font-semibold transition-colors text-red-600 bg-red-50 hover:bg-red-100"
+                              >
+                                Quitar
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleAsiste(p.key);
+                                }}
+                                className="px-2 py-1 rounded-full text-xs font-semibold transition-colors text-green-700 bg-green-100 hover:bg-green-200"
+                              >
+                                ＋ Agregar
+                              </button>
+                            )
                           ) : esAdultoHijos && idx === 0 ? null : !esIndividual ? (
                             <button
                               type="button"
@@ -918,8 +928,8 @@ export default function ConfirmarAsistencia() {
               )}
               {esPareja && (
                 <p className="text-xs text-gray-500 mt-3">
-                  👫 Esta invitación es para la pareja. Marca «Asistirá» o «No asistirá» en cada
-                  integrante (máx. 2 y sin niños).
+                  👫 Invitación para la pareja. Si uno de los dos no asistirá, usa «Quitar» en su
+                  fila (no se borra, y con «＋ Agregar» lo vuelves a incluir). Sin niños.
                 </p>
               )}
               {esAdultoHijos && (
