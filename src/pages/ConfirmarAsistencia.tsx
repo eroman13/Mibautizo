@@ -441,7 +441,20 @@ export default function ConfirmarAsistencia() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-card p-8" ref={cardFormRef}>
-          <form onSubmit={enviar} className="space-y-6">
+          <form
+            onSubmit={enviar}
+            className="space-y-6"
+            onKeyDown={(e) => {
+              // Evita enviar el formulario al presionar Enter en inputs/selects
+              // (común en el teclado móvil); así el invitado puede editar/quitar antes.
+              if (e.key === 'Enter') {
+                const tag = (e.target as HTMLElement)?.tagName;
+                if (tag === 'INPUT' || tag === 'SELECT') {
+                  e.preventDefault();
+                }
+              }
+            }}
+          >
             {/* Indicador de progreso por pasos */}
             <div className="flex flex-wrap items-center gap-2">
               {[
