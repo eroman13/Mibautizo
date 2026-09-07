@@ -251,16 +251,17 @@ export default function AdminInvitaciones() {
     }
   };
 
-  const marcarEnviada = async (inv: Invitacion) => {
-    const response = await adminApi.marcarEnviadaInvitacion(inv.id);
-    if (response.success) await cargar();
-    else setMensaje({ tipo: 'error', texto: response.error || 'Error' });
-  };
-
-  const marcarConfirmadaManual = async (inv: Invitacion) => {
-    const response = await adminApi.actualizarInvitacion(inv.id, { estado: 'confirmada' });
-    if (response.success) await cargar();
-    else setMensaje({ tipo: 'error', texto: response.error || 'Error' });
+  const cambiarEstado = async (inv: Invitacion, estado: Invitacion['estado']) => {
+    const response = await adminApi.actualizarInvitacion(inv.id, { estado });
+    if (response.success) {
+      await cargar();
+      setMensaje({
+        tipo: 'ok',
+        texto: `"${inv.familia}" ahora está ${ETIQUETA_ESTADO[estado].toLowerCase()}.`,
+      });
+    } else {
+      setMensaje({ tipo: 'error', texto: response.error || 'Error al cambiar estado' });
+    }
   };
 
   const eliminar = async (inv: Invitacion) => {
@@ -481,25 +482,18 @@ export default function AdminInvitaciones() {
                     >
                       {copiadoId === inv.id ? '✅ Copiado' : '🔗 Copiar enlace'}
                     </button>
-                    {inv.estado === 'pendiente' && (
-                      <button
-                        type="button"
-                        onClick={() => marcarEnviada(inv)}
-                        className="px-3 py-2 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold hover:bg-blue-200 transition-colors"
-                      >
-                        Marcar enviada
-                      </button>
-                    )}
-                    {inv.estado !== 'confirmada' && (
-                      <button
-                        type="button"
-                        onClick={() => marcarConfirmadaManual(inv)}
-                        title="Úsalo si te confirmaron por teléfono/WhatsApp"
-                        className="px-3 py-2 rounded-full bg-green-100 text-green-700 text-xs font-semibold hover:bg-green-200 transition-colors"
-                      >
-                        ✓ Confirmada
-                      </button>
-                    )}
+                    <select
+                      value={inv.estado}
+                      onChange={(e) =>
+                        cambiarEstado(inv, e.target.value as Invitacion['estado'])
+                      }
+                      title="Cambiar estado: pendiente / enviada / confirmada"
+                      className="px-2 py-2 rounded-full border-2 border-gray-200 bg-white text-xs font-semibold text-gray-700 cursor-pointer focus:border-pastel-pink focus:outline-none"
+                    >
+                      <option value="pendiente">⏳ Pendiente</option>
+                      <option value="enviada">📨 Enviada</option>
+                      <option value="confirmada">✓ Confirmada</option>
+                    </select>
                     <button
                       type="button"
                       onClick={() => abrirEditar(inv)}
