@@ -15,6 +15,7 @@ interface PersonaForm {
   nombre: string;
   tipo: 'adulto' | 'nino';
   edad: string; // Cadena para controlar el input de forma sencilla
+  asiste: boolean; // Para invitaciones de pareja: si este integrante asistirá
 }
 
 export default function ConfirmarAsistencia() {
@@ -28,7 +29,7 @@ export default function ConfirmarAsistencia() {
   const [esIndividual, setEsIndividual] = useState(false);
   const [esPareja, setEsPareja] = useState(false);
   const [personas, setPersonas] = useState<PersonaForm[]>([
-    { key: 1, nombre: '', tipo: 'adulto', edad: '' },
+    { key: 1, nombre: '', tipo: 'adulto', edad: '', asiste: true },
   ]);
 
   const [enviando, setEnviando] = useState(false);
@@ -59,14 +60,14 @@ export default function ConfirmarAsistencia() {
       setEsIndividual(true);
       setPaso(2);
       if (familiaParam) {
-        setPersonas([{ key: 1, nombre: familiaParam, tipo: 'adulto', edad: '' }]);
+        setPersonas([{ key: 1, nombre: familiaParam, tipo: 'adulto', edad: '', asiste: true }]);
         setPersonaActiva(1);
       }
     } else if (modalidadParam === 'pareja') {
       setEsPareja(true);
       setPersonas([
-        { key: 1, nombre: '', tipo: 'adulto', edad: '' },
-        { key: 2, nombre: '', tipo: 'adulto', edad: '' },
+        { key: 1, nombre: '', tipo: 'adulto', edad: '', asiste: true },
+        { key: 2, nombre: '', tipo: 'adulto', edad: '', asiste: true },
       ]);
       setPersonaActiva(1);
     }
@@ -92,14 +93,14 @@ export default function ConfirmarAsistencia() {
           setPaso(2);
           const persona = nombres[0] || info.familia || '';
           if (persona) {
-            setPersonas([{ key: 1, nombre: persona, tipo: 'adulto', edad: '' }]);
+            setPersonas([{ key: 1, nombre: persona, tipo: 'adulto', edad: '', asiste: true }]);
           }
           setPersonaActiva(1);
         } else if (info.modalidad === 'pareja') {
           setEsPareja(true);
           setPersonas([
-            { key: 1, nombre: nombres[0] || '', tipo: 'adulto', edad: '' },
-            { key: 2, nombre: nombres[1] || '', tipo: 'adulto', edad: '' },
+            { key: 1, nombre: nombres[0] || '', tipo: 'adulto', edad: '', asiste: true },
+            { key: 2, nombre: nombres[1] || '', tipo: 'adulto', edad: '', asiste: true },
           ]);
           setPersonaActiva(1);
         }
@@ -153,7 +154,10 @@ export default function ConfirmarAsistencia() {
       return;
     }
     const key = siguienteKey();
-    setPersonas([...personas, { key, nombre: '', tipo: 'adulto', edad: '' }]);
+    setPersonas([
+      ...personas,
+      { key, nombre: '', tipo: 'adulto', edad: '', asiste: true },
+    ]);
     setPersonaActiva(key);
     setError('');
     // Enfocar y centrar la nueva persona para no perder la referencia visual
@@ -208,12 +212,13 @@ export default function ConfirmarAsistencia() {
       : 'Ingresa el nombre de la familia (ej: "Familia Pérez").';
 
   const validarPersonas = (): string => {
-    if (personas.length === 0) {
+    const asistentes = personas.filter((p) => p.asiste !== false);
+    if (asistentes.length === 0) {
       return 'Debes confirmar al menos 1 persona.';
     }
-    for (const p of personas) {
+    for (const p of asistentes) {
       if (!p.nombre.trim()) {
-        return 'Todas las personas deben tener un nombre.';
+        return 'Todas las personas que asistirán deben tener un nombre.';
       }
       if (p.tipo === 'nino') {
         const edad = Number(p.edad);
@@ -231,9 +236,19 @@ export default function ConfirmarAsistencia() {
   const validar = (): string => validarFamilia() || validarPersonas();
 
   const contarAdultos = () =>
-    personas.filter((p) => p.nombre.trim() && p.tipo === 'adulto').length;
+    personas.filter(
+      (p) => p.asiste !== false && p.nombre.trim() && p.tipo === 'adulto'
+    ).length;
   const contarNinos = () =>
-    personas.filter((p) => p.nombre.trim() && p.tipo === 'nino').length;
+    personas.filter(
+      (p) => p.asiste !== false && p.nombre.trim() && p.tipo === 'nino'
+    ).length;
+
+  // Para invitaciones de pareja: alterna si un integrante asistirá o no
+  const toggleAsiste = (key: number) =>
+    setPersonas(
+      personas.map((p) => (p.key === key ? { ...p, asiste: !p.asiste } : p))
+    );
 
   // Posiciona la vista sobre la tarjeta del formulario al cambiar de paso
   const scrollAlFormulario = () => {
@@ -282,11 +297,13 @@ export default function ConfirmarAsistencia() {
         email: email.trim() || undefined,
         telefono: telefono.trim() || undefined,
         invitacionToken: invitacionToken || undefined,
-        asistentes: personas.map((p) => ({
-          nombre: p.nombre.trim(),
-          tipo: p.tipo,
-          edad: p.tipo === 'nino' ? Number(p.edad) : null,
-        })),
+        asistentes: personas
+          .filter((p) => p.asiste !== false)
+          .map((p) => ({
+            nombre: p.nombre.trim(),
+            tipo: p.tipo,
+            edad: p.tipo === 'nino' ? Number(p.edad) : null,
+          })),
       });
       setExito({
         nombreFamilia: response.data.nombreFamilia,
@@ -305,7 +322,7 @@ export default function ConfirmarAsistencia() {
     setNombreFamilia('');
     setEmail('');
     setTelefono('');
-    setPersonas([{ key: 1, nombre: '', tipo: 'adulto', edad: '' }]);
+    setPersonas([{ key: 1, nombre: '', tipo: 'adulto', edad: '', asiste: true }]);
     setInvitacionToken('');
     setPaso(1);
     setPersonaActiva(1);
@@ -578,7 +595,22 @@ export default function ConfirmarAsistencia() {
                           </span>
                         </span>
                         <span className="flex items-center gap-1 shrink-0">
-                          {!esIndividual && (
+                          {esPareja ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleAsiste(p.key);
+                              }}
+                              className={`px-2 py-1 rounded-full text-xs font-semibold transition-colors ${
+                                p.asiste !== false
+                                  ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                  : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                              }`}
+                            >
+                              {p.asiste !== false ? '✓ Asistirá' : '✗ No asistirá'}
+                            </button>
+                          ) : !esIndividual ? (
                             <button
                               type="button"
                               onClick={(e) => {
@@ -590,7 +622,7 @@ export default function ConfirmarAsistencia() {
                             >
                               Quitar
                             </button>
-                          )}
+                          ) : null}
                           <span
                             className={`text-gray-400 text-xs transition-transform ${
                               abierta ? 'rotate-180' : ''
@@ -678,7 +710,8 @@ export default function ConfirmarAsistencia() {
               )}
               {esPareja && (
                 <p className="text-xs text-gray-500 mt-3">
-                  👫 Esta invitación es para la pareja: máximo 2 personas y sin niños.
+                  👫 Esta invitación es para la pareja. Marca «Asistirá» o «No asistirá» en cada
+                  integrante (máx. 2 y sin niños).
                 </p>
               )}
 
