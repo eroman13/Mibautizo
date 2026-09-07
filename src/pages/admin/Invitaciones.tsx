@@ -68,7 +68,7 @@ Nos hace una ilusión enorme compartir contigo un momento muy especial para nues
 
 ${enlaceInvitacion(inv)}
 
-¡Esperamos contar con tu presencia! 🙏 Te pedimos confirmar tu asistencia 💌`;
+¡Esperamos contar con tu presencia! 🙏 Nos encantaría que nos acompañaras: te pedimos confirmar tu asistencia hasta el 30 de septiembre 💌`;
 }
 
 function telefonoWa(inv: Invitacion): string {
