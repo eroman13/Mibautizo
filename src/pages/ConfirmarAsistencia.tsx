@@ -35,6 +35,8 @@ export default function ConfirmarAsistencia() {
 
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState('');
+  const [yaConfirmado, setYaConfirmado] = useState(false);
+  const [cargandoInvitacion, setCargandoInvitacion] = useState(false);
   const [paso, setPaso] = useState(1); // 1: familia, 2: asistentes, 3: notas y confirmar
   const [personaActiva, setPersonaActiva] = useState<number | null>(1);
   const cardFormRef = useRef<HTMLDivElement>(null);
@@ -85,11 +87,17 @@ export default function ConfirmarAsistencia() {
     const tokenParam = params.get('token');
     if (!tokenParam) return;
     let activo = true;
+    setCargandoInvitacion(true);
     api
       .getInvitacionPorToken(tokenParam)
       .then((response) => {
         if (!activo || !response?.success || !response.data) return;
         const info = response.data;
+        // Ya confirmó con este enlace: no permitir volver a confirmar
+        if (info.estado === 'confirmada') {
+          setYaConfirmado(true);
+          return;
+        }
         if (info.familia) setNombreFamilia(info.familia);
         const nombres = (Array.isArray(info.personas) ? info.personas : []).filter(
           (n: string) => n
@@ -126,7 +134,10 @@ export default function ConfirmarAsistencia() {
           setPersonaActiva(1);
         }
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => {
+        if (activo) setCargandoInvitacion(false);
+      });
     return () => {
       activo = false;
     };
@@ -371,6 +382,46 @@ export default function ConfirmarAsistencia() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-red-500">Error al cargar el evento</p>
+      </div>
+    );
+  }
+
+  // Mientras se consulta la invitación por su token, mostrar un loader
+  if (cargandoInvitacion) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-pastel-pink mx-auto mb-4"></div>
+          <p className="text-gray-600">Verificando invitación...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Ya confirmó con este enlace: no permitir volver a confirmar
+  if (yaConfirmado) {
+    return (
+      <div className="min-h-screen bg-soft-gray py-12">
+        <div className="container mx-auto px-4 max-w-xl">
+          <div className="bg-white rounded-2xl shadow-card p-8 md:p-10 text-center">
+            <div className="text-6xl mb-4">💌</div>
+            <h1 className="text-3xl font-display font-bold text-gray-800 mb-4 section-decoration">
+              Ya confirmaste tu asistencia
+            </h1>
+            <p className="text-gray-600 text-lg mb-6">
+              ¡Gracias por confirmar! Este enlace ya fue utilizado.
+            </p>
+            <p className="text-gray-500 bg-gray-50 rounded-xl p-4 text-sm">
+              Si necesitas modificar o corregir algo de tu confirmación, contáctate directamente
+              con los papás de las bebés. 😊
+            </p>
+            <div className="mt-8">
+              <Link to="/" className="text-gray-500 hover:text-pastel-pink text-sm font-medium">
+                ← Volver al inicio
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

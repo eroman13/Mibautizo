@@ -109,8 +109,15 @@ export async function confirmarAsistencia(req: Request, res: Response) {
     if (invitacionToken) {
       const invitacionValida = await prisma.invitacion.findUnique({
         where: { token: invitacionToken },
-        select: { modalidad: true },
+        select: { modalidad: true, estado: true },
       });
+      if (invitacionValida?.estado === 'confirmada') {
+        return res.status(409).json({
+          success: false,
+          error:
+            'Ya confirmaste tu asistencia con este enlace. Si necesitas modificar algo, contáctate directamente con los papás.',
+        });
+      }
       if (invitacionValida?.modalidad === 'individual' && asistentes.length > 1) {
         return res.status(400).json({
           success: false,
