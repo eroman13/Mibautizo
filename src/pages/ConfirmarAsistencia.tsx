@@ -46,6 +46,20 @@ export default function ConfirmarAsistencia() {
     ninos: number;
   } | null>(null);
 
+  // Enlace al Home conservando el contexto de la invitación (familia/token/modalidad),
+  // para no volver al Home genérico y perder la categorización.
+  const homeConContexto = (() => {
+    const original = new URLSearchParams(window.location.search);
+    const p = new URLSearchParams();
+    const fam = original.get('familia');
+    const tok = original.get('token');
+    const mod = original.get('modalidad');
+    if (fam) p.set('familia', fam);
+    if (tok) p.set('token', tok);
+    if (mod) p.set('modalidad', mod);
+    return p.toString() ? `/?${p.toString()}` : '/';
+  })();
+
   useEffect(() => {
     cargarEvento();
   }, []);
@@ -438,7 +452,10 @@ export default function ConfirmarAsistencia() {
               con los papás de las bebés. 😊
             </p>
             <div className="mt-8">
-              <Link to="/" className="text-gray-500 hover:text-pastel-pink text-sm font-medium">
+              <Link
+                to={homeConContexto}
+                className="text-gray-500 hover:text-pastel-pink text-sm font-medium"
+              >
                 ← Volver al inicio
               </Link>
             </div>
@@ -477,9 +494,15 @@ export default function ConfirmarAsistencia() {
               <Link to="/regalos" className="btn-primary inline-block">
                 Ver lista de regalos 🎁
               </Link>
-              <button onClick={resetForm} className="btn-secondary inline-block">
-                Confirmar otra familia
-              </button>
+              {invitacionToken || esIndividual || esPareja || esAdultoHijos ? (
+                <Link to={homeConContexto} className="btn-secondary inline-block">
+                  ← Volver al inicio
+                </Link>
+              ) : (
+                <button onClick={resetForm} className="btn-secondary inline-block">
+                  Confirmar otra familia
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -517,7 +540,10 @@ export default function ConfirmarAsistencia() {
             </form>
           </div>
           <div className="text-center mt-6">
-            <Link to="/" className="text-gray-500 hover:text-pastel-pink text-sm">
+            <Link
+              to={homeConContexto}
+              className="text-gray-500 hover:text-pastel-pink text-sm"
+            >
               ← Volver al inicio
             </Link>
           </div>
@@ -985,7 +1011,7 @@ export default function ConfirmarAsistencia() {
         </div>
 
         <div className="text-center mt-6">
-          <Link to="/" className="text-gray-500 hover:text-pastel-pink text-sm">
+          <Link to={homeConContexto} className="text-gray-500 hover:text-pastel-pink text-sm">
             ← Volver al inicio
           </Link>
         </div>
