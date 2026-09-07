@@ -4,7 +4,7 @@
  * Para los niños se solicita la edad.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Evento } from '../types';
 import { api } from '../services/api';
@@ -33,6 +33,7 @@ export default function ConfirmarAsistencia() {
   const [error, setError] = useState('');
   const [paso, setPaso] = useState(1); // 1: familia, 2: asistentes, 3: notas y confirmar
   const [personaActiva, setPersonaActiva] = useState<number | null>(1);
+  const cardFormRef = useRef<HTMLDivElement>(null);
   const [exito, setExito] = useState<{
     nombreFamilia: string;
     adultos: number;
@@ -158,22 +159,29 @@ export default function ConfirmarAsistencia() {
   const contarNinos = () =>
     personas.filter((p) => p.nombre.trim() && p.tipo === 'nino').length;
 
+  // Posiciona la vista sobre la tarjeta del formulario al cambiar de paso
+  const scrollAlFormulario = () => {
+    setTimeout(() => {
+      cardFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 60);
+  };
+
   const avanzarPaso = () => {
     const errorPaso = paso === 1 ? validarFamilia() : validarPersonas();
     if (errorPaso) {
       setError(errorPaso);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollAlFormulario();
       return;
     }
     setError('');
     setPaso((p) => Math.min(p + 1, 3));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollAlFormulario();
   };
 
   const irAtras = () => {
     setError('');
     setPaso((p) => Math.max(p - 1, 1));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollAlFormulario();
   };
 
   const enviar = async (e: React.FormEvent) => {
@@ -303,7 +311,7 @@ export default function ConfirmarAsistencia() {
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-card p-8">
+        <div className="bg-white rounded-2xl shadow-card p-8" ref={cardFormRef}>
           <form onSubmit={enviar} className="space-y-6">
             {/* Indicador de progreso por pasos */}
             <div className="flex flex-wrap items-center gap-2">
@@ -319,7 +327,7 @@ export default function ConfirmarAsistencia() {
                   onClick={() => {
                     setError('');
                     setPaso(n);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    scrollAlFormulario();
                   }}
                   className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed ${
                     paso === n
@@ -550,6 +558,34 @@ export default function ConfirmarAsistencia() {
 
             {paso === 3 && (
               <>
+            {/* Resumen de la confirmación */}
+            <div className="rounded-xl border border-pastel-pink/30 bg-pink-50/70 p-4 space-y-1.5">
+              <p className="font-semibold text-gray-800 text-sm mb-1">
+                Resumen de tu confirmación
+              </p>
+              <p className="text-sm text-gray-700">
+                <strong>Familia:</strong> {nombreFamilia}
+              </p>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="px-2.5 py-0.5 rounded-full bg-white border border-pastel-pink/40 text-pastel-pink font-medium">
+                  👤 {contarAdultos()} adulto{contarAdultos() !== 1 ? 's' : ''}
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-white border border-pastel-lavender text-pastel-lavender font-medium">
+                  🧒 {contarNinos()} niño{contarNinos() !== 1 ? 's' : ''}
+                </span>
+              </div>
+              {(email.trim() || telefono.trim()) && (
+                <p className="text-xs text-gray-500">
+                  {email.trim() && <><strong>Email:</strong> {email.trim()}</>}
+                  {email.trim() && telefono.trim() && ' · '}
+                  {telefono.trim() && <><strong>Tel:</strong> {telefono.trim()}</>}
+                </p>
+              )}
+              <p className="text-xs text-gray-500 pt-1">
+                Revisa que todo esté correcto antes de confirmar.
+              </p>
+            </div>
+
             {/* Notas opcionales */}
             <div>
               <label className="block text-gray-700 font-medium mb-2">
