@@ -99,37 +99,59 @@ export default function ConfirmarAsistencia() {
           return;
         }
         if (info.familia) setNombreFamilia(info.familia);
-        const nombres = (Array.isArray(info.personas) ? info.personas : []).filter(
-          (n: string) => n
-        );
-        if (info.modalidad === 'individual') {
+        const modalidad: string = info.modalidad || 'familiar';
+        const invitados: Array<{
+          nombre?: string;
+          tipo?: string;
+          edad?: number | null;
+        }> = Array.isArray(info.invitados) ? info.invitados : [];
+
+        const fila = (
+          nombre: string,
+          tipo: 'adulto' | 'nino',
+          edad: number | null,
+          key: number
+        ): PersonaForm => ({
+          key,
+          nombre,
+          tipo,
+          edad: edad != null ? String(edad) : '',
+          asiste: true,
+        });
+
+        const filas: PersonaForm[] = [];
+
+        if (modalidad === 'individual') {
           setEsIndividual(true);
           setPaso(2);
-          const persona = nombres[0] || info.familia || '';
-          if (persona) {
-            setPersonas([{ key: 1, nombre: persona, tipo: 'adulto', edad: '', asiste: true }]);
-          }
-          setPersonaActiva(1);
-        } else if (info.modalidad === 'pareja') {
+          const persona = invitados[0]?.nombre || info.familia || '';
+          if (persona) filas.push(fila(persona, 'adulto', null, 1));
+        } else if (modalidad === 'pareja') {
           setEsPareja(true);
-          setPersonas([
-            { key: 1, nombre: nombres[0] || '', tipo: 'adulto', edad: '', asiste: true },
-            { key: 2, nombre: nombres[1] || '', tipo: 'adulto', edad: '', asiste: true },
-          ]);
-          setPersonaActiva(1);
-        } else if (info.modalidad === 'adulto-hijos') {
+          filas.push(fila(invitados[0]?.nombre || '', 'adulto', null, 1));
+          filas.push(fila(invitados[1]?.nombre || '', 'adulto', null, 2));
+        } else if (modalidad === 'adulto-hijos') {
           setEsAdultoHijos(true);
           setPaso(2);
-          const filas: PersonaForm[] = [
-            { key: 1, nombre: nombres[0] || '', tipo: 'adulto', edad: '', asiste: true },
-            ...nombres.slice(1).map((nombre: string, i: number) => ({
-              key: 2 + i,
-              nombre,
-              tipo: 'nino' as const,
-              edad: '',
-              asiste: true,
-            })),
-          ];
+          invitados.forEach((inv, i) => {
+            filas.push(fila(inv.nombre || '', i === 0 ? 'adulto' : 'nino', inv.edad ?? null, i + 1));
+          });
+          if (filas.length === 0) filas.push(fila('', 'adulto', null, 1));
+        } else {
+          // familiar: precargar las personas escritas en el mantenedor de invitados
+          invitados.forEach((inv, i) => {
+            filas.push(
+              fila(
+                inv.nombre || '',
+                inv.tipo === 'nino' ? 'nino' : 'adulto',
+                inv.edad ?? null,
+                i + 1
+              )
+            );
+          });
+        }
+
+        if (filas.length > 0) {
           setPersonas(filas);
           setPersonaActiva(1);
         }

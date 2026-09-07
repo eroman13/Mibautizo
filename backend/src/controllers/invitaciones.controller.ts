@@ -37,6 +37,63 @@ function normalizarFamiliaFamiliar(
   return /^familia\b/i.test(nombre) ? nombre : `Familia ${nombre}`;
 }
 
+interface InvitadoEstructurado {
+  nombre: string;
+  tipo: 'adulto' | 'nino';
+  edad: number | null;
+}
+
+/**
+ * Interpreta una línea del mantenedor de invitados:
+ * - "Nombre (NN)" o "Nombre (NN años)"  -> niño con edad precargada
+ * - contiene niño/niña/hijo/hija/bebé    -> niño (edad se pide al confirmar)
+ * - en otro caso                          -> adulto
+ */
+function interpretarLineaInvitado(linea: string, forzarNino = false): InvitadoEstructurado {
+  const texto = linea.trim();
+  const conEdad = texto.match(/^(.+?)\s*\((\d{1,2})\s*(años?)?\)\s*$/i);
+  if (conEdad) {
+    return { nombre: conEdad[1].trim(), tipo: 'nino', edad: Number(conEdad[2]) };
+  }
+  const esNino =
+    forzarNino || /niño|niña|hijo|hija|bebé|bebe/i.test(texto);
+  return { nombre: texto, tipo: esNino ? 'nino' : 'adulto', edad: null };
+}
+
+/** Lista estructurada de invitados según la modalidad (para precargar el RSVP). */
+function invitadosEstructurados(inv: {
+  modalidad: string;
+  familia: string;
+  contacto?: string | null;
+  asistentes?: string | null;
+}): InvitadoEstructurado[] {
+  const lineas = (inv.asistentes || '')
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (inv.modalidad === 'individual') {
+    return [{ nombre: inv.familia.trim(), tipo: 'adulto', edad: null }];
+  }
+  if (inv.modalidad === 'pareja') {
+    return lineas
+      .slice(0, 2)
+      .map((n) => ({ nombre: n, tipo: 'adulto' as const, edad: null }));
+  }
+  if (inv.modalidad === 'adulto-hijos') {
+    const adulto = (inv.contacto || '').trim();
+    const resultado: InvitadoEstructurado[] = adulto
+      ? [{ nombre: adulto, tipo: 'adulto', edad: null }]
+      : [];
+    for (const l of lineas) {
+      resultado.push(interpretarLineaInvitado(l, true));
+    }
+    return resultado;
+  }
+  // familiar: precarga las personas escritas en el mantenedor
+  return lineas.map((l) => interpretarLineaInvitado(l));
+}
+
 function generarToken(): string {
   return crypto.randomBytes(12).toString('hex');
 }
@@ -73,24 +130,14 @@ export async function getInvitacionPublica(req: Request, res: Response) {
       return res.status(404).json({ success: false, error: 'Invitación no encontrada' });
     }
 
-    // Nombres para precargar en el RSVP según la modalidad
-    let personas: string[] = [];
-    if (invitacion.modalidad === 'individual') {
-      personas = [invitacion.familia.trim()].filter(Boolean);
-    } else if (invitacion.modalidad === 'pareja') {
-      personas = (invitacion.asistentes || '')
-        .split('\n')
-        .map((s) => s.trim())
-        .filter(Boolean)
-        .slice(0, 2);
-    } else if (invitacion.modalidad === 'adulto-hijos') {
-      const adulto = (invitacion.contacto || '').trim();
-      const hijos = (invitacion.asistentes || '')
-        .split('\n')
-        .map((s) => s.trim())
-        .filter(Boolean);
-      personas = [adulto, ...hijos].filter(Boolean);
-    }
+    // Personas para precargar en el RSVP (nombres y detalle adulto/niño)
+    const invitados = invitadosEstructurados({
+      modalidad: invitacion.modalidad,
+      familia: invitacion.familia,
+      contacto: invitacion.contacto,
+      asistentes: invitacion.asistentes,
+    });
+    const personas = invitados.map((i) => i.nombre);
 
     res.json({
       success: true,
@@ -100,6 +147,7 @@ export async function getInvitacionPublica(req: Request, res: Response) {
         modalidad: invitacion.modalidad,
         estado: invitacion.estado,
         personas,
+        invitados,
       },
     });
   } catch (error) {
