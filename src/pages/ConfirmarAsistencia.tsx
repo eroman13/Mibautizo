@@ -173,7 +173,7 @@ export default function ConfirmarAsistencia() {
       return;
     }
     setError('');
-    setPaso((p) => Math.min(p + 1, 3));
+    setPaso((p) => Math.min(p + 1, 2));
     scrollAlFormulario();
   };
 
@@ -186,7 +186,7 @@ export default function ConfirmarAsistencia() {
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
     // Al presionar Enter (o intentar enviar) antes del último paso, avanzamos
-    if (paso < 3) {
+    if (paso < 2) {
       avanzarPaso();
       return;
     }
@@ -315,7 +315,6 @@ export default function ConfirmarAsistencia() {
               {[
                 { n: 1, label: 'Familia' },
                 { n: 2, label: 'Asistentes' },
-                { n: 3, label: 'Confirmar' },
               ].map(({ n, label }) => (
                 <button
                   key={n}
@@ -549,38 +548,34 @@ export default function ConfirmarAsistencia() {
                   Completa el nombre del invitado en edición para poder agregar a otro.
                 </p>
               )}
-            </div>
-              </>
-            )}
 
-            {paso === 3 && (
-              <>
-            {/* Resumen de la confirmación */}
-            <div className="rounded-xl border border-pastel-pink/30 bg-pink-50/70 p-4 space-y-1.5">
-              <p className="font-semibold text-gray-800 text-sm mb-1">
-                Resumen de tu confirmación
-              </p>
-              <p className="text-sm text-gray-700">
-                <strong>Familia:</strong> {nombreFamilia}
-              </p>
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className="px-2.5 py-0.5 rounded-full bg-white border border-pastel-pink/40 text-pastel-pink font-medium">
-                  👤 {contarAdultos()} adulto{contarAdultos() !== 1 ? 's' : ''}
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-white border border-pastel-lavender text-pastel-lavender font-medium">
-                  🧒 {contarNinos()} niño{contarNinos() !== 1 ? 's' : ''}
-                </span>
-              </div>
-              {(email.trim() || telefono.trim()) && (
-                <p className="text-xs text-gray-500">
-                  {email.trim() && <><strong>Email:</strong> {email.trim()}</>}
-                  {email.trim() && telefono.trim() && ' · '}
-                  {telefono.trim() && <><strong>Tel:</strong> {telefono.trim()}</>}
+              {/* Resumen previo a confirmar */}
+              <div className="rounded-xl border border-pastel-pink/30 bg-pink-50/70 p-4 space-y-1.5 mt-4">
+                <p className="font-semibold text-gray-800 text-sm mb-1">
+                  Resumen de tu confirmación
                 </p>
-              )}
-              <p className="text-xs text-gray-500 pt-1">
-                Revisa que todo esté correcto antes de confirmar.
-              </p>
+                <p className="text-sm text-gray-700">
+                  <strong>Familia:</strong> {nombreFamilia}
+                </p>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <span className="px-2.5 py-0.5 rounded-full bg-white border border-pastel-pink/40 text-pastel-pink font-medium">
+                    👤 {contarAdultos()} adulto{contarAdultos() !== 1 ? 's' : ''}
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-white border border-pastel-lavender text-pastel-lavender font-medium">
+                    🧒 {contarNinos()} niño{contarNinos() !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                {(email.trim() || telefono.trim()) && (
+                  <p className="text-xs text-gray-500">
+                    {email.trim() && <><strong>Email:</strong> {email.trim()}</>}
+                    {email.trim() && telefono.trim() && ' · '}
+                    {telefono.trim() && <><strong>Tel:</strong> {telefono.trim()}</>}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 pt-1">
+                  Revisa y presiona "Confirmar asistencia" para enviar.
+                </p>
+              </div>
             </div>
               </>
             )}
@@ -601,7 +596,7 @@ export default function ConfirmarAsistencia() {
                   ← Volver
                 </button>
               )}
-              {paso < 3 ? (
+              {paso < 2 ? (
                 <button
                   type="button"
                   onClick={avanzarPaso}
@@ -620,12 +615,8 @@ export default function ConfirmarAsistencia() {
               )}
             </div>
             <p className="text-center text-xs text-gray-400">
-              Paso {paso} de 3 ·{' '}
-              {paso === 1
-                ? 'Datos de la familia'
-                : paso === 2
-                  ? '¿Quiénes asisten?'
-                  : 'Revisa y confirma'}
+              Paso {paso} de 2 ·{' '}
+              {paso === 1 ? 'Datos de la familia' : 'Asistentes y confirmación'}
             </p>
           </form>
         </div>
