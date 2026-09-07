@@ -31,6 +31,8 @@ export default function ConfirmarAsistencia() {
 
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState('');
+  const [paso, setPaso] = useState(1); // 1: familia, 2: asistentes, 3: notas y confirmar
+  const [personaActiva, setPersonaActiva] = useState<number | null>(1);
   const [exito, setExito] = useState<{
     nombreFamilia: string;
     adultos: number;
@@ -56,11 +58,18 @@ export default function ConfirmarAsistencia() {
     personas.reduce((max, p) => Math.max(max, p.key), 0) + 1;
 
   const agregarPersona = () => {
-    setPersonas([
-      ...personas,
-      { key: siguienteKey(), nombre: '', tipo: 'adulto', edad: '' },
-    ]);
+    const key = siguienteKey();
+    setPersonas([...personas, { key, nombre: '', tipo: 'adulto', edad: '' }]);
+    setPersonaActiva(key);
     setError('');
+    // Enfocar y centrar la nueva persona para no perder la referencia visual
+    setTimeout(() => {
+      document.getElementById(`asistente-nombre-${key}`)?.focus();
+      document.getElementById(`asistente-card-${key}`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }, 80);
   };
 
   const eliminarPersona = (key: number) => {
@@ -68,8 +77,16 @@ export default function ConfirmarAsistencia() {
       setError('Debe haber al menos 1 persona. Si te equivocaste, edita los datos.');
       return;
     }
-    setPersonas(personas.filter((p) => p.key !== key));
+    const restantes = personas.filter((p) => p.key !== key);
+    if (personaActiva === key) {
+      setPersonaActiva(restantes[0]?.key ?? null);
+    }
+    setPersonas(restantes);
   };
+
+  // Solo una persona "abierta" a la vez (colapsa las demás para no alargar el formulario)
+  const togglePersona = (key: number) =>
+    setPersonaActiva((actual) => (actual === key ? null : key));
 
   const actualizarPersona = (
     key: number,
@@ -91,10 +108,12 @@ export default function ConfirmarAsistencia() {
     );
   };
 
-  const validar = (): string => {
-    if (!nombreFamilia.trim()) {
-      return 'Ingresa el nombre de la familia (ej: "Familia Pérez").';
-    }
+  const validarFamilia = (): string =>
+    nombreFamilia.trim()
+      ? ''
+      : 'Ingresa el nombre de la familia (ej: "Familia Pérez").';
+
+  const validarPersonas = (): string => {
     if (personas.length === 0) {
       return 'Debes confirmar al menos 1 persona.';
     }
@@ -115,8 +134,36 @@ export default function ConfirmarAsistencia() {
     return '';
   };
 
+  const validar = (): string => validarFamilia() || validarPersonas();
+
+  const contarAdultos = () => personas.filter((p) => p.tipo === 'adulto').length;
+  const contarNinos = () => personas.length - contarAdultos();
+
+  const avanzarPaso = () => {
+    const errorPaso = paso === 1 ? validarFamilia() : validarPersonas();
+    if (errorPaso) {
+      setError(errorPaso);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    setError('');
+    setPaso((p) => Math.min(p + 1, 3));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const irAtras = () => {
+    setError('');
+    setPaso((p) => Math.max(p - 1, 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Al presionar Enter (o intentar enviar) antes del último paso, avanzamos
+    if (paso < 3) {
+      avanzarPaso();
+      return;
+    }
     setError('');
 
     const errorValidacion = validar();
@@ -157,6 +204,8 @@ export default function ConfirmarAsistencia() {
     setTelefono('');
     setMensaje('');
     setPersonas([{ key: 1, nombre: '', tipo: 'adulto', edad: '' }]);
+    setPaso(1);
+    setPersonaActiva(1);
     setError('');
   };
 
@@ -237,6 +286,44 @@ export default function ConfirmarAsistencia() {
 
         <div className="bg-white rounded-2xl shadow-card p-8">
           <form onSubmit={enviar} className="space-y-6">
+            {/* Indicador de progreso por pasos */}
+            <div className="flex flex-wrap items-center gap-2">
+              {[
+                { n: 1, label: 'Familia' },
+                { n: 2, label: 'Asistentes' },
+                { n: 3, label: 'Confirmar' },
+              ].map(({ n, label }) => (
+                <button
+                  key={n}
+                  type="button"
+                  disabled={paso < n}
+                  onClick={() => {
+                    setError('');
+                    setPaso(n);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed ${
+                    paso === n
+                      ? 'bg-pastel-pink text-white shadow-sm'
+                      : paso > n
+                        ? 'bg-pastel-pink/15 text-pastel-pink hover:bg-pastel-pink/30'
+                        : 'bg-gray-100 text-gray-400'
+                  }`}
+                >
+                  <span
+                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                      paso > n ? 'bg-pastel-pink text-white' : ''
+                    }`}
+                  >
+                    {paso > n ? '✓' : n}
+                  </span>
+                  <span className="hidden sm:inline">{label}</span>
+                </button>
+              ))}
+            </div>
+
+            {paso === 1 && (
+              <>
             {/* Datos de la familia */}
             <div>
               <label className="block text-gray-700 font-medium mb-2">
@@ -277,86 +364,168 @@ export default function ConfirmarAsistencia() {
                 />
               </div>
             </div>
+              </>
+            )}
+
+            {paso === 2 && (
+              <>
             {/* Lista de personas */}
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <label className="block text-gray-700 font-medium">
-                  ¿Quiénes asistirán? *
-                </label>
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                <div>
+                  <label className="block text-gray-700 font-medium">
+                    ¿Quiénes asistirán? *
+                  </label>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">
+                      👤 {contarAdultos()} adulto{contarAdultos() !== 1 ? 's' : ''}
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-yellow-50 text-yellow-700 text-xs font-medium">
+                      🧒 {contarNinos()} niño{contarNinos() !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={agregarPersona}
-                  className="text-sm bg-pastel-pink text-white px-3 py-1.5 rounded-full hover:bg-pastel-lavender transition-colors"
+                  className="text-sm bg-pastel-pink text-white px-4 py-2 rounded-full hover:bg-pastel-lavender transition-colors shadow-sm"
                 >
                   + Agregar persona
                 </button>
               </div>
 
-              <div className="space-y-3">
-                {personas.map((p) => (
-                  <div
-                    key={p.key}
-                    className="border-2 border-gray-100 rounded-xl p-4 bg-gray-50/60"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                        Persona
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => eliminarPersona(p.key)}
-                        className="text-red-400 hover:text-red-600 text-sm font-medium"
-                        title="Quitar persona"
-                      >
-                        ✕ Quitar
-                      </button>
-                    </div>
-                    <div className="grid md:grid-cols-3 gap-3">
-                      <input
-                        type="text"
-                        value={p.nombre}
-                        onChange={(e) =>
-                          actualizarPersona(p.key, 'nombre', e.target.value)
-                        }
-                        placeholder="Nombre"
-                        className="input-field"
-                      />
-                      <select
-                        value={p.tipo}
-                        onChange={(e) =>
-                          actualizarPersona(p.key, 'tipo', e.target.value)
-                        }
-                        className="input-field"
-                      >
-                        <option value="adulto">Adulto</option>
-                        <option value="nino">Niño/a</option>
-                      </select>
-                      {p.tipo === 'nino' ? (
-                        <input
-                          type="number"
-                          min={0}
-                          max={13}
-                          value={p.edad}
-                          onChange={(e) =>
-                            actualizarPersona(p.key, 'edad', e.target.value)
+              <div className="space-y-2">
+                {personas.map((p, idx) => {
+                  const abierta = personaActiva === p.key;
+                  const nombre = p.nombre.trim();
+                  const resumen =
+                    p.tipo === 'adulto'
+                      ? 'Adulto'
+                      : `Niño/a${p.edad ? ` · ${p.edad} año${Number(p.edad) !== 1 ? 's' : ''}` : ''}`;
+                  return (
+                    <div
+                      key={p.key}
+                      id={`asistente-card-${p.key}`}
+                      className={`border-2 rounded-xl transition-colors ${
+                        abierta
+                          ? 'border-pastel-pink bg-white shadow-sm'
+                          : 'border-gray-100 bg-gray-50/60'
+                      }`}
+                    >
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => togglePersona(p.key)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            togglePersona(p.key);
                           }
-                          placeholder="Edad *"
-                          className="input-field"
-                        />
-                      ) : (
-                        <div className="flex items-center text-gray-400 text-sm px-3">
-                          Adulto
+                        }}
+                        className="w-full flex items-center justify-between gap-3 px-4 py-3 cursor-pointer select-none"
+                      >
+                        <span className="flex items-center gap-3 min-w-0">
+                          <span
+                            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                              abierta
+                                ? 'bg-pastel-pink text-white'
+                                : 'bg-white text-gray-500 border border-gray-200'
+                            }`}
+                          >
+                            {idx + 1}
+                          </span>
+                          <span className="min-w-0">
+                            <span
+                              className={`block truncate text-sm font-semibold ${
+                                nombre ? 'text-gray-800' : 'text-gray-400'
+                              }`}
+                            >
+                              {nombre || `Persona ${idx + 1}`}
+                            </span>
+                            <span className="block text-xs text-gray-500">
+                              {resumen}
+                              {abierta ? ' · completando…' : ''}
+                            </span>
+                          </span>
+                        </span>
+                        <span className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              eliminarPersona(p.key);
+                            }}
+                            className="text-red-400 hover:text-red-600 text-xs font-medium px-2 py-1"
+                            title="Quitar persona"
+                          >
+                            Quitar
+                          </button>
+                          <span
+                            className={`text-gray-400 text-xs transition-transform ${
+                              abierta ? 'rotate-180' : ''
+                            }`}
+                          >
+                            ▾
+                          </span>
+                        </span>
+                      </div>
+
+                      {abierta && (
+                        <div className="px-4 pb-4 pt-3 border-t border-gray-100">
+                          <div className="grid md:grid-cols-3 gap-3">
+                            <input
+                              id={`asistente-nombre-${p.key}`}
+                              type="text"
+                              value={p.nombre}
+                              onChange={(e) =>
+                                actualizarPersona(p.key, 'nombre', e.target.value)
+                              }
+                              placeholder="Nombre"
+                              className="input-field"
+                            />
+                            <select
+                              value={p.tipo}
+                              onChange={(e) =>
+                                actualizarPersona(p.key, 'tipo', e.target.value)
+                              }
+                              className="input-field"
+                            >
+                              <option value="adulto">Adulto</option>
+                              <option value="nino">Niño/a</option>
+                            </select>
+                            {p.tipo === 'nino' ? (
+                              <input
+                                type="number"
+                                min={0}
+                                max={13}
+                                value={p.edad}
+                                onChange={(e) =>
+                                  actualizarPersona(p.key, 'edad', e.target.value)
+                                }
+                                placeholder="Edad *"
+                                className="input-field"
+                              />
+                            ) : (
+                              <div className="flex items-center text-gray-400 text-sm px-3">
+                                ✓ Adulto (sin edad)
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <p className="text-xs text-gray-500 mt-2">
                 Si confirmas un niño/a, su edad es obligatoria (0 a 13 años). Mayores de 13 se consideran adultos.
               </p>
             </div>
+              </>
+            )}
 
+            {paso === 3 && (
+              <>
             {/* Notas opcionales */}
             <div>
               <label className="block text-gray-700 font-medium mb-2">
@@ -370,6 +539,8 @@ export default function ConfirmarAsistencia() {
                 rows={3}
               />
             </div>
+              </>
+            )}
 
             {error && (
               <div className="p-4 rounded-lg bg-red-50 text-red-700 text-sm">
@@ -377,13 +548,42 @@ export default function ConfirmarAsistencia() {
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={enviando}
-              className="btn-primary w-full"
-            >
-              {enviando ? 'Enviando...' : 'Confirmar asistencia 💌'}
-            </button>
+            <div className="flex flex-col-reverse sm:flex-row gap-3 border-t border-gray-100 pt-5">
+              {paso > 1 && (
+                <button
+                  type="button"
+                  onClick={irAtras}
+                  className="btn-secondary flex-1 sm:flex-none"
+                >
+                  ← Volver
+                </button>
+              )}
+              {paso < 3 ? (
+                <button
+                  type="button"
+                  onClick={avanzarPaso}
+                  className="btn-primary flex-1"
+                >
+                  Continuar →
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={enviando}
+                  className="btn-primary flex-1"
+                >
+                  {enviando ? 'Enviando...' : 'Confirmar asistencia 💌'}
+                </button>
+              )}
+            </div>
+            <p className="text-center text-xs text-gray-400">
+              Paso {paso} de 3 ·{' '}
+              {paso === 1
+                ? 'Datos de la familia'
+                : paso === 2
+                  ? '¿Quiénes asisten?'
+                  : 'Revisa y confirma'}
+            </p>
           </form>
         </div>
 
