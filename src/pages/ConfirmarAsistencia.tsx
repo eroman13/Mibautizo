@@ -275,8 +275,8 @@ export default function ConfirmarAsistencia() {
     scrollAlFormulario();
   };
 
-  const enviar = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const enviar = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     // Al presionar Enter (o intentar enviar) antes del último paso, avanzamos
     if (paso < 2) {
       avanzarPaso();
@@ -406,7 +406,12 @@ export default function ConfirmarAsistencia() {
                   {error}
                 </div>
               )}
-              <button type="submit" disabled={enviando} className="btn-primary w-full">
+              <button
+                type="button"
+                onClick={() => enviar()}
+                disabled={enviando}
+                className="btn-primary w-full"
+              >
                 {enviando ? 'Enviando...' : 'Confirmar asistencia 💌'}
               </button>
             </form>
@@ -785,7 +790,8 @@ export default function ConfirmarAsistencia() {
                 </button>
               ) : (
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={() => enviar()}
                   disabled={enviando}
                   className="btn-primary flex-1"
                 >
