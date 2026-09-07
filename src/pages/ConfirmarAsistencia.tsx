@@ -24,7 +24,6 @@ export default function ConfirmarAsistencia() {
   const [nombreFamilia, setNombreFamilia] = useState('');
   const [email, setEmail] = useState('');
   const [telefono, setTelefono] = useState('');
-  const [mensaje, setMensaje] = useState('');
   const [personas, setPersonas] = useState<PersonaForm[]>([
     { key: 1, nombre: '', tipo: 'adulto', edad: '' },
   ]);
@@ -205,7 +204,6 @@ export default function ConfirmarAsistencia() {
         nombreFamilia: nombreFamilia.trim(),
         email: email.trim() || undefined,
         telefono: telefono.trim() || undefined,
-        mensaje: mensaje.trim() || undefined,
         asistentes: personas.map((p) => ({
           nombre: p.nombre.trim(),
           tipo: p.tipo,
@@ -229,7 +227,6 @@ export default function ConfirmarAsistencia() {
     setNombreFamilia('');
     setEmail('');
     setTelefono('');
-    setMensaje('');
     setPersonas([{ key: 1, nombre: '', tipo: 'adulto', edad: '' }]);
     setPaso(1);
     setPersonaActiva(1);
@@ -584,20 +581,6 @@ export default function ConfirmarAsistencia() {
               <p className="text-xs text-gray-500 pt-1">
                 Revisa que todo esté correcto antes de confirmar.
               </p>
-            </div>
-
-            {/* Notas opcionales */}
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Mensaje o notas (opcional)
-              </label>
-              <textarea
-                value={mensaje}
-                onChange={(e) => setMensaje(e.target.value)}
-                placeholder="Alergias, necesidad de silla, etc."
-                className="input-field"
-                rows={3}
-              />
             </div>
               </>
             )}
