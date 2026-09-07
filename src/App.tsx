@@ -12,6 +12,7 @@ import ValidarRetornoPago from './components/pago/ValidarRetornoPago';
 // Páginas públicas
 import Home from './pages/Home';
 import Invitacion from './pages/Invitacion';
+import InvLink from './pages/InvLink';
 import Regalos from './pages/Regalos';
 import Checkout from './pages/Checkout';
 import ConfirmarAsistencia from './pages/ConfirmarAsistencia';
@@ -43,6 +44,7 @@ function App() {
                 {/* Rutas públicas */}
                 <Route path="/" element={<Home />} />
                 <Route path="/invitacion" element={<Invitacion />} />
+                <Route path="/i/:token" element={<InvLink />} />
                 <Route path="/regalos" element={<Regalos />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/confirmar-asistencia" element={<ConfirmarAsistencia />} />

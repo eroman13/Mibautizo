@@ -58,17 +58,17 @@ const COLOR_MODALIDAD: Record<Invitacion['modalidad'], string> = {
 
 function enlaceInvitacion(inv: Invitacion): string {
   const base = window.location.origin;
-  const q = new URLSearchParams({
-    familia: inv.familia,
-    token: inv.token,
-    modalidad: inv.modalidad,
-  }).toString();
-  return `${base}/?${q}`;
+  return `${base}/i/${inv.token}`;
 }
 
 function mensajeWhatsApp(inv: Invitacion): string {
-  const saludo = inv.contacto ? `Hola ${inv.contacto}` : 'Hola';
-  return `${saludo}, ${inv.familia} 💌 Te esperamos en el bautizo de las mellizas 🎀\nConfirma tu asistencia y mira la lista de regalos aquí:\n${enlaceInvitacion(inv)}`;
+  const saludo = inv.contacto ? `¡Hola ${inv.contacto}!` : '¡Hola!';
+  return `${saludo} 🤍
+Nos hace una ilusión enorme compartir contigo un momento muy especial para nuestra familia. Te dejamos la invitación con toda la información del bautizo de las mellizas 🎀
+
+${enlaceInvitacion(inv)}
+
+¡Esperamos contar con tu presencia! 💌 Te pedimos confirmar tu asistencia.`;
 }
 
 function telefonoWa(inv: Invitacion): string {
