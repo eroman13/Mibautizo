@@ -850,9 +850,19 @@ export default function ConfirmarAsistencia() {
                   );
                 })}
               </div>
-              <p className="text-xs text-gray-500 mt-2">
-                Si confirmas un niño/a, su edad es obligatoria (0 a 13 años). Mayores de 13 se consideran adultos.
-              </p>
+              {!esPareja && !esAdultoHijos && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Si confirmas un niño/a, su edad es obligatoria (0 a 13 años). Mayores de 13 se
+                  consideran adultos.
+                </p>
+              )}
+              {personas.some(
+                (per) => per.tipo === 'nino' && per.asiste !== false
+              ) && (
+                <p className="text-xs text-amber-600 mt-2">
+                  👶 Favor validar la edad de su/s hijo/a(s) cuando corresponda.
+                </p>
+              )}
 
               {!esIndividual && (!esPareja || personas.length < 2) && (
                 <button
