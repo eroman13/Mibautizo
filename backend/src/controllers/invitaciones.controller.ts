@@ -16,7 +16,7 @@ interface InvitacionBody {
   contacto?: string;
   telefono?: string;
   estado?: 'pendiente' | 'enviada' | 'confirmada';
-  modalidad?: 'familiar' | 'pareja' | 'individual';
+  modalidad?: 'familiar' | 'pareja' | 'individual' | 'adulto-hijos';
   asistentes?: string;
 }
 
@@ -42,9 +42,10 @@ function validarInvitacion(body: InvitacionBody): string | null {
     body.modalidad &&
     body.modalidad !== 'familiar' &&
     body.modalidad !== 'pareja' &&
-    body.modalidad !== 'individual'
+    body.modalidad !== 'individual' &&
+    body.modalidad !== 'adulto-hijos'
   ) {
-    return 'La modalidad debe ser "familiar", "pareja" o "individual"';
+    return 'La modalidad debe ser "familiar", "pareja", "individual" o "adulto-hijos"';
   }
   return null;
 }
@@ -72,6 +73,13 @@ export async function getInvitacionPublica(req: Request, res: Response) {
         .map((s) => s.trim())
         .filter(Boolean)
         .slice(0, 2);
+    } else if (invitacion.modalidad === 'adulto-hijos') {
+      const adulto = (invitacion.contacto || '').trim();
+      const hijos = (invitacion.asistentes || '')
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      personas = [adulto, ...hijos].filter(Boolean);
     }
 
     res.json({
@@ -210,7 +218,10 @@ export async function actualizarInvitacion(req: Request, res: Response) {
     if (typeof body.contacto === 'string') data.contacto = body.contacto.trim() || null;
     if (typeof body.telefono === 'string') data.telefono = limpiarTelefono(body.telefono);
     if (typeof body.asistentes === 'string') data.asistentes = body.asistentes.trim() || null;
-    if (body.modalidad && ['familiar', 'pareja', 'individual'].includes(body.modalidad)) {
+    if (
+      body.modalidad &&
+      ['familiar', 'pareja', 'individual', 'adulto-hijos'].includes(body.modalidad)
+    ) {
       data.modalidad = body.modalidad;
     }
 

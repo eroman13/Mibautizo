@@ -13,7 +13,7 @@ interface FormInvitacion {
   contacto: string;
   telefono: string;
   asistentes: string;
-  modalidad: 'familiar' | 'pareja' | 'individual';
+  modalidad: 'familiar' | 'pareja' | 'individual' | 'adulto-hijos';
   parejaNombre1: string;
   parejaNombre2: string;
 }
@@ -46,12 +46,14 @@ const ETIQUETA_MODALIDAD: Record<Invitacion['modalidad'], string> = {
   familiar: '👨‍👩‍👧 Familiar',
   pareja: '👫 Pareja (sin niños)',
   individual: '🙋 Individual',
+  'adulto-hijos': '🧑‍🧒 Adulto + hijos',
 };
 
 const COLOR_MODALIDAD: Record<Invitacion['modalidad'], string> = {
   familiar: 'bg-gray-100 text-gray-500',
   pareja: 'bg-teal-100 text-teal-700',
   individual: 'bg-purple-100 text-purple-700',
+  'adulto-hijos': 'bg-amber-100 text-amber-700',
 };
 
 function enlaceInvitacion(inv: Invitacion): string {
@@ -176,6 +178,19 @@ export default function AdminInvitaciones() {
         contacto: n1,
         telefono: form.telefono.trim(),
         asistentes: `${n1}\n${n2}`,
+      };
+    } else if (form.modalidad === 'adulto-hijos') {
+      const adulto = form.contacto.trim();
+      if (!adulto) {
+        setMensaje({ tipo: 'error', texto: 'Ingresa el nombre del adulto.' });
+        return;
+      }
+      payload = {
+        modalidad: 'adulto-hijos',
+        familia: `${adulto} y sus hijos`,
+        contacto: adulto,
+        telefono: form.telefono.trim(),
+        asistentes: form.asistentes.trim(),
       };
     } else {
       if (!form.familia.trim()) {
@@ -566,6 +581,21 @@ export default function AdminInvitaciones() {
                         </span>
                       </span>
                     </label>
+                    <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border-2 border-gray-100 hover:border-amber-300 transition-colors">
+                      <input
+                        type="radio"
+                        name="modalidad"
+                        checked={form.modalidad === 'adulto-hijos'}
+                        onChange={() => setForm({ ...form, modalidad: 'adulto-hijos' })}
+                        className="mt-1"
+                      />
+                      <span>
+                        <span className="block font-medium text-gray-800">🧑‍🧒 Adulto + hijos</span>
+                        <span className="text-xs text-gray-500">
+                          Invitas a un adulto con su(s) hijo(s).
+                        </span>
+                      </span>
+                    </label>
                   </div>
                 </div>
                 {form.modalidad === 'individual' && (
@@ -581,6 +611,35 @@ export default function AdminInvitaciones() {
                       placeholder="Francisco"
                     />
                   </div>
+                )}
+
+                {form.modalidad === 'adulto-hijos' && (
+                  <>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">
+                        Nombre del adulto * <span className="text-gray-400">(ej: María)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={form.contacto}
+                        onChange={(e) => setForm({ ...form, contacto: e.target.value })}
+                        className="input-field"
+                        placeholder="María"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">
+                        Nombres de los hijos <span className="text-gray-400">(opcional, uno por línea)</span>
+                      </label>
+                      <textarea
+                        value={form.asistentes}
+                        onChange={(e) => setForm({ ...form, asistentes: e.target.value })}
+                        className="input-field"
+                        rows={3}
+                        placeholder={'Josefina\nPedro'}
+                      />
+                    </div>
+                  </>
                 )}
 
                 {form.modalidad === 'pareja' && (

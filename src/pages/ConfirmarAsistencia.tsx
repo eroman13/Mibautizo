@@ -28,6 +28,7 @@ export default function ConfirmarAsistencia() {
   const [invitacionToken, setInvitacionToken] = useState('');
   const [esIndividual, setEsIndividual] = useState(false);
   const [esPareja, setEsPareja] = useState(false);
+  const [esAdultoHijos, setEsAdultoHijos] = useState(false);
   const [personas, setPersonas] = useState<PersonaForm[]>([
     { key: 1, nombre: '', tipo: 'adulto', edad: '', asiste: true },
   ]);
@@ -70,6 +71,11 @@ export default function ConfirmarAsistencia() {
         { key: 2, nombre: '', tipo: 'adulto', edad: '', asiste: true },
       ]);
       setPersonaActiva(1);
+    } else if (modalidadParam === 'adulto-hijos') {
+      setEsAdultoHijos(true);
+      setPaso(2);
+      setPersonas([{ key: 1, nombre: '', tipo: 'adulto', edad: '', asiste: true }]);
+      setPersonaActiva(1);
     }
   }, []);
 
@@ -102,6 +108,21 @@ export default function ConfirmarAsistencia() {
             { key: 1, nombre: nombres[0] || '', tipo: 'adulto', edad: '', asiste: true },
             { key: 2, nombre: nombres[1] || '', tipo: 'adulto', edad: '', asiste: true },
           ]);
+          setPersonaActiva(1);
+        } else if (info.modalidad === 'adulto-hijos') {
+          setEsAdultoHijos(true);
+          setPaso(2);
+          const filas: PersonaForm[] = [
+            { key: 1, nombre: nombres[0] || '', tipo: 'adulto', edad: '', asiste: true },
+            ...nombres.slice(1).map((nombre: string, i: number) => ({
+              key: 2 + i,
+              nombre,
+              tipo: 'nino' as const,
+              edad: '',
+              asiste: true,
+            })),
+          ];
+          setPersonas(filas);
           setPersonaActiva(1);
         }
       })
@@ -156,7 +177,13 @@ export default function ConfirmarAsistencia() {
     const key = siguienteKey();
     setPersonas([
       ...personas,
-      { key, nombre: '', tipo: 'adulto', edad: '', asiste: true },
+      {
+        key,
+        nombre: '',
+        tipo: esAdultoHijos ? 'nino' : 'adulto',
+        edad: '',
+        asiste: true,
+      },
     ]);
     setPersonaActiva(key);
     setError('');
@@ -435,9 +462,11 @@ export default function ConfirmarAsistencia() {
             Confirmar asistencia
           </h1>
           <p className="text-gray-600 max-w-xl mx-auto">
-            {esPareja
-              ? 'Cuéntanos quiénes de la pareja nos acompañarán en el bautizo de '
-              : 'Cuéntanos quiénes de tu familia nos acompañarán en el bautizo de '}
+            {esAdultoHijos
+              ? 'Cuéntanos quiénes asistirán (adulto y sus hijos) al bautizo de '
+              : esPareja
+                ? 'Cuéntanos quiénes de la pareja nos acompañarán en el bautizo de '
+                : 'Cuéntanos quiénes de tu familia nos acompañarán en el bautizo de '}
             {evento.nombreMelliza1} y {evento.nombreMelliza2}.💝
           </p>
           <p className="text-pastel-pink font-medium mt-3">
@@ -461,6 +490,7 @@ export default function ConfirmarAsistencia() {
             }}
           >
             {/* Indicador de progreso por pasos */}
+            {!esAdultoHijos && (
             <div className="flex flex-wrap items-center gap-2">
               {[
                 { n: 1, label: 'Familia' },
@@ -494,6 +524,7 @@ export default function ConfirmarAsistencia() {
                 </button>
               ))}
             </div>
+            )}
 
             {paso === 1 && (
               <>
@@ -546,7 +577,11 @@ export default function ConfirmarAsistencia() {
             <div>
               <div className="mb-3">
                 <label className="block text-gray-700 font-medium">
-                  {esPareja ? '¿Quiénes confirman? (máx. 2, sin niños) *' : '¿Quiénes asistirán? *'}
+                  {esAdultoHijos
+                    ? '¿Quién asistirá? (adulto y sus hijos) *'
+                    : esPareja
+                      ? '¿Quiénes confirman? (máx. 2, sin niños) *'
+                      : '¿Quiénes asistirán? *'}
                 </label>
                 <div className="flex items-center gap-2 mt-1.5">
                   <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">
@@ -628,7 +663,7 @@ export default function ConfirmarAsistencia() {
                             >
                               {p.asiste !== false ? '✓ Asistirá' : '✗ No asistirá'}
                             </button>
-                          ) : !esIndividual ? (
+                          ) : esAdultoHijos && idx === 0 ? null : !esIndividual ? (
                             <button
                               type="button"
                               onClick={(e) => {
@@ -653,30 +688,34 @@ export default function ConfirmarAsistencia() {
 
                       {abierta && (
                         <div className="px-4 pb-4 pt-3 border-t border-gray-100">
-                          <div className="grid md:grid-cols-3 gap-3">
-                            <input
-                              id={`asistente-nombre-${p.key}`}
-                              type="text"
-                              value={p.nombre}
-                              onChange={(e) =>
-                                actualizarPersona(p.key, 'nombre', e.target.value)
-                              }
-                              placeholder="Nombre"
-                              className="input-field"
-                            />
-                            <select
-                              value={p.tipo}
-                              onChange={(e) =>
-                                actualizarPersona(p.key, 'tipo', e.target.value)
-                              }
-                              className="input-field"
-                            >
-                              <option value="adulto">Adulto</option>
-                              <option value="nino" disabled={esPareja}>
-                          Niño/a
-                        </option>
-                            </select>
-                            {p.tipo === 'nino' ? (
+                          {esAdultoHijos && idx === 0 ? (
+                            <div className="grid md:grid-cols-2 gap-3">
+                              <input
+                                id={`asistente-nombre-${p.key}`}
+                                type="text"
+                                value={p.nombre}
+                                onChange={(e) =>
+                                  actualizarPersona(p.key, 'nombre', e.target.value)
+                                }
+                                placeholder="Nombre del adulto"
+                                className="input-field"
+                              />
+                              <div className="flex items-center text-gray-400 text-sm px-3">
+                                👤 Adulto
+                              </div>
+                            </div>
+                          ) : esAdultoHijos ? (
+                            <div className="grid md:grid-cols-2 gap-3">
+                              <input
+                                id={`asistente-nombre-${p.key}`}
+                                type="text"
+                                value={p.nombre}
+                                onChange={(e) =>
+                                  actualizarPersona(p.key, 'nombre', e.target.value)
+                                }
+                                placeholder="Nombre del hijo/a"
+                                className="input-field"
+                              />
                               <input
                                 type="number"
                                 min={0}
@@ -688,12 +727,50 @@ export default function ConfirmarAsistencia() {
                                 placeholder="Edad *"
                                 className="input-field"
                               />
-                            ) : (
-                              <div className="flex items-center text-gray-400 text-sm px-3">
-                                ✓ Adulto (sin edad)
-                              </div>
-                            )}
-                          </div>
+                            </div>
+                          ) : (
+                            <div className="grid md:grid-cols-3 gap-3">
+                              <input
+                                id={`asistente-nombre-${p.key}`}
+                                type="text"
+                                value={p.nombre}
+                                onChange={(e) =>
+                                  actualizarPersona(p.key, 'nombre', e.target.value)
+                                }
+                                placeholder="Nombre"
+                                className="input-field"
+                              />
+                              <select
+                                value={p.tipo}
+                                onChange={(e) =>
+                                  actualizarPersona(p.key, 'tipo', e.target.value)
+                                }
+                                className="input-field"
+                              >
+                                <option value="adulto">Adulto</option>
+                                <option value="nino" disabled={esPareja}>
+                                  Niño/a
+                                </option>
+                              </select>
+                              {p.tipo === 'nino' ? (
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={13}
+                                  value={p.edad}
+                                  onChange={(e) =>
+                                    actualizarPersona(p.key, 'edad', e.target.value)
+                                  }
+                                  placeholder="Edad *"
+                                  className="input-field"
+                                />
+                              ) : (
+                                <div className="flex items-center text-gray-400 text-sm px-3">
+                                  ✓ Adulto (sin edad)
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -711,7 +788,11 @@ export default function ConfirmarAsistencia() {
                   disabled={personas.some((per) => !per.nombre.trim())}
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border-2 border-dashed border-pastel-pink/60 text-pastel-pink rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-pastel-pink/10 disabled:opacity-40 disabled:cursor-not-allowed mt-3"
                 >
-                  {esPareja ? '＋ Agregar a la otra persona' : '＋ Agregar otra persona'}
+                  {esPareja
+                    ? '＋ Agregar a la otra persona'
+                    : esAdultoHijos
+                      ? '＋ Agregar hijo/a'
+                      : '＋ Agregar otra persona'}
                 </button>
               )}
               {!esIndividual &&
@@ -732,6 +813,11 @@ export default function ConfirmarAsistencia() {
                   integrante (máx. 2 y sin niños).
                 </p>
               )}
+              {esAdultoHijos && (
+                <p className="text-xs text-gray-500 mt-3">
+                  🧑‍🧒 Invitas a 1 adulto con sus hijos. Agrega cada hijo con su edad (0 a 13 años).
+                </p>
+              )}
 
               {/* Resumen previo a confirmar */}
               <div className="rounded-xl border border-pastel-pink/30 bg-pink-50/70 p-4 space-y-1.5 mt-4">
@@ -739,7 +825,10 @@ export default function ConfirmarAsistencia() {
                   Resumen de tu confirmación
                 </p>
                 <p className="text-sm text-gray-700">
-                  <strong>{esPareja ? 'Pareja' : 'Familia'}:</strong> {nombreFamilia}
+                  <strong>
+                    {esAdultoHijos ? 'Adulto + hijos' : esPareja ? 'Pareja' : 'Familia'}:
+                  </strong>{' '}
+                  {nombreFamilia}
                 </p>
                 <div className="flex flex-wrap gap-2 text-xs">
                   <span className="px-2.5 py-0.5 rounded-full bg-white border border-pastel-pink/40 text-pastel-pink font-medium">
@@ -771,7 +860,7 @@ export default function ConfirmarAsistencia() {
             )}
 
             <div className="flex flex-col-reverse sm:flex-row gap-3 border-t border-gray-100 pt-5">
-              {paso > 1 && (
+              {paso > 1 && !esAdultoHijos && (
                 <button
                   type="button"
                   onClick={irAtras}
@@ -799,14 +888,16 @@ export default function ConfirmarAsistencia() {
                 </button>
               )}
             </div>
-            <p className="text-center text-xs text-gray-400">
-              Paso {paso} de 2 ·{' '}
-              {paso === 1
-                ? esPareja
-                  ? 'Datos de la pareja'
-                  : 'Datos de la familia'
-                : 'Asistentes y confirmación'}
-            </p>
+            {!esAdultoHijos && (
+              <p className="text-center text-xs text-gray-400">
+                Paso {paso} de 2 ·{' '}
+                {paso === 1
+                  ? esPareja
+                    ? 'Datos de la pareja'
+                    : 'Datos de la familia'
+                  : 'Asistentes y confirmación'}
+              </p>
+            )}
           </form>
         </div>
 

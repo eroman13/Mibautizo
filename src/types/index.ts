@@ -64,7 +64,7 @@ export interface Invitacion {
   telefono?: string | null;
   token: string;
   estado: 'pendiente' | 'enviada' | 'confirmada';
-  modalidad: 'familiar' | 'pareja' | 'individual';
+  modalidad: 'familiar' | 'pareja' | 'individual' | 'adulto-hijos';
   asistentes?: string | null;
   fechaEnviada?: string | null;
   fechaConfirmada?: string | null;

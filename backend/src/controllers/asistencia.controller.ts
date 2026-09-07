@@ -131,6 +131,15 @@ export async function confirmarAsistencia(req: Request, res: Response) {
           });
         }
       }
+      if (invitacionValida?.modalidad === 'adulto-hijos') {
+        const adultos = asistentes.filter((a) => a.tipo === 'adulto').length;
+        if (adultos !== 1) {
+          return res.status(400).json({
+            success: false,
+            error: 'Esta invitación es para 1 adulto con sus hijos: debe asistir exactamente 1 adulto.',
+          });
+        }
+      }
     }
 
     // Guardar en una transacción: la confirmación + todas sus personas

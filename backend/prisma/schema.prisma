@@ -119,7 +119,7 @@ model Invitacion {
   telefono        String? // Teléfono para abrir WhatsApp directo (opcional)
   token           String    @unique // Token del enlace personalizado
   estado          String    @default("pendiente") // "pendiente" | "enviada" | "confirmada"
-  modalidad       String    @default("familiar") // "familiar" | "pareja" | "individual"
+  modalidad       String    @default("familiar") // "familiar" | "pareja" | "individual" | "adulto-hijos"
   asistentes      String? // Personas invitadas (una por línea, opcional)
   fechaEnviada    DateTime?
   fechaConfirmada DateTime?
