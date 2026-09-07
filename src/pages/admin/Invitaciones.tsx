@@ -62,7 +62,12 @@ function enlaceInvitacion(inv: Invitacion): string {
 }
 
 function mensajeWhatsApp(inv: Invitacion): string {
-  const saludo = inv.contacto ? `¡Hola ${inv.contacto}!` : '¡Hola!';
+  // Individual: saluda por el nombre de la persona invitada (inv.familia = la persona)
+  const saludo = inv.contacto
+    ? `¡Hola ${inv.contacto}!`
+    : inv.modalidad === 'individual' && inv.familia
+      ? `¡Hola ${inv.familia}!`
+      : '¡Hola!';
   return `${saludo} ✨
 Nos hace una ilusión enorme compartir contigo un momento muy especial para nuestra familia 💖 Te dejamos la invitación con toda la información del bautizo de las mellizas 🎀
 
