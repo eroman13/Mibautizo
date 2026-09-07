@@ -46,13 +46,30 @@ export default function ConfirmarAsistencia() {
     cargarEvento();
   }, []);
 
-  // Si llegó desde un enlace de invitación (?familia=&token=), precargar los datos
+  // Si llegó desde un enlace de invitación (?familia=&token=&modalidad=), precargar los datos
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const familiaParam = params.get('familia');
     if (familiaParam) setNombreFamilia(familiaParam);
     const tokenParam = params.get('token');
     if (tokenParam) setInvitacionToken(tokenParam);
+
+    const modalidadParam = (params.get('modalidad') || '').trim();
+    if (modalidadParam === 'individual') {
+      setEsIndividual(true);
+      setPaso(2);
+      if (familiaParam) {
+        setPersonas([{ key: 1, nombre: familiaParam, tipo: 'adulto', edad: '' }]);
+        setPersonaActiva(1);
+      }
+    } else if (modalidadParam === 'pareja') {
+      setEsPareja(true);
+      setPersonas([
+        { key: 1, nombre: '', tipo: 'adulto', edad: '' },
+        { key: 2, nombre: '', tipo: 'adulto', edad: '' },
+      ]);
+      setPersonaActiva(1);
+    }
   }, []);
 
   // Consulta la modalidad de la invitación (familiar o individual)

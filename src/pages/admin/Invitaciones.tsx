@@ -56,7 +56,11 @@ const COLOR_MODALIDAD: Record<Invitacion['modalidad'], string> = {
 
 function enlaceInvitacion(inv: Invitacion): string {
   const base = window.location.origin;
-  const q = new URLSearchParams({ familia: inv.familia, token: inv.token }).toString();
+  const q = new URLSearchParams({
+    familia: inv.familia,
+    token: inv.token,
+    modalidad: inv.modalidad,
+  }).toString();
   return `${base}/?${q}`;
 }
 

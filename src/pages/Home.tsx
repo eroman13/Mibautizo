@@ -17,11 +17,13 @@ export default function Home() {
   const [searchParams] = useSearchParams();
   const familiaParam = (searchParams.get('familia') || '').trim();
   const tokenParam = (searchParams.get('token') || '').trim();
+  const modalidadParam = (searchParams.get('modalidad') || '').trim();
   const hayInvitacion = Boolean(familiaParam || tokenParam);
 
   const qRsvp = new URLSearchParams();
   if (familiaParam) qRsvp.set('familia', familiaParam);
   if (tokenParam) qRsvp.set('token', tokenParam);
+  if (modalidadParam) qRsvp.set('modalidad', modalidadParam);
   const linkRsvp = qRsvp.toString()
     ? `/confirmar-asistencia?${qRsvp.toString()}`
     : '/confirmar-asistencia';
