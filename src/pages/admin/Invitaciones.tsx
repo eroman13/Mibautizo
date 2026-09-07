@@ -636,8 +636,12 @@ export default function AdminInvitaciones() {
                         onChange={(e) => setForm({ ...form, asistentes: e.target.value })}
                         className="input-field"
                         rows={3}
-                        placeholder={'Josefina\nPedro'}
+                        placeholder={'Josefina (5)\nPedro (2)'}
                       />
+                      <p className="text-xs text-gray-400 mt-1">
+                        Aquí todos se cargan como hijos (niño/a). Puedes indicar la edad entre
+                        paréntesis, ej: <code className="bg-gray-100 px-1 rounded">Pedro (3)</code>.
+                      </p>
                     </div>
                   </>
                 )}
@@ -706,8 +710,14 @@ export default function AdminInvitaciones() {
                         onChange={(e) => setForm({ ...form, asistentes: e.target.value })}
                         className="input-field"
                         rows={3}
-                        placeholder={'Mamá\nPapá\nHijo/a (8 años)'}
+                        placeholder={'Mamá\nPapá\nJosefina (5)\nPedro (2)'}
                       />
+                      <p className="text-xs text-gray-400 mt-1">
+                        Para marcarlo como niño/a escribe su edad entre paréntesis, ej:{' '}
+                        <code className="bg-gray-100 px-1 rounded">Josefina (5)</code>. También se
+                        reconocen las palabras niño/a, hijo/a o bebé. Si no lleva edad se carga como
+                        adulto (puedes cambiarlo al confirmar).
+                      </p>
                     </div>
                   </>
                 )}
