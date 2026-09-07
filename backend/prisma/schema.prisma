@@ -110,3 +110,19 @@ model Asistente {
   tipo         String // 'adulto' | 'nino'
   edad         Int? // Obligatorio si tipo = 'nino'
 }
+
+// Invitaciones a familias/personas (se envían por WhatsApp con un enlace único)
+model Invitacion {
+  id              Int       @id @default(autoincrement())
+  familia         String // Nombre a mostrar y a precargar en el RSVP
+  contacto        String? // Persona de contacto (opcional)
+  telefono        String? // Teléfono para abrir WhatsApp directo (opcional)
+  token           String    @unique // Token del enlace personalizado
+  estado          String    @default("pendiente") // "pendiente" | "enviada" | "confirmada"
+  asistentes      String? // Personas invitadas (una por línea, opcional)
+  fechaEnviada    DateTime?
+  fechaConfirmada DateTime?
+  asistenciaId    Int? // id de la confirmación cuando responde
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}

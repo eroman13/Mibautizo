@@ -28,6 +28,14 @@ import {
   testEmail,
 } from '../controllers/admin.controller';
 import {
+  getInvitaciones,
+  crearInvitacion,
+  crearInvitacionesMasivo,
+  actualizarInvitacion,
+  marcarEnviadaInvitacion,
+  eliminarInvitacion,
+} from '../controllers/invitaciones.controller';
+import {
   getAllAdminUsers,
   createAdminUser,
   updateAdminUser,
@@ -86,6 +94,14 @@ router.post('/admin/limpiar-pagos', verificarAuth, limpiarPagos);
 router.post('/admin/test-email', verificarAuth, testEmail);
 router.get('/admin/asistencias', verificarAuth, getAsistencias);
 router.delete('/admin/asistencias/:id', verificarAuth, eliminarAsistencia);
+
+// Rutas de invitaciones (enviadas por WhatsApp con enlace único)
+router.get('/admin/invitaciones', verificarAuth, getInvitaciones);
+router.post('/admin/invitaciones', verificarAuth, crearInvitacion);
+router.post('/admin/invitaciones/bulk', verificarAuth, crearInvitacionesMasivo);
+router.put('/admin/invitaciones/:id', verificarAuth, actualizarInvitacion);
+router.delete('/admin/invitaciones/:id', verificarAuth, eliminarInvitacion);
+router.post('/admin/invitaciones/:id/marcar-enviada', verificarAuth, marcarEnviadaInvitacion);
 
 // Rutas de gestión de usuarios admin
 router.get('/admin-users', verificarAuth, getAllAdminUsers);

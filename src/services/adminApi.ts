@@ -136,4 +136,55 @@ export const adminApi = {
     });
     return response.json();
   },
+
+  // Invitaciones (enlaces por WhatsApp)
+  getInvitaciones: async () => {
+    const response = await fetch(`${API_URL}/admin/invitaciones`, {
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  },
+
+  crearInvitacion: async (data: any) => {
+    const response = await fetch(`${API_URL}/admin/invitaciones`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  },
+
+  crearInvitacionesMasivo: async (invitaciones: any[]) => {
+    const response = await fetch(`${API_URL}/admin/invitaciones/bulk`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ invitaciones }),
+    });
+    return response.json();
+  },
+
+  actualizarInvitacion: async (id: number, data: any) => {
+    const response = await fetch(`${API_URL}/admin/invitaciones/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  },
+
+  marcarEnviadaInvitacion: async (id: number) => {
+    const response = await fetch(`${API_URL}/admin/invitaciones/${id}/marcar-enviada`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  },
+
+  eliminarInvitacion: async (id: number) => {
+    const response = await fetch(`${API_URL}/admin/invitaciones/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  },
 };

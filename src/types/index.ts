@@ -57,6 +57,20 @@ export interface AsistenteConfirmacion {
   edad?: number | null;
 }
 
+export interface Invitacion {
+  id: number;
+  familia: string;
+  contacto?: string | null;
+  telefono?: string | null;
+  token: string;
+  estado: 'pendiente' | 'enviada' | 'confirmada';
+  asistentes?: string | null;
+  fechaEnviada?: string | null;
+  fechaConfirmada?: string | null;
+  asistenciaId?: number | null;
+  createdAt?: string;
+}
+
 export interface ConfirmacionAsistencia {
   id: number;
   nombreFamilia: string;

@@ -59,7 +59,7 @@ export const api = {
     nombreFamilia: string;
     email?: string;
     telefono?: string;
-    mensaje?: string;
+    invitacionToken?: string;
     asistentes: Array<{ nombre: string; tipo: 'adulto' | 'nino'; edad?: number | null }>;
   }) => {
     return fetchAPI('/confirmar-asistencia', {

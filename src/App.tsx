@@ -11,6 +11,7 @@ import ValidarRetornoPago from './components/pago/ValidarRetornoPago';
 
 // Páginas públicas
 import Home from './pages/Home';
+import Invitacion from './pages/Invitacion';
 import Regalos from './pages/Regalos';
 import Checkout from './pages/Checkout';
 import ConfirmarAsistencia from './pages/ConfirmarAsistencia';
@@ -25,6 +26,7 @@ import AdminLogin from './pages/admin/Login';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminContribuciones from './pages/admin/Contribuciones';
 import AdminAsistencias from './pages/admin/Asistencias';
+import AdminInvitaciones from './pages/admin/Invitaciones';
 import AdminRegalos from './pages/admin/Regalos';
 import AdminConfiguracion from './pages/admin/Configuracion';
 import AdminUsers from './pages/admin/AdminUsers';
@@ -40,6 +42,7 @@ function App() {
               <Routes>
                 {/* Rutas públicas */}
                 <Route path="/" element={<Home />} />
+                <Route path="/invitacion" element={<Invitacion />} />
                 <Route path="/regalos" element={<Regalos />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/confirmar-asistencia" element={<ConfirmarAsistencia />} />
@@ -97,6 +100,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <AdminAsistencias />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/invitaciones"
+                  element={
+                    <ProtectedRoute>
+                      <AdminInvitaciones />
                     </ProtectedRoute>
                   }
                 />

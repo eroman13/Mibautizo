@@ -24,6 +24,7 @@ interface ConfirmarBody {
   email?: string;
   telefono?: string;
   mensaje?: string;
+  invitacionToken?: string; // Token del enlace de invitación por WhatsApp
   asistentes?: AsistenteBody[];
 }
 
@@ -178,6 +179,29 @@ export async function confirmarAsistencia(req: Request, res: Response) {
       }
     } catch (errorEmail) {
       console.error('⚠️ Error en envío de correos de asistencia:', errorEmail);
+    }
+
+    // Vincular la confirmación con su invitación (si venía con token del enlace de WhatsApp)
+    const invitacionToken = (body.invitacionToken || '').trim();
+    if (invitacionToken) {
+      try {
+        const invitacion = await prisma.invitacion.findUnique({
+          where: { token: invitacionToken },
+        });
+        if (invitacion) {
+          await prisma.invitacion.update({
+            where: { id: invitacion.id },
+            data: {
+              estado: 'confirmada',
+              fechaConfirmada: new Date(),
+              asistenciaId: confirmacion.id,
+            },
+          });
+          console.log(`✅ Invitación de "${invitacion.familia}" marcada como confirmada`);
+        }
+      } catch (errorLink) {
+        console.warn('⚠️ No se pudo vincular la invitación:', errorLink);
+      }
     }
 
     console.log(

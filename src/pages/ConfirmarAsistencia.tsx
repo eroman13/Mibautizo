@@ -24,6 +24,7 @@ export default function ConfirmarAsistencia() {
   const [nombreFamilia, setNombreFamilia] = useState('');
   const [email, setEmail] = useState('');
   const [telefono, setTelefono] = useState('');
+  const [invitacionToken, setInvitacionToken] = useState('');
   const [personas, setPersonas] = useState<PersonaForm[]>([
     { key: 1, nombre: '', tipo: 'adulto', edad: '' },
   ]);
@@ -41,6 +42,15 @@ export default function ConfirmarAsistencia() {
 
   useEffect(() => {
     cargarEvento();
+  }, []);
+
+  // Si llegó desde un enlace de invitación (?familia=&token=), precargar los datos
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const familiaParam = params.get('familia');
+    if (familiaParam) setNombreFamilia(familiaParam);
+    const tokenParam = params.get('token');
+    if (tokenParam) setInvitacionToken(tokenParam);
   }, []);
 
   const cargarEvento = async () => {
@@ -204,6 +214,7 @@ export default function ConfirmarAsistencia() {
         nombreFamilia: nombreFamilia.trim(),
         email: email.trim() || undefined,
         telefono: telefono.trim() || undefined,
+        invitacionToken: invitacionToken || undefined,
         asistentes: personas.map((p) => ({
           nombre: p.nombre.trim(),
           tipo: p.tipo,
@@ -228,6 +239,7 @@ export default function ConfirmarAsistencia() {
     setEmail('');
     setTelefono('');
     setPersonas([{ key: 1, nombre: '', tipo: 'adulto', edad: '' }]);
+    setInvitacionToken('');
     setPaso(1);
     setPersonaActiva(1);
     setError('');
