@@ -2,7 +2,7 @@
  * Página de gestión de regalos (CRUD)
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../services/api';
 import { adminApi } from '../../services/adminApi';
 import { buildApiUrl } from '../../services/config';
@@ -10,6 +10,122 @@ import { comprimirImagen } from '../../utils/imagen';
 import { formatCLP } from '../../utils/format';
 import { Link } from 'react-router-dom';
 import { Regalo } from '../../types';
+
+// ---------- Utilidades de búsqueda y detección de posibles duplicados ----------
+
+const STOP_WORDS = new Set([
+  'de', 'del', 'el', 'la', 'los', 'las', 'un', 'una', 'unos', 'unas',
+  'y', 'o', 'a', 'al', 'con', 'sin', 'para', 'por', 'en', 'e', 'u',
+  'bebe', 'bebes', 'gemela', 'gemelas', 'cada', 'su', 'sus',
+  'set', 'pack', 'kit', 'x', 'mas',
+]);
+
+/** Normaliza texto: minúsculas, sin tildes, sin puntuación y espacios extra. */
+function normalizarTexto(texto: string): string {
+  return texto
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Palabras significativas (sin stopwords) de un texto. */
+function tokensRelevantes(texto: string): string[] {
+  return normalizarTexto(texto)
+    .split(' ')
+    .filter((t) => t.length > 2 && !STOP_WORDS.has(t));
+}
+
+/** Índice de Jaccard entre dos listas de tokens (0..1). */
+function indiceJaccard(a: string[], b: string[]): number {
+  if (a.length === 0 || b.length === 0) return 0;
+  const setA = new Set(a);
+  const comunes = b.filter((t) => setA.has(t)).length;
+  const union = new Set([...a, ...b]).size;
+  return comunes / union;
+}
+
+/** Similitud (0..1) entre el nombre de un regalo existente y otro nombre/criterio. */
+function similitudEntreNombres(existente: string, nuevo: string): number {
+  const n1 = normalizarTexto(existente);
+  const n2 = normalizarTexto(nuevo);
+  if (!n1 || !n2) return 0;
+  if (n1 === n2) return 1;
+  return indiceJaccard(tokensRelevantes(n1), tokensRelevantes(n2));
+}
+
+/**
+ * Detecta grupos de regalos que podrían repetirse o tener características similares:
+ *  - nombre o descripción idénticos (ignorando tildes y mayúsculas), o
+ *  - similitud de Jaccard >= 0.5 entre las palabras clave de sus nombres.
+ */
+function detectarPosiblesDuplicados(regalos: Regalo[]): {
+  grupos: number[][];
+  porRegalo: Map<number, number[]>;
+} {
+  const n = regalos.length;
+  const padre = Array.from({ length: n }, (_, i) => i);
+  const find = (i: number): number => (padre[i] === i ? i : (padre[i] = find(padre[i])));
+  const unir = (a: number, b: number) => {
+    const ra = find(a);
+    const rb = find(b);
+    if (ra !== rb) padre[rb] = ra;
+  };
+
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const a = regalos[i];
+      const b = regalos[j];
+      const nombreA = normalizarTexto(a.nombre);
+      const nombreB = normalizarTexto(b.nombre);
+      if (!nombreA || !nombreB) continue;
+      if (nombreA === nombreB) {
+        unir(i, j);
+        continue;
+      }
+      const descA = normalizarTexto(a.descripcion);
+      const descB = normalizarTexto(b.descripcion);
+      if (descA && descB && descA === descB) {
+        unir(i, j);
+        continue;
+      }
+      if (similitudEntreNombres(a.nombre, b.nombre) >= 0.5) unir(i, j);
+    }
+  }
+
+  const gruposMap = new Map<number, number[]>();
+  for (let i = 0; i < n; i++) {
+    const raiz = find(i);
+    const grupo = gruposMap.get(raiz) ?? [];
+    grupo.push(i);
+    gruposMap.set(raiz, grupo);
+  }
+
+  const grupos = [...gruposMap.values()].filter((g) => g.length > 1);
+  const porRegalo = new Map<number, number[]>();
+  for (const grupo of grupos) {
+    for (const idx of grupo) {
+      porRegalo.set(regalos[idx].id, grupo.map((otro) => regalos[otro].id));
+    }
+  }
+  return { grupos, porRegalo };
+}
+
+/** Nombres de los otros regalos del mismo grupo (máx. 3) para mostrar en la tarjeta. */
+function otrosDuplicadosDe(
+  regalo: Regalo,
+  regalos: Regalo[],
+  porRegalo: Map<number, number[]>
+): { nombres: string[]; total: number } {
+  const ids = porRegalo.get(regalo.id) ?? [];
+  const nombres = ids
+    .filter((id) => id !== regalo.id)
+    .map((id) => regalos.find((r) => r.id === id)?.nombre)
+    .filter((n): n is string => Boolean(n));
+  return { nombres: nombres.slice(0, 3), total: nombres.length };
+}
 
 export default function AdminRegalos() {
   const [regalos, setRegalos] = useState<Regalo[]>([]);
@@ -25,6 +141,10 @@ export default function AdminRegalos() {
     imagenUrl: '',
     permiteColaborativo: false,
   });
+
+  // Buscador y revisión de posibles duplicados
+  const [busqueda, setBusqueda] = useState('');
+  const [soloDuplicados, setSoloDuplicados] = useState(false);
 
   // Estados para carga masiva
   const [modalMasivoAbierto, setModalMasivoAbierto] = useState(false);
@@ -53,6 +173,37 @@ export default function AdminRegalos() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Detección de posibles duplicados o regalos con características similares
+  const { grupos: gruposDuplicados, porRegalo: porRegaloDuplicados } = useMemo(
+    () => detectarPosiblesDuplicados(regalos),
+    [regalos]
+  );
+
+  const idsDuplicados = useMemo(
+    () => new Set(porRegaloDuplicados.keys()),
+    [porRegaloDuplicados]
+  );
+
+  // Regalos visibles según el buscador y/o el filtro de posibles duplicados
+  const regalosFiltrados = useMemo(() => {
+    const terminos = normalizarTexto(busqueda).split(' ').filter(Boolean);
+
+    return regalos.filter((regalo) => {
+      if (soloDuplicados && !idsDuplicados.has(regalo.id)) return false;
+      if (terminos.length === 0) return true;
+
+      const texto = normalizarTexto(
+        `${regalo.nombre} ${regalo.descripcion} ${regalo.precioCLP} ${formatCLP(regalo.precioCLP)}`
+      );
+      return terminos.every((t) => texto.includes(t));
+    });
+  }, [regalos, busqueda, soloDuplicados, idsDuplicados]);
+
+  const limpiarFiltros = () => {
+    setBusqueda('');
+    setSoloDuplicados(false);
   };
 
   const abrirModal = (regalo?: Regalo) => {
@@ -294,9 +445,70 @@ export default function AdminRegalos() {
           </button>
         </div>
 
+        {/* Buscador y revisión de posibles duplicados */}
+        <div className="mb-6 bg-white rounded-2xl shadow-card p-4 sm:p-5 space-y-3">
+          <div className="relative">
+            <span
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              aria-hidden
+            >
+              🔍
+            </span>
+            <input
+              type="search"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="input-field !pl-11"
+              placeholder="Buscar por nombre, descripción o precio (ej: coche, bodies, 25000)…"
+              aria-label="Buscar regalos"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+            <span className="text-gray-600">
+              Mostrando{' '}
+              <strong className="text-gray-800">{regalosFiltrados.length}</strong> de{' '}
+              <strong className="text-gray-800">{regalos.length}</strong> regalos
+            </span>
+
+            {gruposDuplicados.length > 0 && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 font-medium">
+                ⚠️ {gruposDuplicados.length} grupo{gruposDuplicados.length !== 1 ? 's' : ''} con
+                posibles duplicados o similares
+              </span>
+            )}
+
+            {gruposDuplicados.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setSoloDuplicados((v) => !v)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                  soloDuplicados
+                    ? 'bg-yellow-500 text-white hover:bg-yellow-600'
+                    : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                }`}
+              >
+                {soloDuplicados ? '✓ Mostrando solo duplicados' : 'Ver solo posibles duplicados'}
+              </button>
+            )}
+
+            {(busqueda || soloDuplicados) && (
+              <button
+                type="button"
+                onClick={limpiarFiltros}
+                className="text-pastel-pink hover:text-pastel-lavender font-medium text-xs"
+              >
+                ✕ Limpiar filtros
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Grid de regalos */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {regalos.map((regalo) => (
+          {regalosFiltrados.map((regalo) => {
+            const duplicados = otrosDuplicadosDe(regalo, regalos, porRegaloDuplicados);
+            return (
             <div key={regalo.id} className="bg-white rounded-2xl shadow-card overflow-hidden">
               <img
                 src={regalo.imagenUrl}
@@ -304,6 +516,25 @@ export default function AdminRegalos() {
                 className="w-full h-48 object-cover"
               />
               <div className="p-6">
+                {duplicados.total > 0 && (
+                  <div className="mb-4 bg-yellow-50 border border-yellow-300 rounded-lg p-2.5 text-xs text-yellow-800">
+                    <p className="font-semibold mb-1">⚠️ Posible duplicado o muy similar</p>
+                    <p className="leading-snug">
+                      Coincide con:{' '}
+                      {duplicados.nombres.map((nombre, i) => (
+                        <span key={i}>
+                          {i > 0 && ' · '}
+                          <span className="font-medium">{nombre}</span>
+                        </span>
+                      ))}
+                      {duplicados.total > duplicados.nombres.length && (
+                        <span className="font-medium">
+                          {' '}+{duplicados.total - duplicados.nombres.length} más
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                )}
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
                   {regalo.nombre}
                 </h3>
@@ -345,8 +576,30 @@ export default function AdminRegalos() {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
+
+        {/* Mensaje cuando no hay resultados con los filtros aplicados */}
+        {regalosFiltrados.length === 0 && (
+          <div className="bg-white rounded-2xl shadow-card p-10 text-center">
+            <p className="text-3xl mb-2">🔎</p>
+            <p className="text-gray-600 font-medium">
+              {regalos.length === 0
+                ? 'Aún no hay regalos en el catálogo. Usa "Agregar Nuevo Regalo" o "Carga Masiva" para comenzar.'
+                : 'No se encontraron regalos que coincidan con tu búsqueda.'}
+            </p>
+            {(busqueda || soloDuplicados) && (
+              <button
+                type="button"
+                onClick={limpiarFiltros}
+                className="mt-3 text-pastel-pink hover:text-pastel-lavender text-sm font-medium underline"
+              >
+                Limpiar filtros
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Modal de agregar/editar */}
@@ -375,6 +628,51 @@ export default function AdminRegalos() {
                     className="input-field"
                     placeholder="Ej: Pack de 2 bodies de algodón"
                   />
+
+                  {/* Sugerencias de posibles duplicados mientras se escribe el nombre */}
+                  {formData.nombre.trim().length >= 3 &&
+                    (() => {
+                      const candidatos = regalos
+                        .filter((r) => r.id !== regaloEditando?.id)
+                        .map((r) => ({
+                          regalo: r,
+                          similitud: similitudEntreNombres(r.nombre, formData.nombre),
+                        }))
+                        .filter((c) => c.similitud >= 0.4)
+                        .sort((a, b) => b.similitud - a.similitud)
+                        .slice(0, 4);
+
+                      if (candidatos.length === 0) return null;
+
+                      return (
+                        <div className="mt-3 p-3 rounded-lg bg-yellow-50 border border-yellow-300 text-sm">
+                          <p className="font-semibold text-yellow-800 mb-1.5">
+                            ⚠️ Ya existen regalos con nombre similar:
+                          </p>
+                          <ul className="space-y-1">
+                            {candidatos.map(({ regalo, similitud }) => (
+                              <li
+                                key={regalo.id}
+                                className="flex items-center justify-between gap-3 text-yellow-800"
+                              >
+                                <span className="truncate">{regalo.nombre}</span>
+                                <span className="flex items-center gap-2 shrink-0">
+                                  <span className="text-xs bg-white border border-yellow-200 rounded-full px-2 py-0.5">
+                                    {formatCLP(regalo.precioCLP)}
+                                  </span>
+                                  <span className="text-xs font-medium">
+                                    {Math.round(similitud * 100)}%
+                                  </span>
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                          <p className="text-xs text-yellow-700 mt-1.5">
+                            Revisa antes de guardar para evitar regalos repetidos o muy parecidos.
+                          </p>
+                        </div>
+                      );
+                    })()}
                 </div>
 
                 <div>
