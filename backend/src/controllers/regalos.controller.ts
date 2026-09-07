@@ -122,3 +122,35 @@ export async function getEvento(req: Request, res: Response) {
     });
   }
 }
+
+/**
+ * Servir la imagen de portada actual del evento (para vista previa en WhatsApp).
+ * GET /api/portada
+ * Si la portada es un data URL se envía como imagen; si es una URL externa se redirige.
+ */
+export async function getPortada(req: Request, res: Response) {
+  try {
+    const evento = await prisma.event.findFirst();
+    const url = evento?.portadaUrl || '';
+    if (!url) {
+      return res.status(404).send('Portada no disponible');
+    }
+
+    if (url.startsWith('data:')) {
+      const match = url.match(/^data:(image\/[a-z0-9+.-]+);base64,(.*)$/s);
+      if (!match) {
+        return res.status(400).send('Portada inválida');
+      }
+      const buffer = Buffer.from(match[2], 'base64');
+      res.set('Content-Type', match[1]);
+      res.set('Cache-Control', 'public, max-age=3600');
+      return res.send(buffer);
+    }
+
+    // URL externa: redirigir (los crawlers siguen redirecciones)
+    return res.redirect(302, url);
+  } catch (error) {
+    console.error('❌ Error al obtener portada:', error);
+    res.status(500).send('Error al obtener portada');
+  }
+}

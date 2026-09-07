@@ -3,7 +3,7 @@
  */
 
 import { Router } from 'express';
-import { getRegalos, getRegaloById, getEvento } from '../controllers/regalos.controller';
+import { getRegalos, getRegaloById, getEvento, getPortada } from '../controllers/regalos.controller';
 import { crearPreferencia } from '../controllers/preferencia.controller';
 import { webhook } from '../controllers/webhook.controller';
 import { uploadImage } from '../controllers/upload.controller';
@@ -55,6 +55,7 @@ const verificarAuth = verificarAuthAdmin;
 router.get('/regalos', getRegalos);
 router.get('/regalos/:id', getRegaloById);
 router.get('/evento', getEvento);
+router.get('/portada', getPortada);
 router.get('/invitacion', getInvitacionPublica);
 
 // Ruta para subir imágenes

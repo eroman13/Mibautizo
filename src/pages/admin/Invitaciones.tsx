@@ -63,12 +63,12 @@ function enlaceInvitacion(inv: Invitacion): string {
 
 function mensajeWhatsApp(inv: Invitacion): string {
   const saludo = inv.contacto ? `¡Hola ${inv.contacto}!` : '¡Hola!';
-  return `${saludo} 🤍
-Nos hace una ilusión enorme compartir contigo un momento muy especial para nuestra familia. Te dejamos la invitación con toda la información del bautizo de las mellizas 🎀
+  return `${saludo} ✨
+Nos hace una ilusión enorme compartir contigo un momento muy especial para nuestra familia 💖 Te dejamos la invitación con toda la información del bautizo de las mellizas 🎀
 
 ${enlaceInvitacion(inv)}
 
-¡Esperamos contar con tu presencia! 💌 Te pedimos confirmar tu asistencia.`;
+¡Esperamos contar con tu presencia! 🙏 Te pedimos confirmar tu asistencia 💌`;
 }
 
 function telefonoWa(inv: Invitacion): string {
