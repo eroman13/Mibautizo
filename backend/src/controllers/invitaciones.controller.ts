@@ -27,6 +27,16 @@ function limpiarTelefono(tel?: string): string | null {
   return limpio || null;
 }
 
+/** Para invitaciones "familiar" asegura que el nombre empiece con "Familia". */
+function normalizarFamiliaFamiliar(
+  modalidad: string | undefined,
+  familia: string
+): string {
+  const nombre = familia.trim();
+  if (modalidad !== 'familiar') return nombre;
+  return /^familia\b/i.test(nombre) ? nombre : `Familia ${nombre}`;
+}
+
 function generarToken(): string {
   return crypto.randomBytes(12).toString('hex');
 }
@@ -130,7 +140,7 @@ export async function crearInvitacion(req: Request, res: Response) {
 
     const invitacion = await prisma.invitacion.create({
       data: {
-        familia: body.familia!.trim(),
+        familia: normalizarFamiliaFamiliar(body.modalidad, body.familia!),
         contacto: (body.contacto || '').trim() || null,
         telefono: limpiarTelefono(body.telefono),
         token: generarToken(),
@@ -171,7 +181,7 @@ export async function crearInvitacionesMasivo(req: Request, res: Response) {
       }
       await prisma.invitacion.create({
         data: {
-          familia: fila.familia!.trim(),
+          familia: normalizarFamiliaFamiliar(fila.modalidad, fila.familia!),
           contacto: (fila.contacto || '').trim() || null,
           telefono: limpiarTelefono(fila.telefono),
           token: generarToken(),
@@ -208,12 +218,13 @@ export async function actualizarInvitacion(req: Request, res: Response) {
 
     const body: InvitacionBody = req.body || {};
 
+    const modalidadFinal = body.modalidad || existente.modalidad;
     const data: any = {};
     if (typeof body.familia === 'string') {
       if (!body.familia.trim()) {
         return res.status(400).json({ success: false, error: 'El nombre de la familia es obligatorio' });
       }
-      data.familia = body.familia.trim();
+      data.familia = normalizarFamiliaFamiliar(modalidadFinal, body.familia);
     }
     if (typeof body.contacto === 'string') data.contacto = body.contacto.trim() || null;
     if (typeof body.telefono === 'string') data.telefono = limpiarTelefono(body.telefono);

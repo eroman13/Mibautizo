@@ -28,6 +28,16 @@ export default function Home() {
     ? `/confirmar-asistencia?${qRsvp.toString()}`
     : '/confirmar-asistencia';
 
+  // Saludo con la forma correcta según el tipo de invitación
+  // (ej: "Familia Muñoz Román" para familiar, "Lili y Julio" para pareja, etc.)
+  const nombreSaludo = (() => {
+    if (!familiaParam) return '';
+    if (modalidadParam === 'familiar' && !/^familia\b/i.test(familiaParam)) {
+      return `Familia ${familiaParam}`;
+    }
+    return familiaParam;
+  })();
+
   useEffect(() => {
     cargarEvento();
   }, []);
@@ -129,7 +139,7 @@ export default function Home() {
         <div className="bg-white rounded-2xl shadow-card p-8 md:p-12">
           <div className="text-center mb-8">
             <h3 className="text-3xl font-display font-bold text-gray-800 mb-2 section-decoration">
-              {hayInvitacion && familiaParam ? `¡${familiaParam}!` : '¡Bienvenidos!'}
+              {hayInvitacion && nombreSaludo ? `¡${nombreSaludo}!` : '¡Bienvenidos!'}
             </h3>
           </div>
           <div className="prose prose-lg mx-auto text-gray-700 whitespace-pre-line">
