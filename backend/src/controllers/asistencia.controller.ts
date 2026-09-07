@@ -105,21 +105,31 @@ export async function confirmarAsistencia(req: Request, res: Response) {
 
     const invitacionToken = (body.invitacionToken || '').trim();
 
-    // Si la invitación es individual, solo se permite confirmar a esa persona
+    // Validar según el tipo de invitación: individual (1), pareja (2 adultos, sin niños)
     if (invitacionToken) {
-      const invitacionTokenValida = await prisma.invitacion.findUnique({
+      const invitacionValida = await prisma.invitacion.findUnique({
         where: { token: invitacionToken },
         select: { modalidad: true },
       });
-      if (
-        invitacionTokenValida &&
-        invitacionTokenValida.modalidad === 'individual' &&
-        asistentes.length > 1
-      ) {
+      if (invitacionValida?.modalidad === 'individual' && asistentes.length > 1) {
         return res.status(400).json({
           success: false,
           error: 'Esta invitación es individual: solo puedes confirmar a la persona invitada.',
         });
+      }
+      if (invitacionValida?.modalidad === 'pareja') {
+        if (asistentes.length > 2) {
+          return res.status(400).json({
+            success: false,
+            error: 'Esta invitación es para la pareja: máximo 2 personas.',
+          });
+        }
+        if (asistentes.some((a) => a.tipo === 'nino')) {
+          return res.status(400).json({
+            success: false,
+            error: 'Esta invitación es solo para la pareja: no incluye niños.',
+          });
+        }
       }
     }
 

@@ -16,7 +16,7 @@ interface InvitacionBody {
   contacto?: string;
   telefono?: string;
   estado?: 'pendiente' | 'enviada' | 'confirmada';
-  modalidad?: 'familiar' | 'individual';
+  modalidad?: 'familiar' | 'pareja' | 'individual';
   asistentes?: string;
 }
 
@@ -38,8 +38,13 @@ function validarInvitacion(body: InvitacionBody): string | null {
   if (body.familia.trim().length > 120) {
     return 'El nombre de la familia es demasiado largo';
   }
-  if (body.modalidad && body.modalidad !== 'familiar' && body.modalidad !== 'individual') {
-    return 'La modalidad debe ser "familiar" o "individual"';
+  if (
+    body.modalidad &&
+    body.modalidad !== 'familiar' &&
+    body.modalidad !== 'pareja' &&
+    body.modalidad !== 'individual'
+  ) {
+    return 'La modalidad debe ser "familiar", "pareja" o "individual"';
   }
   return null;
 }
@@ -192,7 +197,7 @@ export async function actualizarInvitacion(req: Request, res: Response) {
     if (typeof body.contacto === 'string') data.contacto = body.contacto.trim() || null;
     if (typeof body.telefono === 'string') data.telefono = limpiarTelefono(body.telefono);
     if (typeof body.asistentes === 'string') data.asistentes = body.asistentes.trim() || null;
-    if (body.modalidad && ['familiar', 'individual'].includes(body.modalidad)) {
+    if (body.modalidad && ['familiar', 'pareja', 'individual'].includes(body.modalidad)) {
       data.modalidad = body.modalidad;
     }
 

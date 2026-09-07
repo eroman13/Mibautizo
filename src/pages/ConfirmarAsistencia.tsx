@@ -26,6 +26,7 @@ export default function ConfirmarAsistencia() {
   const [telefono, setTelefono] = useState('');
   const [invitacionToken, setInvitacionToken] = useState('');
   const [esIndividual, setEsIndividual] = useState(false);
+  const [esPareja, setEsPareja] = useState(false);
   const [personas, setPersonas] = useState<PersonaForm[]>([
     { key: 1, nombre: '', tipo: 'adulto', edad: '' },
   ]);
@@ -73,6 +74,14 @@ export default function ConfirmarAsistencia() {
             setPersonas([{ key: 1, nombre: persona, tipo: 'adulto', edad: '' }]);
             setPersonaActiva(1);
           }
+        } else if (info.modalidad === 'pareja') {
+          setEsPareja(true);
+          const primeraPersona = (info.contacto || '').trim();
+          setPersonas([
+            { key: 1, nombre: primeraPersona, tipo: 'adulto', edad: '' },
+            { key: 2, nombre: '', tipo: 'adulto', edad: '' },
+          ]);
+          setPersonaActiva(1);
         }
       })
       .catch(() => undefined);
@@ -99,6 +108,11 @@ export default function ConfirmarAsistencia() {
     // Las invitaciones individuales solo permiten confirmar a la persona invitada
     if (esIndividual) {
       setError('Esta invitación es individual: solo puedes confirmar a la persona invitada.');
+      return;
+    }
+    // Las invitaciones de pareja admiten máximo 2 personas
+    if (esPareja && personas.length >= 2) {
+      setError('Esta invitación es para la pareja: máximo 2 personas.');
       return;
     }
     // No se permite agregar más invitados si alguno no tiene nombre aún
@@ -552,7 +566,9 @@ export default function ConfirmarAsistencia() {
                               className="input-field"
                             >
                               <option value="adulto">Adulto</option>
-                              <option value="nino">Niño/a</option>
+                              <option value="nino" disabled={esPareja}>
+                          Niño/a
+                        </option>
                             </select>
                             {p.tipo === 'nino' ? (
                               <input
@@ -582,17 +598,18 @@ export default function ConfirmarAsistencia() {
                 Si confirmas un niño/a, su edad es obligatoria (0 a 13 años). Mayores de 13 se consideran adultos.
               </p>
 
-              {!esIndividual && (
+              {!esIndividual && (!esPareja || personas.length < 2) && (
                 <button
                   type="button"
                   onClick={agregarPersona}
                   disabled={personas.some((per) => !per.nombre.trim())}
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border-2 border-dashed border-pastel-pink/60 text-pastel-pink rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-pastel-pink/10 disabled:opacity-40 disabled:cursor-not-allowed mt-3"
                 >
-                  ＋ Agregar otra persona
+                  {esPareja ? '＋ Agregar a la otra persona' : '＋ Agregar otra persona'}
                 </button>
               )}
               {!esIndividual &&
+                !esPareja &&
                 personas.some((per) => !per.nombre.trim()) && (
                   <p className="text-xs text-amber-600 mt-1.5">
                     Completa el nombre del invitado en edición para poder agregar a otro.
@@ -601,6 +618,11 @@ export default function ConfirmarAsistencia() {
               {esIndividual && (
                 <p className="text-xs text-gray-500 mt-3">
                   🙋 Esta invitación es individual: solo se confirma a la persona invitada.
+                </p>
+              )}
+              {esPareja && (
+                <p className="text-xs text-gray-500 mt-3">
+                  👫 Esta invitación es para la pareja: máximo 2 personas y sin niños.
                 </p>
               )}
 

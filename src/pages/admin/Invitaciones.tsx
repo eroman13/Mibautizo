@@ -13,7 +13,7 @@ interface FormInvitacion {
   contacto: string;
   telefono: string;
   asistentes: string;
-  modalidad: 'familiar' | 'individual';
+  modalidad: 'familiar' | 'pareja' | 'individual';
 }
 
 const FORM_VACIO: FormInvitacion = {
@@ -36,6 +36,18 @@ const COLOR_ESTADO: Record<Invitacion['estado'], string> = {
   pendiente: 'bg-gray-100 text-gray-600',
   enviada: 'bg-blue-100 text-blue-700',
   confirmada: 'bg-green-100 text-green-700',
+};
+
+const ETIQUETA_MODALIDAD: Record<Invitacion['modalidad'], string> = {
+  familiar: '👨‍👩‍👧 Familiar',
+  pareja: '👫 Pareja (sin niños)',
+  individual: '🙋 Individual',
+};
+
+const COLOR_MODALIDAD: Record<Invitacion['modalidad'], string> = {
+  familiar: 'bg-gray-100 text-gray-500',
+  pareja: 'bg-teal-100 text-teal-700',
+  individual: 'bg-purple-100 text-purple-700',
 };
 
 function enlaceInvitacion(inv: Invitacion): string {
@@ -379,13 +391,9 @@ export default function AdminInvitaciones() {
                         {ETIQUETA_ESTADO[inv.estado]}
                       </span>
                       <span
-                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                          inv.modalidad === 'individual'
-                            ? 'bg-purple-100 text-purple-700'
-                            : 'bg-gray-100 text-gray-500'
-                        }`}
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${COLOR_MODALIDAD[inv.modalidad]}`}
                       >
-                        {inv.modalidad === 'individual' ? '🙋 Individual' : '👨‍👩‍👧 Familiar'}
+                        {ETIQUETA_MODALIDAD[inv.modalidad]}
                       </span>
                     </div>
                     <div className="text-sm text-gray-500 mt-1">
@@ -482,6 +490,21 @@ export default function AdminInvitaciones() {
                         <span className="block font-medium text-gray-800">👨‍👩‍👧 Familiar</span>
                         <span className="text-xs text-gray-500">
                           Pueden confirmar varias personas de la familia.
+                        </span>
+                      </span>
+                    </label>
+                    <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border-2 border-gray-100 hover:border-teal-300 transition-colors">
+                      <input
+                        type="radio"
+                        name="modalidad"
+                        checked={form.modalidad === 'pareja'}
+                        onChange={() => setForm({ ...form, modalidad: 'pareja' })}
+                        className="mt-1"
+                      />
+                      <span>
+                        <span className="block font-medium text-gray-800">👫 Pareja (sin niños)</span>
+                        <span className="text-xs text-gray-500">
+                          Invitas solo al matrimonio: máximo 2 adultos, sin niños.
                         </span>
                       </span>
                     </label>
