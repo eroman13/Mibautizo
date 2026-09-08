@@ -3,11 +3,14 @@
  * Maneja el enrutamiento entre vista pública y panel admin
  */
 
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { CarritoProvider } from './context/CarritoContext';
 import { AuthProvider } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import ValidarRetornoPago from './components/pago/ValidarRetornoPago';
+import { api } from './services/api';
 
 // Páginas públicas
 import Home from './pages/Home';
@@ -25,6 +28,7 @@ import NotFound from './pages/NotFound';
 // Páginas del admin
 import AdminLogin from './pages/admin/Login';
 import AdminDashboard from './pages/admin/Dashboard';
+import AdminAnalytics from './pages/admin/Analytics';
 import AdminContribuciones from './pages/admin/Contribuciones';
 import AdminAsistencias from './pages/admin/Asistencias';
 import AdminInvitaciones from './pages/admin/Invitaciones';
@@ -33,12 +37,36 @@ import AdminConfiguracion from './pages/admin/Configuracion';
 import AdminUsers from './pages/admin/AdminUsers';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 
+function RouteTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname.startsWith('/admin')) return;
+
+    let page = 'home';
+    if (location.pathname === '/regalos') page = 'regalos';
+    else if (location.pathname === '/checkout') page = 'checkout';
+    else if (location.pathname === '/confirmar-asistencia') page = 'asistencia';
+    else if (location.pathname === '/invitacion') page = 'invitacion';
+    else if (location.pathname.startsWith('/i/')) page = 'invitacion-link';
+    else if (location.pathname.startsWith('/pago-')) page = 'pago';
+    else if (location.pathname !== '/') page = 'otro';
+
+    api.trackPageView(page, document.referrer || undefined).catch(() => {
+      // No bloquear UX por fallas de analytics
+    });
+  }, [location.pathname]);
+
+  return null;
+}
+
 function App() {
   return (
     <Router>
       <AuthProvider>
         <CarritoProvider>
           <ErrorBoundary>
+            <RouteTracker />
             <div className="min-h-screen bg-soft-gray">
               <Routes>
                 {/* Rutas públicas */}
@@ -86,6 +114,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <AdminDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/analytics"
+                  element={
+                    <ProtectedRoute>
+                      <AdminAnalytics />
                     </ProtectedRoute>
                   }
                 />

@@ -42,6 +42,7 @@ import {
   updateAdminUser,
   deleteAdminUser,
 } from '../controllers/admin-users.controller';
+import { trackPageView, getAnalytics } from '../controllers/analytics.controller';
 
 const router = Router();
 
@@ -74,6 +75,9 @@ router.post(
 // Confirmación de asistencia (RSVP)
 router.post('/confirmar-asistencia', confirmarAsistencia);
 
+// Analytics - Rastreo de visitantes (pública)
+router.post('/track-page-view', trackPageView);
+
 // Rutas del panel admin
 router.post(
   '/admin/login',
@@ -97,6 +101,7 @@ router.post('/admin/limpiar-pagos', verificarAuth, limpiarPagos);
 router.post('/admin/test-email', verificarAuth, testEmail);
 router.get('/admin/asistencias', verificarAuth, getAsistencias);
 router.delete('/admin/asistencias/:id', verificarAuth, eliminarAsistencia);
+router.get('/admin/analytics', verificarAuth, getAnalytics);
 
 // Rutas de invitaciones (enviadas por WhatsApp con enlace único)
 router.get('/admin/invitaciones', verificarAuth, getInvitaciones);

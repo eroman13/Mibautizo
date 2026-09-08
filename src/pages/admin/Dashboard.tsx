@@ -65,6 +65,9 @@ export default function AdminDashboard() {
             <Link to="/admin/dashboard" className="text-pastel-pink font-semibold">
               Dashboard
             </Link>
+            <Link to="/admin/analytics" className="text-gray-600 hover:text-pastel-pink">
+              📊 Analytics
+            </Link>
             <Link to="/admin/contribuciones" className="text-gray-600 hover:text-pastel-pink">
               Contribuciones
             </Link>

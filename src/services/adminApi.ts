@@ -187,4 +187,16 @@ export const adminApi = {
     });
     return response.json();
   },
+
+  // Analytics de visitantes
+  getAnalytics: async (filters?: any) => {
+    const query = new URLSearchParams();
+    if (filters?.page) query.append('page', filters.page);
+    if (filters?.days) query.append('days', filters.days);
+    
+    const response = await fetch(`${API_URL}/admin/analytics?${query}`, {
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  },
 };

@@ -72,4 +72,16 @@ export const api = {
       body: JSON.stringify(data),
     });
   },
+
+  // Rastrear visita a página
+  trackPageView: async (page: string, referrer?: string) => {
+    try {
+      return await fetchAPI('/track-page-view', {
+        method: 'POST',
+        body: JSON.stringify({ page, referrer }),
+      });
+    } catch (error) {
+      console.log('Analytics: no se pudo rastrear visita');
+    }
+  },
 };

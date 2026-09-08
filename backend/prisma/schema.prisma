@@ -127,3 +127,27 @@ model Invitacion {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }
+
+// Sesión de usuario para rastrear visitantes
+model PageViewSession {
+  id        String    @id @default(cuid())
+  userAgent String?
+  ipAddress String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  views     PageView[]
+}
+
+// Rastreo de visitantes a páginas
+model PageView {
+  id        Int               @id @default(autoincrement())
+  sessionId String
+  session   PageViewSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  page      String // "regalos", "invitacion", "asistencia", "checkout", etc.
+  referrer  String? // Página de origen
+  timestamp DateTime          @default(now())
+  
+  @@index([sessionId])
+  @@index([page])
+  @@index([timestamp])
+}
