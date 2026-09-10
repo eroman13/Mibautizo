@@ -52,10 +52,16 @@ function RouteTracker() {
     else if (location.pathname.startsWith('/pago-')) page = 'pago';
     else if (location.pathname !== '/') page = 'otro';
 
-    api.trackPageView(page, document.referrer || undefined).catch(() => {
+    const params = new URLSearchParams(location.search);
+    let invitationToken = params.get('token') || undefined;
+    if (!invitationToken && location.pathname.startsWith('/i/')) {
+      invitationToken = location.pathname.replace('/i/', '').split('/')[0] || undefined;
+    }
+
+    api.trackPageView(page, document.referrer || undefined, invitationToken).catch(() => {
       // No bloquear UX por fallas de analytics
     });
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   return null;
 }

@@ -16,6 +16,7 @@ interface AnalyticsStats {
   pageViewsByDay: Array<{ day: string; count: number }>;
   topSessions: Array<{
     sessionId: string;
+    visitorName: string;
     visits: number;
     pages: string[];
     lastVisit: Date | string;
@@ -166,7 +167,7 @@ export default function AnalyticsPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-200">
-                      <th className="text-left py-2 px-4 font-semibold text-gray-700">ID Visitante</th>
+                      <th className="text-left py-2 px-4 font-semibold text-gray-700">Familia o Persona</th>
                       <th className="text-center py-2 px-4 font-semibold text-gray-700">Visitas</th>
                       <th className="text-left py-2 px-4 font-semibold text-gray-700">Paginas</th>
                       <th className="text-right py-2 px-4 font-semibold text-gray-700">Ultima Visita</th>
@@ -175,9 +176,7 @@ export default function AnalyticsPage() {
                   <tbody>
                     {stats.topSessions.map((session) => (
                       <tr key={session.sessionId} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-3 px-4">
-                          <span className="bg-gray-100 px-2 py-1 rounded text-xs">{session.sessionId.substring(0, 12)}...</span>
-                        </td>
+                        <td className="py-3 px-4 font-medium text-gray-800">{session.visitorName || 'Visitante anonimo'}</td>
                         <td className="text-center py-3 px-4">{session.visits}</td>
                         <td className="py-3 px-4">{session.pages.join(', ')}</td>
                         <td className="py-3 px-4 text-right text-gray-600 text-xs">

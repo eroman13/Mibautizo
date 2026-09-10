@@ -11,13 +11,29 @@ import prisma from '../lib/prisma';
  */
 export async function trackPageView(req: Request, res: Response) {
   try {
-    const { page, referrer } = req.body;
+    const { page, referrer, invitationToken } = req.body;
 
     if (!page) {
       return res.status(400).json({
         success: false,
         error: 'El campo "page" es obligatorio',
       });
+    }
+
+    const token = typeof invitationToken === 'string' ? invitationToken.trim() : '';
+
+    let visitorName: string | null = null;
+    let resolvedToken: string | null = null;
+    if (token) {
+      const invitacion = await prisma.invitacion.findUnique({
+        where: { token },
+        select: { familia: true, token: true },
+      });
+
+      if (invitacion) {
+        visitorName = invitacion.familia;
+        resolvedToken = invitacion.token;
+      }
     }
 
     // Obtener identificadores del cliente
@@ -50,13 +66,27 @@ export async function trackPageView(req: Request, res: Response) {
         data: {
           userAgent,
           ipAddress: ip,
+          invitationToken: resolvedToken,
+          visitorName,
         },
       });
     } else {
+      const shouldUpdateIdentity =
+        !!resolvedToken &&
+        (session.invitationToken !== resolvedToken || session.visitorName !== visitorName);
+
       // Actualizar timestamp de la sesión
       await prisma.pageViewSession.update({
         where: { id: session.id },
-        data: { updatedAt: new Date() },
+        data: {
+          updatedAt: new Date(),
+          ...(shouldUpdateIdentity
+            ? {
+                invitationToken: resolvedToken,
+                visitorName,
+              }
+            : {}),
+        },
       });
     }
 
@@ -116,7 +146,9 @@ export async function getAnalytics(req: Request, res: Response) {
     const uniqueSessions = new Set(pageViews.map(v => v.sessionId)).size;
     const pageViewsByPage: { [key: string]: number } = {};
     const pageViewsByDay: { [key: string]: number } = {};
-    const sessionDetails: { [key: string]: { visits: number; pages: string[]; lastVisit: Date } } = {};
+    const sessionDetails: {
+      [key: string]: { visits: number; pages: string[]; lastVisit: Date; visitorName: string }
+    } = {};
 
     for (const view of pageViews) {
       // Contar por página
@@ -132,6 +164,7 @@ export async function getAnalytics(req: Request, res: Response) {
           visits: 0,
           pages: [],
           lastVisit: view.timestamp,
+          visitorName: view.session.visitorName || 'Visitante anonimo',
         };
       }
       sessionDetails[view.sessionId].visits++;
@@ -140,6 +173,12 @@ export async function getAnalytics(req: Request, res: Response) {
       }
       if (view.timestamp > sessionDetails[view.sessionId].lastVisit) {
         sessionDetails[view.sessionId].lastVisit = view.timestamp;
+      }
+      if (
+        view.session.visitorName &&
+        sessionDetails[view.sessionId].visitorName === 'Visitante anonimo'
+      ) {
+        sessionDetails[view.sessionId].visitorName = view.session.visitorName;
       }
     }
 

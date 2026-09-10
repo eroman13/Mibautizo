@@ -133,6 +133,8 @@ model PageViewSession {
   id        String    @id @default(cuid())
   userAgent String?
   ipAddress String?
+  invitationToken String?
+  visitorName String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   views     PageView[]
