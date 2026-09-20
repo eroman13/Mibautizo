@@ -93,6 +93,19 @@ export default function Regalos() {
           </p>
         </div>
 
+        {/* Nota: regalos referenciales */}
+        <div className="max-w-3xl mx-auto mb-8">
+          <div className="bg-pastel-blue/10 border border-pastel-blue/25 rounded-2xl px-6 py-4 flex items-start gap-3 text-left">
+            <span className="text-2xl leading-none" aria-hidden>💡</span>
+            <p className="text-gray-600 text-sm md:text-base">
+              Los regalos de esta lista son <span className="font-semibold text-gray-700">referenciales</span>:
+              elige con cariño el que más te guste, y de todas las contribuciones recibidas,
+              los papás decidirán cuáles se adquieren realmente para{' '}
+              {evento.nombreMelliza1} y {evento.nombreMelliza2}. 💝
+            </p>
+          </div>
+        </div>
+
         {/* Barra de ordenamiento */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-6">
           <p className="text-gray-600">
