@@ -10,6 +10,7 @@ import { uploadImage } from '../controllers/upload.controller';
 import { verificarAuthAdmin, rateLimit } from '../lib/security';
 import {
   confirmarAsistencia,
+  declinarAsistencia,
   getAsistencias,
   eliminarAsistencia,
 } from '../controllers/asistencia.controller';
@@ -74,6 +75,7 @@ router.post(
 
 // Confirmación de asistencia (RSVP)
 router.post('/confirmar-asistencia', confirmarAsistencia);
+router.post('/declinar-asistencia', declinarAsistencia);
 
 // Analytics - Rastreo de visitantes (pública)
 router.post('/track-page-view', trackPageView);

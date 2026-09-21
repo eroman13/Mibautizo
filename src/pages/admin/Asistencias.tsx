@@ -27,6 +27,7 @@ export default function AdminAsistencias() {
     adultos: 0,
     ninosMenores: 0,
     ninosMayores: 0,
+    declinadas: 0,
   });
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState('');
@@ -45,6 +46,7 @@ export default function AdminAsistencias() {
           adultos: 0,
           ninosMenores: 0,
           ninosMayores: 0,
+          declinadas: 0,
         }
       );
     } catch (error) {
@@ -105,7 +107,7 @@ export default function AdminAsistencias() {
               <h1 className="text-2xl font-display font-bold text-gray-800">
                 📋 Confirmaciones de Asistencia
               </h1>
-              <p className="text-gray-600 text-sm">Invitados que confirmaron su presencia</p>
+              <p className="text-gray-600 text-sm">Invitados que respondieron la invitación</p>
             </div>
             <Link
               to="/admin/dashboard"
@@ -119,7 +121,7 @@ export default function AdminAsistencias() {
 
       <div className="container mx-auto px-4 py-8">
         {/* Resumen */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <div className="bg-gradient-to-br from-pink-400 to-pink-600 text-white rounded-2xl shadow-card p-6">
             <h3 className="text-sm font-medium opacity-90">Familias</h3>
             <p className="text-3xl font-bold mt-1">{resumen.familias}</p>
@@ -136,6 +138,10 @@ export default function AdminAsistencias() {
             <h3 className="text-sm font-medium opacity-90">Niños (8 a 13 años)</h3>
             <p className="text-3xl font-bold mt-1">{resumen.ninosMayores}</p>
           </div>
+          <div className="bg-gradient-to-br from-red-400 to-red-600 text-white rounded-2xl shadow-card p-6">
+            <h3 className="text-sm font-medium opacity-90">No asistirán</h3>
+            <p className="text-3xl font-bold mt-1">{resumen.declinadas}</p>
+          </div>
         </div>
 
         {/* Filtro */}
@@ -148,8 +154,7 @@ export default function AdminAsistencias() {
             className="input-field max-w-sm"
           />
           <span className="text-gray-500 text-sm">
-            {asistenciasFiltradas.length} confirmacion
-            {asistenciasFiltradas.length !== 1 ? 'es' : ''}
+            {asistenciasFiltradas.length} respuesta{asistenciasFiltradas.length !== 1 ? 's' : ''}
           </span>
         </div>
 
@@ -188,6 +193,9 @@ export default function AdminAsistencias() {
                       <tr key={a.id} className="hover:bg-pink-50/30">
                         <td className="px-6 py-4">
                           <div className="font-semibold text-gray-800">{a.nombreFamilia}</div>
+                          {a.estado === 'declinada' && (
+                            <span className="badge bg-red-100 text-red-700 mt-1">💔 No asistirá</span>
+                          )}
                           {a.mensaje && (
                             <div className="text-xs text-gray-500 mt-1 italic">
                               “{a.mensaje}”

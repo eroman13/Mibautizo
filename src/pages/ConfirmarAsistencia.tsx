@@ -45,6 +45,12 @@ export default function ConfirmarAsistencia() {
     adultos: number;
     ninos: number;
   } | null>(null);
+  const [declinado, setDeclinado] = useState(false);
+  const [mostrarDeclinar, setMostrarDeclinar] = useState(false);
+  const [mensajeDeclinar, setMensajeDeclinar] = useState('');
+  const [enviandoDeclinar, setEnviandoDeclinar] = useState(false);
+  const [errorDeclinar, setErrorDeclinar] = useState('');
+  const [respuestaPrevia, setRespuestaPrevia] = useState<'confirmada' | 'declinada' | null>(null);
 
   // Enlace al Home conservando el contexto de la invitación (familia/token/modalidad),
   // para no volver al Home genérico y perder la categorización.
@@ -107,8 +113,9 @@ export default function ConfirmarAsistencia() {
       .then((response) => {
         if (!activo || !response?.success || !response.data) return;
         const info = response.data;
-        // Ya confirmó con este enlace: no permitir volver a confirmar
-        if (info.estado === 'confirmada') {
+        // Ya respondió con este enlace (confirmó o declinó): no permitir responder de nuevo
+        if (info.estado === 'confirmada' || info.estado === 'declinada') {
+          setRespuestaPrevia(info.estado);
           setYaConfirmado(true);
           return;
         }
@@ -393,6 +400,10 @@ export default function ConfirmarAsistencia() {
 
   const resetForm = () => {
     setExito(null);
+    setDeclinado(false);
+    setMostrarDeclinar(false);
+    setMensajeDeclinar('');
+    setErrorDeclinar('');
     setNombreFamilia('');
     setEmail('');
     setTelefono('');
@@ -402,6 +413,79 @@ export default function ConfirmarAsistencia() {
     setPersonaActiva(1);
     setError('');
   };
+
+  // Registrar que la familia/persona no asistirá (respuesta "No podré asistir")
+  const declinar = async () => {
+    setErrorDeclinar('');
+    if (!nombreFamilia.trim() && !invitacionToken) {
+      setErrorDeclinar('Indícanos tu nombre o familia para registrar tu respuesta.');
+      return;
+    }
+    setEnviandoDeclinar(true);
+    try {
+      await api.declinarAsistencia({
+        nombreFamilia: nombreFamilia.trim() || undefined,
+        email: email.trim() || undefined,
+        invitacionToken: invitacionToken || undefined,
+        mensaje: mensajeDeclinar.trim() || undefined,
+      });
+      setDeclinado(true);
+    } catch (err: any) {
+      setErrorDeclinar(err.message || 'No se pudo registrar tu respuesta. Intenta nuevamente.');
+    } finally {
+      setEnviandoDeclinar(false);
+    }
+  };
+
+  const renderDeclinar = () => (
+    <div className="pt-5 mt-2 border-t border-dashed border-gray-200">
+      {!mostrarDeclinar ? (
+        <button
+          type="button"
+          onClick={() => {
+            setMostrarDeclinar(true);
+            setErrorDeclinar('');
+          }}
+          className="w-full text-sm text-gray-400 hover:text-gray-600 transition-colors font-medium"
+        >
+          ¿No podrás asistir? Indícanoslo aquí →
+        </button>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600">
+            Lamentamos que no puedas acompañarnos. Déjanos saberlo para tenerlo en cuenta. 💛
+          </p>
+          <textarea
+            value={mensajeDeclinar}
+            onChange={(e) => setMensajeDeclinar(e.target.value)}
+            rows={2}
+            placeholder="Mensaje para los papás (opcional)"
+            className="input-field"
+          />
+          {errorDeclinar && (
+            <div className="p-3 rounded-lg bg-red-50 text-red-700 text-sm">{errorDeclinar}</div>
+          )}
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setMostrarDeclinar(false)}
+              className="btn-secondary flex-1 text-sm py-2"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={declinar}
+              disabled={enviandoDeclinar}
+              className="flex-1 text-sm py-2 rounded-full font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+            >
+              {enviandoDeclinar ? 'Enviando...' : 'No podré asistir'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   if (loading) {
     return (
@@ -440,12 +524,14 @@ export default function ConfirmarAsistencia() {
       <div className="min-h-screen bg-soft-gray py-12">
         <div className="container mx-auto px-4 max-w-xl">
           <div className="bg-white rounded-2xl shadow-card p-8 md:p-10 text-center">
-            <div className="text-6xl mb-4">💌</div>
+            <div className="text-6xl mb-4">{respuestaPrevia === 'declinada' ? '💛' : '💌'}</div>
             <h1 className="text-3xl font-display font-bold text-gray-800 mb-4 section-decoration">
-              Ya confirmaste tu asistencia
+              {respuestaPrevia === 'declinada' ? 'Ya respondiste esta invitación' : 'Ya confirmaste tu asistencia'}
             </h1>
             <p className="text-gray-600 text-lg mb-6">
-              ¡Gracias por confirmar! Este enlace ya fue utilizado.
+              {respuestaPrevia === 'declinada'
+                ? 'Gracias por avisarnos que no podrás asistir. Este enlace ya fue utilizado.'
+                : '¡Gracias por confirmar! Este enlace ya fue utilizado.'}
             </p>
             <p className="text-gray-500 bg-gray-50 rounded-xl p-4 text-sm">
               Si necesitas modificar o corregir algo de tu confirmación, contáctate directamente
@@ -456,6 +542,36 @@ export default function ConfirmarAsistencia() {
                 to={homeConContexto}
                 className="text-gray-500 hover:text-pastel-pink text-sm font-medium"
               >
+                ← Volver al inicio
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Pantalla de éxito por no asistir (declinación)
+  if (declinado) {
+    return (
+      <div className="min-h-screen bg-soft-gray py-12">
+        <div className="container mx-auto px-4 max-w-xl">
+          <div className="bg-white rounded-2xl shadow-card p-8 md:p-12 text-center">
+            <div className="text-6xl mb-6">💛</div>
+            <h1 className="text-3xl md:text-4xl font-display font-bold text-gray-800 mb-4 section-decoration">
+              ¡Gracias por avisarnos!
+            </h1>
+            <p className="text-lg text-gray-600 mb-6">
+              {nombreFamilia.trim()
+                ? `Lamentamos que no puedas acompañarnos, ${nombreFamilia.trim()}. Te tendremos presente con mucho cariño.`
+                : 'Lamentamos que no puedas acompañarnos. Te tendremos presente con mucho cariño.'}{' '}
+              💌
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link to="/regalos" className="btn-primary inline-block">
+                Ver lista de regalos 🎁
+              </Link>
+              <Link to={homeConContexto} className="btn-secondary inline-block">
                 ← Volver al inicio
               </Link>
             </div>
@@ -538,6 +654,8 @@ export default function ConfirmarAsistencia() {
                 {enviando ? 'Enviando...' : 'Confirmar asistencia 💌'}
               </button>
             </form>
+
+            {renderDeclinar()}
           </div>
           <div className="text-center mt-6">
             <Link
@@ -1018,6 +1136,8 @@ export default function ConfirmarAsistencia() {
               </p>
             )}
           </form>
+
+          {renderDeclinar()}
         </div>
 
         <div className="text-center mt-6">

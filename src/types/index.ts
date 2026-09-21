@@ -63,11 +63,12 @@ export interface Invitacion {
   contacto?: string | null;
   telefono?: string | null;
   token: string;
-  estado: 'pendiente' | 'enviada' | 'confirmada';
+  estado: 'pendiente' | 'enviada' | 'confirmada' | 'declinada';
   modalidad: 'familiar' | 'pareja' | 'individual' | 'adulto-hijos';
   asistentes?: string | null;
   fechaEnviada?: string | null;
   fechaConfirmada?: string | null;
+  fechaDeclinada?: string | null;
   asistenciaId?: number | null;
   createdAt?: string;
 }
@@ -78,6 +79,7 @@ export interface ConfirmacionAsistencia {
   email?: string | null;
   telefono?: string | null;
   mensaje?: string | null;
+  estado?: 'confirmada' | 'declinada';
   createdAt: string;
   asistentes: AsistenteConfirmacion[];
 }

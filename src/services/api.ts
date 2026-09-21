@@ -73,6 +73,19 @@ export const api = {
     });
   },
 
+  // Indicar que no se asistirá al evento (RSVP)
+  declinarAsistencia: async (data: {
+    nombreFamilia?: string;
+    email?: string;
+    invitacionToken?: string;
+    mensaje?: string;
+  }) => {
+    return fetchAPI('/declinar-asistencia', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
   // Rastrear visita a página
   trackPageView: async (page: string, referrer?: string, invitationToken?: string) => {
     try {

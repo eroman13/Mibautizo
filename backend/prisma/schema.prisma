@@ -97,6 +97,7 @@ model Asistencia {
   email         String? // Contacto opcional
   telefono      String? // Contacto opcional
   mensaje       String? // Notas opcionales (alergias, silla, etc.)
+  estado        String      @default("confirmada") // "confirmada" | "declinada"
   createdAt     DateTime    @default(now())
   asistentes    Asistente[]
 }
@@ -118,11 +119,12 @@ model Invitacion {
   contacto        String? // Persona de contacto (opcional)
   telefono        String? // Teléfono para abrir WhatsApp directo (opcional)
   token           String    @unique // Token del enlace personalizado
-  estado          String    @default("pendiente") // "pendiente" | "enviada" | "confirmada"
+  estado          String    @default("pendiente") // "pendiente" | "enviada" | "confirmada" | "declinada"
   modalidad       String    @default("familiar") // "familiar" | "pareja" | "individual" | "adulto-hijos"
   asistentes      String? // Personas invitadas (una por línea, opcional)
   fechaEnviada    DateTime?
   fechaConfirmada DateTime?
+  fechaDeclinada  DateTime?
   asistenciaId    Int? // id de la confirmación cuando responde
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt

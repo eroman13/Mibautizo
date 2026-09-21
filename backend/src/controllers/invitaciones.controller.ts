@@ -15,7 +15,7 @@ interface InvitacionBody {
   familia?: string;
   contacto?: string;
   telefono?: string;
-  estado?: 'pendiente' | 'enviada' | 'confirmada';
+  estado?: 'pendiente' | 'enviada' | 'confirmada' | 'declinada';
   modalidad?: 'familiar' | 'pareja' | 'individual' | 'adulto-hijos';
   asistentes?: string;
 }
@@ -168,6 +168,7 @@ export async function getInvitaciones(req: Request, res: Response) {
       pendientes: invitaciones.filter((i) => i.estado === 'pendiente').length,
       enviadas: invitaciones.filter((i) => i.estado === 'enviada').length,
       confirmadas: invitaciones.filter((i) => i.estado === 'confirmada').length,
+      declinadas: invitaciones.filter((i) => i.estado === 'declinada').length,
     };
 
     res.json({ success: true, data: invitaciones, resumen });
@@ -284,18 +285,24 @@ export async function actualizarInvitacion(req: Request, res: Response) {
       data.modalidad = body.modalidad;
     }
 
-    // Cambio de estado manual (marcar confirmada sin RSVP, o volver a pendiente)
-    if (body.estado && ['pendiente', 'enviada', 'confirmada'].includes(body.estado)) {
+    // Cambio de estado manual (marcar confirmada sin RSVP, declinada, o volver a pendiente)
+    if (body.estado && ['pendiente', 'enviada', 'confirmada', 'declinada'].includes(body.estado)) {
       if (body.estado !== existente.estado) {
         data.estado = body.estado;
         if (body.estado === 'enviada') {
           data.fechaEnviada = new Date();
           data.fechaConfirmada = null;
+          data.fechaDeclinada = null;
         } else if (body.estado === 'confirmada') {
           data.fechaConfirmada = new Date();
+          data.fechaDeclinada = null;
+        } else if (body.estado === 'declinada') {
+          data.fechaDeclinada = new Date();
+          data.fechaConfirmada = null;
         } else if (body.estado === 'pendiente') {
           data.fechaEnviada = null;
           data.fechaConfirmada = null;
+          data.fechaDeclinada = null;
         }
       }
     }

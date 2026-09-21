@@ -10,6 +10,7 @@ import prisma from '../lib/prisma';
 import {
   enviarConfirmacionAsistencia,
   enviarNotificacionAsistencia,
+  enviarNotificacionDeclinacion,
   obtenerEmailsNotificacion,
 } from '../lib/email';
 
@@ -272,6 +273,104 @@ export async function confirmarAsistencia(req: Request, res: Response) {
 }
 
 /**
+ * Registrar que un invitado no asistirá al evento (declinación)
+ * POST /api/declinar-asistencia
+ */
+export async function declinarAsistencia(req: Request, res: Response) {
+  try {
+    const body: ConfirmarBody = req.body || {};
+
+    let nombreFamilia = (body.nombreFamilia || '').trim();
+    const invitacionToken = (body.invitacionToken || '').trim();
+
+    // Si viene con token, validar la invitación y usar su familia como respaldo
+    if (invitacionToken) {
+      const invitacion = await prisma.invitacion.findUnique({
+        where: { token: invitacionToken },
+        select: { id: true, familia: true, estado: true },
+      });
+
+      if (!invitacion) {
+        return res.status(404).json({ success: false, error: 'Invitación no encontrada' });
+      }
+
+      if (invitacion.estado === 'confirmada' || invitacion.estado === 'declinada') {
+        return res.status(409).json({
+          success: false,
+          error:
+            'Ya respondiste con este enlace. Si necesitas modificar algo, contáctate directamente con los papás.',
+        });
+      }
+
+      if (!nombreFamilia) nombreFamilia = invitacion.familia;
+    }
+
+    if (!nombreFamilia) {
+      return res.status(400).json({
+        success: false,
+        error: 'Indícanos tu nombre o familia para registrar tu respuesta.',
+      });
+    }
+
+    const confirmacion = await prisma.asistencia.create({
+      data: {
+        nombreFamilia,
+        email: (body.email || '').trim() || null,
+        telefono: (body.telefono || '').trim() || null,
+        mensaje: (body.mensaje || '').trim() || null,
+        estado: 'declinada',
+      },
+    });
+
+    // Notificar a los papás por email (sin bloquear la respuesta)
+    try {
+      const eventoNotif = await prisma.event.findFirst();
+      const destinatarios = obtenerEmailsNotificacion(eventoNotif);
+      if (destinatarios.length > 0) {
+        await enviarNotificacionDeclinacion({
+          para: destinatarios,
+          nombreFamilia,
+          email: (body.email || '').trim() || undefined,
+          mensaje: (body.mensaje || '').trim() || undefined,
+        });
+      }
+    } catch (errorEmail) {
+      console.error('⚠️ Error al enviar notificación de declinación:', errorEmail);
+    }
+
+    // Vincular la invitación (estado "declinada")
+    if (invitacionToken) {
+      try {
+        await prisma.invitacion.update({
+          where: { token: invitacionToken },
+          data: {
+            estado: 'declinada',
+            fechaDeclinada: new Date(),
+            asistenciaId: confirmacion.id,
+          },
+        });
+        console.log(`💔 Invitación de "${nombreFamilia}" marcada como declinada`);
+      } catch (errorLink) {
+        console.warn('⚠️ No se pudo vincular la invitación:', errorLink);
+      }
+    }
+
+    console.log(`💔 Declinación de asistencia registrada: ${nombreFamilia}`);
+
+    res.json({
+      success: true,
+      data: {
+        id: confirmacion.id,
+        nombreFamilia,
+      },
+    });
+  } catch (error) {
+    console.error('❌ Error al registrar declinación:', error);
+    res.status(500).json({ success: false, error: 'Error al registrar tu respuesta' });
+  }
+}
+
+/**
  * Listar todas las confirmaciones de asistencia (admin)
  * GET /api/admin/asistencias
  */
@@ -287,11 +386,16 @@ export async function getAsistencias(req: Request, res: Response) {
     });
 
     let familias = 0;
+    let declinadas = 0;
     let adultos = 0;
     let ninosMenores = 0;
     let ninosMayores = 0;
 
     for (const a of lista) {
+      if (a.estado === 'declinada') {
+        declinadas++;
+        continue;
+      }
       familias++;
       for (const p of a.asistentes) {
         const grupo = grupoDe(p);
@@ -306,6 +410,7 @@ export async function getAsistencias(req: Request, res: Response) {
       data: lista,
       resumen: {
         familias,
+        declinadas,
         adultos,
         ninosMenores,
         ninosMayores,

@@ -34,12 +34,14 @@ const ETIQUETA_ESTADO: Record<Invitacion['estado'], string> = {
   pendiente: 'Pendiente',
   enviada: 'Enviada',
   confirmada: 'Confirmada',
+  declinada: 'No asistirá',
 };
 
 const COLOR_ESTADO: Record<Invitacion['estado'], string> = {
   pendiente: 'bg-gray-100 text-gray-600',
   enviada: 'bg-blue-100 text-blue-700',
   confirmada: 'bg-green-100 text-green-700',
+  declinada: 'bg-red-100 text-red-700',
 };
 
 const ETIQUETA_MODALIDAD: Record<Invitacion['modalidad'], string> = {
@@ -96,7 +98,7 @@ function formatearFecha(iso?: string | null): string {
 
 export default function AdminInvitaciones() {
   const [invitaciones, setInvitaciones] = useState<Invitacion[]>([]);
-  const [resumen, setResumen] = useState({ total: 0, pendientes: 0, enviadas: 0, confirmadas: 0 });
+  const [resumen, setResumen] = useState({ total: 0, pendientes: 0, enviadas: 0, confirmadas: 0, declinadas: 0 });
   const [loading, setLoading] = useState(true);
   const [busqueda, setBusqueda] = useState('');
   const [filtroEstado, setFiltroEstado] = useState<EstadoFiltro>('todos');
@@ -119,7 +121,7 @@ export default function AdminInvitaciones() {
       const response = await adminApi.getInvitaciones();
       setInvitaciones(response.data || []);
       setResumen(
-        response.resumen || { total: 0, pendientes: 0, enviadas: 0, confirmadas: 0 }
+        response.resumen || { total: 0, pendientes: 0, enviadas: 0, confirmadas: 0, declinadas: 0 }
       );
     } catch (error) {
       console.error('Error al cargar invitaciones:', error);
@@ -373,7 +375,7 @@ export default function AdminInvitaciones() {
         )}
 
         {/* Resumen */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
           <div className="bg-white rounded-xl shadow-soft p-4 text-center">
             <p className="text-2xl font-bold text-gray-800">{resumen.total}</p>
             <p className="text-xs text-gray-500">Total</p>
@@ -390,6 +392,10 @@ export default function AdminInvitaciones() {
             <p className="text-2xl font-bold text-green-500">{resumen.confirmadas}</p>
             <p className="text-xs text-gray-500">Confirmadas</p>
           </div>
+          <div className="bg-white rounded-xl shadow-soft p-4 text-center">
+            <p className="text-2xl font-bold text-red-400">{resumen.declinadas}</p>
+            <p className="text-xs text-gray-500">No asistirán</p>
+          </div>
         </div>
 
         {/* Controles */}
@@ -403,7 +409,7 @@ export default function AdminInvitaciones() {
               className="input-field md:flex-1"
             />
             <div className="flex gap-2 flex-wrap">
-              {(['todos', 'pendiente', 'enviada', 'confirmada'] as EstadoFiltro[]).map((f) => (
+              {(['todos', 'pendiente', 'enviada', 'confirmada', 'declinada'] as EstadoFiltro[]).map((f) => (
                 <button
                   key={f}
                   type="button"
@@ -469,6 +475,9 @@ export default function AdminInvitaciones() {
                     <div className="text-xs text-gray-400 mt-1">
                       Enviada: {formatearFecha(inv.fechaEnviada)} · Confirmada:{' '}
                       {formatearFecha(inv.fechaConfirmada)}
+                      {inv.estado === 'declinada' && (
+                        <> · Declinó: {formatearFecha(inv.fechaDeclinada)}</>
+                      )}
                     </div>
                   </div>
 
@@ -492,12 +501,13 @@ export default function AdminInvitaciones() {
                       onChange={(e) =>
                         cambiarEstado(inv, e.target.value as Invitacion['estado'])
                       }
-                      title="Cambiar estado: pendiente / enviada / confirmada"
+                      title="Cambiar estado: pendiente / enviada / confirmada / no asistirá"
                       className="px-2 py-2 rounded-full border-2 border-gray-200 bg-white text-xs font-semibold text-gray-700 cursor-pointer focus:border-pastel-pink focus:outline-none"
                     >
                       <option value="pendiente">⏳ Pendiente</option>
                       <option value="enviada">📨 Enviada</option>
                       <option value="confirmada">✓ Confirmada</option>
+                      <option value="declinada">💔 No asistirá</option>
                     </select>
                     <button
                       type="button"

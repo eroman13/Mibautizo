@@ -696,6 +696,76 @@ export async function enviarNotificacionAsistencia({
 }
 
 /**
+ * Enviar notificación al administrador cuando alguien declina la invitación (no asistirá)
+ */
+export async function enviarNotificacionDeclinacion({
+  para,
+  nombreFamilia,
+  email,
+  mensaje,
+}: {
+  para: string[];
+  nombreFamilia: string;
+  email?: string;
+  mensaje?: string;
+}) {
+  if (!brevoApiKey && !resendApiKey && (!gmailUser || !gmailPass)) {
+    console.warn(
+      '⚠️ Notificación de declinación NO enviada: credenciales de email no configuradas.'
+    );
+    return { success: false, error: new Error('Credenciales de email no configuradas') };
+  }
+
+  if (!para || para.length === 0) {
+    console.warn('⚠️ Notificación de declinación omitida: no hay destinatarios configurados.');
+    return { success: false, error: new Error('No hay destinatarios configurados') };
+  }
+
+  try {
+    const html = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: Arial, sans-serif; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .alert { background: #fef2f2; border-left: 4px solid #fca5a5; padding: 15px; border-radius: 4px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="alert">
+            <h2>💔 Invitado que no asistirá</h2>
+            <p><strong>Familia:</strong> ${escapaHtml(nombreFamilia)}</p>
+            <p><strong>Email:</strong> ${email ? escapaHtml(email) : 'No proporcionado'}</p>
+            ${mensaje ? `<p><strong>Mensaje:</strong><br>${escapaHtml(mensaje).replace(/\n/g, '<br>')}</p>` : ''}
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const resultado = await enviarConReintentos({
+      from: gmailUser || 'tu-email@gmail.com',
+      to: para,
+      subject: `💔 No asistirá: ${nombreFamilia}`,
+      html,
+    });
+
+    if (!resultado.success) {
+      console.error('❌ Error al enviar notificación de declinación:', (resultado.error as Error)?.message);
+      return { success: false, error: resultado.error };
+    }
+    console.log('✅ Notificación de declinación enviada:', resultado.messageId);
+    return { success: true, messageId: resultado.messageId };
+  } catch (error: any) {
+    console.error('❌ Error al enviar notificación de declinación:', error.message);
+    return { success: false, error };
+  }
+}
+
+/**
  * Enviar un correo de prueba para verificar la configuración de email.
  * Útil desde el panel de administración (POST /api/admin/test-email).
  */
