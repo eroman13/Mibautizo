@@ -212,6 +212,19 @@ Primera versión completa y funcional de la Mesa de Regalos Digital para el baut
 
 ## [Unreleased] - Próximas Mejoras
 
+### ✨ Added
+
+- **Recordatorios para invitaciones sin confirmar**: en el panel `/admin/invitaciones` ahora se
+  ve un resumen y un panel con las familias que aún no responden, un filtro "🔔 Sin confirmar",
+  un botón "🔔 Recordar" por invitación (y otro dentro del modal de recordatorios) que abre
+  WhatsApp con un mensaje de recordatorio ya redactado, incluyendo el enlace único de la
+  invitación.
+  - Nuevos campos en `Invitacion`: `recordatoriosEnviados` (contador) y
+    `fechaUltimoRecordatorio`, visibles en la lista.
+  - Nuevo endpoint `POST /api/admin/invitaciones/:id/recordatorio` (redirige el estado de
+    "pendiente" a "enviada" la primera vez).
+  - El resumen de `GET /api/admin/invitaciones` incluye `sinConfirmar`.
+
 ### Planificado para v1.1.0
 
 - [ ] Envío de emails de confirmación (Resend/SendGrid)

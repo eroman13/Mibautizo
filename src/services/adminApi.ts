@@ -180,6 +180,15 @@ export const adminApi = {
     return response.json();
   },
 
+  // Registrar el envío de un recordatorio por WhatsApp (quienes no confirman)
+  registrarRecordatorio: async (id: number) => {
+    const response = await fetch(`${API_URL}/admin/invitaciones/${id}/recordatorio`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  },
+
   eliminarInvitacion: async (id: number) => {
     const response = await fetch(`${API_URL}/admin/invitaciones/${id}`, {
       method: 'DELETE',

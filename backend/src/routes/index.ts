@@ -34,6 +34,7 @@ import {
   crearInvitacionesMasivo,
   actualizarInvitacion,
   marcarEnviadaInvitacion,
+  registrarRecordatorio,
   eliminarInvitacion,
   getInvitacionPublica,
 } from '../controllers/invitaciones.controller';
@@ -112,6 +113,8 @@ router.post('/admin/invitaciones/bulk', verificarAuth, crearInvitacionesMasivo);
 router.put('/admin/invitaciones/:id', verificarAuth, actualizarInvitacion);
 router.delete('/admin/invitaciones/:id', verificarAuth, eliminarInvitacion);
 router.post('/admin/invitaciones/:id/marcar-enviada', verificarAuth, marcarEnviadaInvitacion);
+// Recordatorio por WhatsApp para quienes aún no confirman (pendiente/enviada)
+router.post('/admin/invitaciones/:id/recordatorio', verificarAuth, registrarRecordatorio);
 
 // Rutas de gestión de usuarios admin
 router.get('/admin-users', verificarAuth, getAllAdminUsers);

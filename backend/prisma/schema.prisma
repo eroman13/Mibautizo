@@ -125,6 +125,8 @@ model Invitacion {
   fechaEnviada    DateTime?
   fechaConfirmada DateTime?
   fechaDeclinada  DateTime?
+  recordatoriosEnviados   Int      @default(0) // Cantidad de recordatorios enviados por WhatsApp
+  fechaUltimoRecordatorio DateTime? // Fecha del último recordatorio enviado
   asistenciaId    Int? // id de la confirmación cuando responde
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt

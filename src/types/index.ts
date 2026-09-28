@@ -69,6 +69,8 @@ export interface Invitacion {
   fechaEnviada?: string | null;
   fechaConfirmada?: string | null;
   fechaDeclinada?: string | null;
+  recordatoriosEnviados?: number;
+  fechaUltimoRecordatorio?: string | null;
   asistenciaId?: number | null;
   createdAt?: string;
 }

@@ -28,7 +28,25 @@ const FORM_VACIO: FormInvitacion = {
   parejaNombre2: '',
 };
 
-type EstadoFiltro = 'todos' | Invitacion['estado'];
+type EstadoFiltro = 'todos' | 'sin-confirmar' | Invitacion['estado'];
+
+/** Fecha límite de confirmación que se menciona en los mensajes de WhatsApp */
+const FECHA_LIMITE_CONFIRMACION = '30 de septiembre';
+
+/** Etiquetas del filtro de la lista de invitaciones */
+const ETIQUETA_FILTRO: Record<EstadoFiltro, string> = {
+  todos: 'Todos',
+  'sin-confirmar': '🔔 Sin confirmar',
+  pendiente: 'Pendiente',
+  enviada: 'Enviada',
+  confirmada: 'Confirmada',
+  declinada: 'No asistirá',
+};
+
+/** Una invitación "sin confirmar" todavía no responde (pendiente o enviada) */
+function sinConfirmar(inv: Invitacion): boolean {
+  return inv.estado === 'pendiente' || inv.estado === 'enviada';
+}
 
 const ETIQUETA_ESTADO: Record<Invitacion['estado'], string> = {
   pendiente: 'Pendiente',
@@ -75,7 +93,23 @@ Nos hace una ilusión enorme compartir contigo un momento muy especial para nues
 
 ${enlaceInvitacion(inv)}
 
-¡Esperamos contar con tu presencia! 🙏 Nos encantaría que nos acompañaras: te pedimos confirmar tu asistencia hasta el 30 de septiembre 💌`;
+¡Esperamos contar con tu presencia! 🙏 Nos encantaría que nos acompañaras: te pedimos confirmar tu asistencia hasta el ${FECHA_LIMITE_CONFIRMACION} 💌`;
+}
+
+/** Mensaje de recordatorio para quienes todavía no confirman su asistencia */
+function mensajeRecordatorio(inv: Invitacion): string {
+  const saludo = inv.contacto
+    ? `¡Hola ${inv.contacto}!`
+    : inv.modalidad === 'individual' && inv.familia
+      ? `¡Hola ${inv.familia}!`
+      : '¡Hola!';
+  return `${saludo} 💕
+Te escribimos para recordarte con cariño que seguimos esperando tu confirmación para el bautizo de las mellizas 🎀
+Tu invitación sigue vigente e incluye toda la información del evento:
+
+${enlaceInvitacion(inv)}
+
+¿Nos puedes confirmar tu asistencia hasta el ${FECHA_LIMITE_CONFIRMACION}? Tu respuesta nos ayuda a organizar todo 🙏 ¡Gracias!`;
 }
 
 function telefonoWa(inv: Invitacion): string {
@@ -98,7 +132,7 @@ function formatearFecha(iso?: string | null): string {
 
 export default function AdminInvitaciones() {
   const [invitaciones, setInvitaciones] = useState<Invitacion[]>([]);
-  const [resumen, setResumen] = useState({ total: 0, pendientes: 0, enviadas: 0, confirmadas: 0, declinadas: 0 });
+  const [resumen, setResumen] = useState({ total: 0, pendientes: 0, enviadas: 0, confirmadas: 0, declinadas: 0, sinConfirmar: 0 });
   const [loading, setLoading] = useState(true);
   const [busqueda, setBusqueda] = useState('');
   const [filtroEstado, setFiltroEstado] = useState<EstadoFiltro>('todos');
@@ -111,6 +145,7 @@ export default function AdminInvitaciones() {
   const [importando, setImportando] = useState(false);
   const [mensaje, setMensaje] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null);
   const [copiadoId, setCopiadoId] = useState<number | null>(null);
+  const [recordatoriosAbierto, setRecordatoriosAbierto] = useState(false);
 
   useEffect(() => {
     cargar();
@@ -121,7 +156,7 @@ export default function AdminInvitaciones() {
       const response = await adminApi.getInvitaciones();
       setInvitaciones(response.data || []);
       setResumen(
-        response.resumen || { total: 0, pendientes: 0, enviadas: 0, confirmadas: 0, declinadas: 0 }
+        response.resumen || { total: 0, pendientes: 0, enviadas: 0, confirmadas: 0, declinadas: 0, sinConfirmar: 0 }
       );
     } catch (error) {
       console.error('Error al cargar invitaciones:', error);
@@ -248,6 +283,24 @@ export default function AdminInvitaciones() {
     }
   };
 
+  /** Abre WhatsApp con el mensaje de recordatorio y lo registra en la BD */
+  const enviarRecordatorio = async (inv: Invitacion) => {
+    const num = telefonoWa(inv);
+    const url = num
+      ? `https://wa.me/${num}?text=${encodeURIComponent(mensajeRecordatorio(inv))}`
+      : `https://wa.me/?text=${encodeURIComponent(mensajeRecordatorio(inv))}`;
+    window.open(url, '_blank');
+    // Registrar el recordatorio (no bloqueante) para saber a quién y cuándo se le insistió
+    await adminApi.registrarRecordatorio(inv.id).catch(() => undefined);
+    await cargar();
+    setMensaje({
+      tipo: 'ok',
+      texto: `🔔 Recordatorio registrado para "${inv.familia}".${
+        num ? '' : ' Se abrió WhatsApp sin destinatario: elige el contacto manualmente.'
+      }`,
+    });
+  };
+
   const copiarEnlace = async (inv: Invitacion) => {
     try {
       await navigator.clipboard.writeText(enlaceInvitacion(inv));
@@ -325,7 +378,10 @@ export default function AdminInvitaciones() {
   };
 
   const filtradas = invitaciones.filter((inv) => {
-    if (filtroEstado !== 'todos' && inv.estado !== filtroEstado) return false;
+    if (filtroEstado === 'sin-confirmar' && !sinConfirmar(inv)) return false;
+    if (filtroEstado !== 'todos' && filtroEstado !== 'sin-confirmar' && inv.estado !== filtroEstado) {
+      return false;
+    }
     const q = busqueda.toLowerCase();
     if (!q) return true;
     return (
@@ -333,6 +389,9 @@ export default function AdminInvitaciones() {
       (inv.contacto || '').toLowerCase().includes(q)
     );
   });
+
+  // Invitaciones que todavía no confirman ni declinan (candidatas a recordatorio)
+  const pendientesDeConfirmar = invitaciones.filter(sinConfirmar);
 
   if (loading) {
     return (
@@ -375,7 +434,7 @@ export default function AdminInvitaciones() {
         )}
 
         {/* Resumen */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
           <div className="bg-white rounded-xl shadow-soft p-4 text-center">
             <p className="text-2xl font-bold text-gray-800">{resumen.total}</p>
             <p className="text-xs text-gray-500">Total</p>
@@ -396,7 +455,36 @@ export default function AdminInvitaciones() {
             <p className="text-2xl font-bold text-red-400">{resumen.declinadas}</p>
             <p className="text-xs text-gray-500">No asistirán</p>
           </div>
+          <div className="bg-white rounded-xl shadow-soft p-4 text-center">
+            <p className="text-2xl font-bold text-amber-500">{pendientesDeConfirmar.length}</p>
+            <p className="text-xs text-gray-500">Sin confirmar</p>
+          </div>
         </div>
+
+        {/* Panel de recordatorios para quienes aún no confirman */}
+        {pendientesDeConfirmar.length > 0 && (
+          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex-1">
+              <p className="font-semibold text-amber-800">
+                🔔 {pendientesDeConfirmar.length}{' '}
+                {pendientesDeConfirmar.length === 1
+                  ? 'invitación aún no confirma'
+                  : 'invitaciones aún no confirman'}
+              </p>
+              <p className="text-sm text-amber-700">
+                Envíales un recordatorio por WhatsApp (incluye su enlace único). Sugerencia: espera
+                unos días entre cada recordatorio y hazlo antes del {FECHA_LIMITE_CONFIRMACION}.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setRecordatoriosAbierto(true)}
+              className="btn-primary text-sm px-4 py-2 whitespace-nowrap"
+            >
+              🔔 Ver y recordar
+            </button>
+          </div>
+        )}
 
         {/* Controles */}
         <div className="bg-white rounded-2xl shadow-card p-4 mb-6 space-y-3">
@@ -409,7 +497,7 @@ export default function AdminInvitaciones() {
               className="input-field md:flex-1"
             />
             <div className="flex gap-2 flex-wrap">
-              {(['todos', 'pendiente', 'enviada', 'confirmada', 'declinada'] as EstadoFiltro[]).map((f) => (
+              {(['todos', 'sin-confirmar', 'pendiente', 'enviada', 'confirmada', 'declinada'] as EstadoFiltro[]).map((f) => (
                 <button
                   key={f}
                   type="button"
@@ -417,10 +505,12 @@ export default function AdminInvitaciones() {
                   className={`px-3 py-2 rounded-full text-xs font-semibold transition-colors ${
                     filtroEstado === f
                       ? 'bg-pastel-pink text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : f === 'sin-confirmar'
+                        ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
-                  {f === 'todos' ? 'Todos' : ETIQUETA_ESTADO[f]}
+                  {ETIQUETA_FILTRO[f]}
                 </button>
               ))}
             </div>
@@ -435,6 +525,14 @@ export default function AdminInvitaciones() {
               className="btn-secondary text-sm px-4 py-2"
             >
               📄 Importar lista
+            </button>
+            <button
+              type="button"
+              onClick={() => setRecordatoriosAbierto(true)}
+              className="btn-secondary text-sm px-4 py-2"
+              title="Recordar a quienes aún no confirman"
+            >
+              🔔 Recordatorios{pendientesDeConfirmar.length > 0 ? ` (${pendientesDeConfirmar.length})` : ''}
             </button>
           </div>
         </div>
@@ -479,6 +577,16 @@ export default function AdminInvitaciones() {
                         <> · Declinó: {formatearFecha(inv.fechaDeclinada)}</>
                       )}
                     </div>
+                    {(inv.recordatoriosEnviados || 0) > 0 && (
+                      <div className="text-xs text-amber-600 mt-0.5">
+                        🔔 {inv.recordatoriosEnviados}{' '}
+                        {inv.recordatoriosEnviados === 1
+                          ? 'recordatorio enviado'
+                          : 'recordatorios enviados'}
+                        {' · último: '}
+                        {formatearFecha(inv.fechaUltimoRecordatorio)}
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap gap-2 lg:justify-end">
@@ -489,6 +597,16 @@ export default function AdminInvitaciones() {
                     >
                       📲 WhatsApp
                     </button>
+                    {sinConfirmar(inv) && (
+                      <button
+                        type="button"
+                        onClick={() => enviarRecordatorio(inv)}
+                        title="Enviar recordatorio por WhatsApp (incluye el enlace de la invitación)"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition-colors"
+                      >
+                        🔔 Recordar
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => copiarEnlace(inv)}
@@ -527,6 +645,89 @@ export default function AdminInvitaciones() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+        {/* Modal recordatorios para quienes aún no confirman */}
+        {recordatoriosAbierto && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setRecordatoriosAbierto(false)}
+            />
+            <div className="relative bg-white rounded-2xl shadow-card w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
+              <h2 className="text-xl font-display font-bold text-gray-800 mb-2">
+                🔔 Recordatorios de confirmación
+              </h2>
+              <p className="text-sm text-gray-500 mb-4">
+                Estas invitaciones aún no responden. El botón abre WhatsApp con un mensaje de
+                recordatorio que incluye su enlace único (si la invitación no tiene teléfono, se
+                abre WhatsApp para que elijas el contacto).
+              </p>
+
+              {pendientesDeConfirmar.length === 0 ? (
+                <div className="bg-green-50 text-green-700 rounded-xl p-4 text-sm">
+                  🎉 ¡Todas las invitaciones ya respondieron! No hay recordatorios pendientes.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {pendientesDeConfirmar.map((inv) => {
+                    const n = inv.recordatoriosEnviados || 0;
+                    return (
+                      <div
+                        key={inv.id}
+                        className="flex flex-col sm:flex-row sm:items-center gap-2 border border-gray-100 rounded-xl p-3"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-800">
+                            {inv.familia}
+                            <span
+                              className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${COLOR_ESTADO[inv.estado]}`}
+                            >
+                              {ETIQUETA_ESTADO[inv.estado]}
+                            </span>
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {inv.contacto || 'Sin contacto'}
+                            {' · '}
+                            {inv.telefono || 'sin teléfono'}
+                            {n > 0 &&
+                              ` · 🔔 ${n} enviado${n !== 1 ? 's' : ''} (último ${formatearFecha(
+                                inv.fechaUltimoRecordatorio
+                              )})`}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => enviarRecordatorio(inv)}
+                            className="px-3 py-2 rounded-full bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition-colors"
+                          >
+                            📲 Recordar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => copiarEnlace(inv)}
+                            className="px-3 py-2 rounded-full bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200 transition-colors"
+                          >
+                            {copiadoId === inv.id ? '✅ Copiado' : '🔗 Enlace'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="mt-6 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setRecordatoriosAbierto(false)}
+                  className="btn-secondary px-4 py-2"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
           </div>
         )}
         {/* Modal crear/editar */}

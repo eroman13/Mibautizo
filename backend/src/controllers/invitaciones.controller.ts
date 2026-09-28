@@ -5,6 +5,8 @@
  * - POST  /api/admin/invitaciones/bulk
  * - PUT   /api/admin/invitaciones/:id
  * - DELETE /api/admin/invitaciones/:id
+ * - POST  /api/admin/invitaciones/:id/marcar-enviada
+ * - POST  /api/admin/invitaciones/:id/recordatorio
  */
 
 import { Request, Response } from 'express';
@@ -169,6 +171,10 @@ export async function getInvitaciones(req: Request, res: Response) {
       enviadas: invitaciones.filter((i) => i.estado === 'enviada').length,
       confirmadas: invitaciones.filter((i) => i.estado === 'confirmada').length,
       declinadas: invitaciones.filter((i) => i.estado === 'declinada').length,
+      // Invitaciones que todavía no responden (candidatas a recordatorio)
+      sinConfirmar: invitaciones.filter(
+        (i) => i.estado === 'pendiente' || i.estado === 'enviada'
+      ).length,
     };
 
     res.json({ success: true, data: invitaciones, resumen });
@@ -340,6 +346,44 @@ export async function marcarEnviadaInvitacion(req: Request, res: Response) {
   } catch (error) {
     console.error('❌ Error al marcar invitación como enviada:', error);
     res.status(500).json({ success: false, error: 'Error al marcar invitación como enviada' });
+  }
+}
+
+/**
+ * Registrar el envío de un recordatorio por WhatsApp a una invitación que
+ * todavía no responde. Si aún estaba "pendiente" pasa a "enviada".
+ */
+export async function registrarRecordatorio(req: Request, res: Response) {
+  try {
+    const id = Number(req.params.id);
+    if (!id || Number.isNaN(id)) {
+      return res.status(400).json({ success: false, error: 'ID inválido' });
+    }
+
+    const existente = await prisma.invitacion.findUnique({ where: { id } });
+    if (!existente) {
+      return res.status(404).json({ success: false, error: 'Invitación no encontrada' });
+    }
+
+    const invitacion = await prisma.invitacion.update({
+      where: { id },
+      data: {
+        recordatoriosEnviados: { increment: 1 },
+        fechaUltimoRecordatorio: new Date(),
+        // El recordatorio incluye el enlace, así que el primer contacto cuenta como envío
+        ...(existente.estado === 'pendiente'
+          ? { estado: 'enviada', fechaEnviada: existente.fechaEnviada || new Date() }
+          : {}),
+      },
+    });
+
+    console.log(
+      `🔔 Recordatorio #${invitacion.recordatoriosEnviados} enviado a "${invitacion.familia}"`
+    );
+    res.json({ success: true, data: invitacion });
+  } catch (error) {
+    console.error('❌ Error al registrar recordatorio:', error);
+    res.status(500).json({ success: false, error: 'Error al registrar recordatorio' });
   }
 }
 
