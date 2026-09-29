@@ -117,6 +117,17 @@
 - Name: `EVENT_DATE`
 - Value: `15 de septiembre de 2026`
 
+**Variables 12-16: Cloudflare R2 (opcional - almacenamiento de imágenes)**
+- Name: `R2_ACCOUNT_ID` → Value: tu Account ID (Cloudflare → R2 → Overview, panel derecho)
+- Name: `R2_ACCESS_KEY_ID` → Value: (R2 → API → Manage API tokens → crear token del bucket)
+- Name: `R2_SECRET_ACCESS_KEY` → Value: (solo se muestra al crear el token)
+- Name: `R2_BUCKET` → Value: nombre del bucket
+- Name: `R2_PUBLIC_URL` → Value: `https://pub-xxxxxxxx.r2.dev` o tu dominio propio (sin barra final)
+
+> Si NO configuras estas variables, las imágenes se siguen guardando como base64 en la base de
+> datos (funciona igual, pero la BD crece más). Para verificar el modo activo:
+> `https://<tu-backend>.railway.app/api/health` debe responder `"storage":"r2"`.
+
 5. Click "Save" después de cada variable
 6. Railway redeploya automáticamente
 

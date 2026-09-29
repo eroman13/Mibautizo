@@ -47,6 +47,20 @@ if (mpPublicKey) {
   console.log('   MP_PUBLIC_KEY: NO CONFIGURADO');
 }
 
+// Log de diagnóstico del almacenamiento de imágenes
+try {
+  const { r2Configurado, r2ParcialmenteConfigurado } = require('./lib/r2');
+  if (r2Configurado()) {
+    console.log(`   Almacenamiento de imágenes: Cloudflare R2 (bucket: ${process.env.R2_BUCKET})`);
+  } else if (r2ParcialmenteConfigurado()) {
+    console.warn('   Imágenes: R2 a medias (falta R2_BUCKET o R2_PUBLIC_URL) → data URL en BD');
+  } else {
+    console.log('   Imágenes: data URL (base64) en la base de datos');
+  }
+} catch {
+  console.log('   Imágenes: data URL (base64) en la base de datos');
+}
+
 // Sincronizar el schema de la base de datos (aplica cambios pendientes).
 // Se ejecuta aquí (dentro del código) porque Railway ignora el startCommand
 // del railway.json, por lo que el `prisma db push` del Dockerfile no se ejecuta.
@@ -109,10 +123,19 @@ app.use(express.json({ limit: '25mb' }));
 // Health - debe responder siempre
 app.get('/api/health', (req, res) => {
   console.log('✅ GET /api/health called');
+  // Modo de almacenamiento de imágenes (útil para verificar la configuración en prod)
+  let storage = 'base64';
+  try {
+    const { r2Configurado } = require('./lib/r2');
+    storage = r2Configurado() ? 'r2' : 'base64';
+  } catch {
+    storage = 'base64';
+  }
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV || 'development',
+    storage,
   });
 });
 

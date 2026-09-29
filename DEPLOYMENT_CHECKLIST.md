@@ -102,6 +102,11 @@
   - MELLIZA2_NAME
   - EVENT_DATE
   - NODE_ENV=production
+  - R2_ACCOUNT_ID (opcional - imágenes en Cloudflare R2)
+  - R2_ACCESS_KEY_ID
+  - R2_SECRET_ACCESS_KEY
+  - R2_BUCKET
+  - R2_PUBLIC_URL
 - [ ] Trigger deploy
 - [ ] Verificar que `/api/health` responde
 - [ ] Copiar URL: `https://mibautizo-backend.onrender.com`

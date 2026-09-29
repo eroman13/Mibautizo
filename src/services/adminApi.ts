@@ -208,4 +208,15 @@ export const adminApi = {
     });
     return response.json();
   },
+
+  // Subir una imagen (portada, portada móvil o foto de regalo).
+  // El backend la guarda en Cloudflare R2 y devuelve { success, imageUrl }.
+  subirImagen: async (base64: string) => {
+    const response = await fetch(`${API_URL}/upload-image`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ base64 }),
+    });
+    return response.json();
+  },
 };

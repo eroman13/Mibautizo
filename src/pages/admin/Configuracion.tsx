@@ -4,7 +4,6 @@
 
 import { useEffect, useState } from 'react';
 import { adminApi } from '../../services/adminApi';
-import { buildApiUrl } from '../../services/config';
 import { comprimirImagen } from '../../utils/imagen';
 import { Link } from 'react-router-dom';
 import { Evento } from '../../types';
@@ -97,16 +96,8 @@ export default function AdminConfiguracion() {
       // (~500KB-1MB) es manejable para PostgreSQL y la carga web.
       const base64 = await comprimirImagen(file, 1920, 0.85);
 
-      // Enviar al backend
-      const response = await fetch(buildApiUrl('/upload-image'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ base64 }),
-      });
-
-      const data = await response.json();
+      // Enviar al backend (se guarda en Cloudflare R2 y devuelve la URL pública)
+      const data = await adminApi.subirImagen(base64);
       if (data.success) {
         setFormData({ ...formData, portadaUrl: data.imageUrl });
         console.log('✅ Imagen subida');
@@ -128,15 +119,8 @@ export default function AdminConfiguracion() {
       // Comprimir la imagen móvil (vertical) a buena resolución
       const base64 = await comprimirImagen(file, 1080, 0.85);
 
-      const response = await fetch(buildApiUrl('/upload-image'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ base64 }),
-      });
-
-      const data = await response.json();
+      // Enviar al backend (se guarda en Cloudflare R2 y devuelve la URL pública)
+      const data = await adminApi.subirImagen(base64);
       if (data.success) {
         setFormData({ ...formData, portadaUrlMobile: data.imageUrl });
         console.log('✅ Imagen móvil subida');

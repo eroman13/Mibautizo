@@ -61,8 +61,14 @@ router.get('/evento', getEvento);
 router.get('/portada', getPortada);
 router.get('/invitacion', getInvitacionPublica);
 
-// Ruta para subir imágenes
-router.post('/upload-image', uploadImage);
+// Ruta para subir imágenes (solo admin). Antes era pública: con el storage en
+// Cloudflare R2 cualquier persona podía escribir archivos en el bucket.
+router.post(
+  '/upload-image',
+  verificarAuth,
+  rateLimit({ windowMs: 60 * 1000, max: 30, mensaje: 'Demasiadas subidas, espera un momento' }),
+  uploadImage
+);
 
 // Ruta para crear preferencia de pago
 router.post('/crear-preferencia', crearPreferencia);

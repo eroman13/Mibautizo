@@ -1,8 +1,10 @@
 /**
  * Controlador de subida de archivos
  *
- * Devuelve la imagen como data URL (base64) directamente, sin guardarla en
- * el filesystem. La imagen se guarda en la base de datos (campo imagenUrl/portadaUrl).
+ * Si Cloudflare R2 está configurado (ver lib/r2.ts), la imagen se sube al bucket
+ * y se devuelve su URL pública. Si no, se mantiene el comportamiento anterior:
+ * devolver un data URL (base64) que se guarda en la base de datos
+ * (campo imagenUrl/portadaUrl).
  *
  * SEGURIDAD: solo se aceptan formatos raster (jpeg/png/webp/gif). Se rechazan
  * SVG, HTML y cualquier otro tipo (un SVG puede ejecutar scripts/XSS cuando se
@@ -10,6 +12,7 @@
  */
 
 import { Request, Response } from 'express';
+import { r2Configurado, r2ParcialmenteConfigurado, subirImagenR2 } from '../lib/r2';
 
 // Formatos de imagen permitidos
 const MIMES_PERMITIDOS = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
@@ -75,12 +78,31 @@ export const uploadImage = async (req: Request, res: Response) => {
       });
     }
 
-    console.log('✅ Imagen válida recibida (data URL)');
+    console.log('✅ Imagen válida recibida');
 
-    // Devolver la imagen como data URL para que se guarde en la base de datos
+    // 1) Si R2 está configurado, subir el archivo al bucket y devolver su URL pública
+    if (r2Configurado()) {
+      try {
+        const imageUrl = await subirImagenR2(buffer, mime);
+        return res.json({ success: true, imageUrl, storage: 'r2' });
+      } catch (error) {
+        // No rompemos la subida: si R2 falla se guarda como data URL
+        console.error(
+          '⚠️ Error subiendo a R2, se guardará como data URL:',
+          error instanceof Error ? error.message : error
+        );
+      }
+    } else if (r2ParcialmenteConfigurado()) {
+      console.warn(
+        '⚠️ R2 tiene credenciales pero falta R2_BUCKET o R2_PUBLIC_URL: se guardará como data URL'
+      );
+    }
+
+    // 2) Sin R2: devolver la imagen como data URL para que se guarde en la base de datos
     res.json({
       success: true,
       imageUrl: base64,
+      storage: 'base64',
     });
   } catch (error) {
     console.error('❌ Error en uploadImage:', error);

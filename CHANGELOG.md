@@ -225,6 +225,21 @@ Primera versión completa y funcional de la Mesa de Regalos Digital para el baut
     "pendiente" a "enviada" la primera vez).
   - El resumen de `GET /api/admin/invitaciones` incluye `sinConfirmar`.
 
+- **Imágenes en Cloudflare R2**: las imágenes subidas desde el panel (portada, portada móvil y
+  fotos de regalos) ya no se guardan como base64 dentro de PostgreSQL: se suben al bucket R2 y
+  en la base de datos solo queda la URL pública.
+  - Nuevo módulo `backend/src/lib/r2.ts` (AWS SDK v3 - S3) con las variables `R2_ACCOUNT_ID`,
+    `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_URL` (y `R2_PREFIX`
+    opcional). Si falta alguna, la subida sigue funcionando como antes (data URL en la BD),
+    así que la app nunca se rompe por configuración faltante.
+  - `POST /api/upload-image` ahora responde `{ success, imageUrl, storage: 'r2' | 'base64' }`.
+  - Seguridad: `POST /api/upload-image` ahora exige token de admin (antes era público, cualquiera
+    podía escribir imágenes) y tiene rate limit de 30 subidas por minuto.
+  - Nuevo `adminApi.subirImagen()` en el frontend, usado por `Configuracion.tsx` y `Regalos.tsx`
+    (así la llamada envía el token y se centraliza la subida).
+  - `GET /api/health` ahora informa `storage` (`"r2"` o `"base64"`) para verificar la
+    configuración en producción.
+
 ### Planificado para v1.1.0
 
 - [ ] Envío de emails de confirmación (Resend/SendGrid)

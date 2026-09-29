@@ -5,7 +5,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../services/api';
 import { adminApi } from '../../services/adminApi';
-import { buildApiUrl } from '../../services/config';
 import { comprimirImagen } from '../../utils/imagen';
 import { formatCLP } from '../../utils/format';
 import { Link } from 'react-router-dom';
@@ -257,16 +256,8 @@ export default function AdminRegalos() {
       // Comprimir y redimensionar la imagen antes de subirla
       const base64 = await comprimirImagen(file);
 
-      // Enviar al backend
-      const response = await fetch(buildApiUrl('/upload-image'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ base64 }),
-      });
-
-      const data = await response.json();
+      // Enviar al backend (se guarda en Cloudflare R2 y devuelve la URL pública)
+      const data = await adminApi.subirImagen(base64);
       if (data.success) {
         setFormData({ ...formData, imagenUrl: data.imageUrl });
         console.log('✅ Imagen subida');
