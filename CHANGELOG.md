@@ -264,7 +264,44 @@ Primera versión completa y funcional de la Mesa de Regalos Digital para el baut
   total que no asistirá, total que sí asistirá y el estado de las invitaciones (respondidas,
   confirmadas, declinadas y sin responder).
 
+### 🐛 Fixed - Fotos en formatos que el navegador no puede leer (HEIC de iPhone)
+
+- Al elegir una foto en **HEIC/HEIF** (el formato de iPhone), **TIFF** o **RAW**, el navegador no
+  puede decodificarla y la subida se cortaba con el mensaje genérico *“No se pudo cargar la
+  imagen”*, que no decía ni qué archivo fallaba ni qué hacer. `comprimirImagen()` ahora identifica
+  el formato (por MIME y, si viene vacío, por la extensión: las fotos reenviadas por WhatsApp
+  pierden el MIME) y explica la salida: enviarla por WhatsApp/correo, hacer una captura de pantalla
+  o, en iPhone, Ajustes → Cámara → Formatos → “Más compatible”.
+- El resto de fallos al leer una foto ahora dicen **nombre, tipo y peso** (`foto.jpg`, `image/jpeg`,
+  2.0 MB), para distinguir un archivo dañado o a medio descargar de un formato no soportado.
+- Se avisa antes de intentar leer un archivo vacío o de más de 40 MB, y una foto que tarde más de
+  60 s en procesarse ya no deja la subida colgada con la barra de progreso girando.
+- En el álbum (público y admin) se recuerda qué formatos funcionan y el truco de iPhone, y subir la
+  imagen de una fila en Regalos ya no falla en silencio si el formato no es válido.
+
+### ✨ Added - Nueva experiencia para subir fotos y galería del álbum
+
+- **Subir fotos ya no arranca solo:** al elegir archivos estos quedan en una **lista de espera con
+  miniaturas** (y su peso), se pueden quitar de a una o todas con “Quitar todas”, y recién se envían
+  al pulsar el botón **“📨 Enviar N fotos”** (deshabilitado mientras no haya fotos o mientras sube).
+- El envío muestra una **barra de progreso** con porcentaje (“Enviando foto 2 de 5…”), y los fallos
+  parciales dejan solo las fotos que fallaron en la lista para reintentar, sin perder las demás.
+- **Aviso de revisión bien visible:** antes de elegir nada se explica que *“Tus fotos pasan por
+  revisión antes de publicarse… aparecerán en la galería cuando los papás las aprueben”*, con los
+  tres pasos (1. Tú las envías → 2. Los papás las aprueban → 3. Aparecen en la galería). Al terminar
+  el envío se confirma que quedaron **en revisión** y no publicadas.
+- **Galería separada y más amigable:** vive en su propia sección (separador decorativo entre subir y
+  ver), con título “Galería de recuerdos”, contador de fotos aprobadas, botón **“Ver si hay nuevas”**
+  para recargar sin salir de la página y un estado vacío que invita a subir la primera foto.
+- Las fotos ahora muestran **autor, mensaje y fecha sobre la imagen** (al pasar el mouse en
+  escritorio, siempre en móvil) e incluyen un ícono de zoom; el visor a pantalla completa suma
+  **flechas anterior/siguiente, contador (3 / 12) y navegación con el teclado** (← → y Esc).
+- Los problemas al cargar la galería y los de la subida se avisan por separado para no mezclar
+  mensajes.
+
+
 ### 🗄️ Base de datos
+
 
 - `Asistente.asiste BOOLEAN DEFAULT true` (las filas existentes se mantienen como asistentes).
 - Nueva tabla `Foto` con índices.

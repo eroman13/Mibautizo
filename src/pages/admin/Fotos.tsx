@@ -280,6 +280,11 @@ export default function AdminFotos() {
               className="hidden"
             />
           </label>
+          <p className="mt-2 text-xs text-gray-500">
+            Formatos válidos: JPG, PNG, WebP o GIF (el archivo se comprime automáticamente). Si la
+            foto viene del iPhone en formato HEIC, o es TIFF/RAW, conviértela antes: en macOS, Vista
+            Previa → Archivo → Exportar → JPEG.
+          </p>
           {aviso && (
             <div className="mt-4 p-3 rounded-lg bg-green-50 text-green-700 text-sm">{aviso}</div>
           )}

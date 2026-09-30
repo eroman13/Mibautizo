@@ -106,7 +106,7 @@ export default function AdminConfiguracion() {
       }
     } catch (error: any) {
       console.error('Error al subir imagen:', error);
-      alert('Error al subir imagen');
+      alert(error?.message || 'Error al subir imagen');
     } finally {
       setSubiendo(false);
     }
@@ -129,7 +129,7 @@ export default function AdminConfiguracion() {
       }
     } catch (error: any) {
       console.error('Error al subir imagen móvil:', error);
-      alert('Error al subir imagen móvil');
+      alert(error?.message || 'Error al subir imagen móvil');
     } finally {
       setSubiendo(false);
     }

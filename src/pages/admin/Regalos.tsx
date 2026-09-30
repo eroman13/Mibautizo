@@ -266,7 +266,7 @@ export default function AdminRegalos() {
       }
     } catch (error: any) {
       console.error('Error al subir imagen:', error);
-      alert('Error al subir imagen');
+      alert(error?.message || 'Error al subir imagen');
     } finally {
       setSubiendo(false);
     }
@@ -362,8 +362,15 @@ export default function AdminRegalos() {
   };
 
   const subirImagenFila = async (index: number, file: File) => {
-    const base64 = await comprimirImagen(file);
-    actualizarFilaMasivo(index, 'imagenBase64', base64);
+    try {
+      const base64 = await comprimirImagen(file);
+      actualizarFilaMasivo(index, 'imagenBase64', base64);
+    } catch (error: any) {
+      // Sin este catch un formato no soportado fallaba en silencio (la fila
+      // simplemente no recibía imagen y no había forma de saber por qué).
+      console.error(`Error al procesar la imagen de la fila ${index + 1}:`, error);
+      alert(`Fila ${index + 1}: ${error?.message || 'no se pudo procesar la imagen'}`);
+    }
   };
 
   const procesarFormularioMasivo = async () => {
