@@ -300,6 +300,25 @@ Primera versión completa y funcional de la Mesa de Regalos Digital para el baut
   mensajes.
 
 
+### ✨ Added - Panel de fotos: botón para actualizar y QR para las mesas
+
+- **“🔄 Ver si hay nuevas”** en el panel (`/admin/fotos`): vuelve a pedir las fotos al servidor sin
+  recargar la página, avisa cuántas llegaron desde la revisión anterior (“✅ Llegaron 3 fotos
+  nuevas…”), muestra la hora de la última revisión y, si el servidor no responde, lo dice sin
+  perder la lista que ya estaba en pantalla. Está en la tarjeta de subida y junto a la lista, que es
+  donde aparecen las fotos nuevas.
+- **Tarjeta “🔳 QR para las mesas”** (misma página): muestra el QR que lleva al álbum público, con
+  vista previa de la tarjeta y acciones para **descargarlo en PNG o SVG, copiar el enlace, copiar un
+  mensaje listo para WhatsApp, probar el enlace e imprimir tarjetas** (4 por hoja A4 para las mesas
+  o 1 grande tipo letrero). El QR se arma con el dominio desde el que se abrió el panel (y se puede
+  corregir a mano), usa corrección de errores alta y mantiene su espacio blanco alrededor, para que
+  se lea bien impreso.
+- **Generador de tarjetas imprimibles** (`npm run qr:mesas`): escribe en `qr/` el QR en PNG
+  (1200 px) y en SVG vectorial, una **hoja A4 con 4 tarjetas** para cortar por la línea de puntos,
+  una **tarjeta grande por hoja** y un `LEEME.md` con el paso a paso de impresión. Toma los nombres
+  y la fecha reales desde la API (o se pasan a mano) y **verifica el QR decodificándolo** antes de
+  guardarlo, así no se imprime un código roto; `--url` permite regenerar todo si cambia el dominio.
+
 ### 🗄️ Base de datos
 
 

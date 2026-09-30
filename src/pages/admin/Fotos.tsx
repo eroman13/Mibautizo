@@ -8,11 +8,48 @@ import { Link } from 'react-router-dom';
 import { adminApi } from '../../services/adminApi';
 import { comprimirImagen } from '../../utils/imagen';
 import { Foto, ResumenFotos } from '../../types';
+import QrMesas from '../../components/admin/QrMesas';
 
 type EstadoFoto = 'pendiente' | 'aprobada' | 'rechazada';
 type Filtro = 'todas' | EstadoFoto;
+type AvisoRecarga = { tipo: 'ok' | 'info' | 'error'; texto: string };
 
 const RESUMEN_VACIO: ResumenFotos = { total: 0, pendientes: 0, aprobadas: 0, rechazadas: 0 };
+
+const COLOR_AVISO: Record<AvisoRecarga['tipo'], string> = {
+  ok: 'bg-green-50 text-green-700',
+  info: 'bg-gray-50 text-gray-600',
+  error: 'bg-red-50 text-red-700',
+};
+
+/**
+ * Botón para volver a pedir las fotos al servidor. Los invitados suben desde sus teléfonos
+ * durante todo el evento, así que el panel no se entera solo: hay que preguntar.
+ */
+function BotonActualizar({
+  recargando,
+  onActualizar,
+  className = '',
+}: {
+  recargando: boolean;
+  onActualizar: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onActualizar}
+      disabled={recargando}
+      title="Volver a pedir las fotos al servidor"
+      className={`inline-flex items-center gap-2 rounded-full font-semibold transition-colors disabled:opacity-60 disabled:cursor-wait ${className}`}
+    >
+      <span className="inline-block animate-spin" style={{ animationPlayState: recargando ? 'running' : 'paused' }}>
+        🔄
+      </span>
+      {recargando ? 'Actualizando…' : 'Ver si hay nuevas'}
+    </button>
+  );
+}
 
 export default function AdminFotos() {
   const [fotos, setFotos] = useState<Foto[]>([]);
@@ -21,6 +58,12 @@ export default function AdminFotos() {
   const [filtro, setFiltro] = useState<Filtro>('todas');
   const [procesandoId, setProcesandoId] = useState<number | null>(null);
   const [fotoAmpliada, setFotoAmpliada] = useState<Foto | null>(null);
+
+  // Actualización manual: "¿llegaron fotos nuevas?"
+  const [recargando, setRecargando] = useState(false);
+  const [avisoRecarga, setAvisoRecarga] = useState<AvisoRecarga | null>(null);
+  const [ultimaRevision, setUltimaRevision] = useState<Date | null>(null);
+  const idsConocidosRef = useRef<Set<number>>(new Set());
 
   // Subida desde el panel (se aprueba automáticamente)
   const [autor, setAutor] = useState('');
@@ -31,19 +74,61 @@ export default function AdminFotos() {
   const inputArchivoRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    cargarFotos();
+    cargarFotos(true);
   }, []);
 
-  const cargarFotos = async () => {
+  /**
+   * Trae las fotos del servidor y cuenta cuántas no se conocían.
+   *
+   * @param mostrarSpinner Muestra el spinner de pantalla completa (solo en la primera carga)
+   * @returns número de fotos nuevas, o `null` si falló la conexión
+   */
+  const cargarFotos = async (mostrarSpinner = false): Promise<number | null> => {
+    if (mostrarSpinner) setLoading(true);
     try {
       const response = await adminApi.getFotos();
-      setFotos(response.data || []);
+      const lista: Foto[] = response.data || [];
+      const nuevas = lista.filter((foto) => !idsConocidosRef.current.has(foto.id)).length;
+      idsConocidosRef.current = new Set(lista.map((foto) => foto.id));
+      setFotos(lista);
       setResumen({ ...RESUMEN_VACIO, ...(response.resumen || {}) });
+      return nuevas;
     } catch (errorCarga) {
       console.error('Error al cargar fotos:', errorCarga);
+      return null;
     } finally {
       setLoading(false);
     }
+  };
+
+  /** Recarga la lista avisando cuántas fotos nuevas llegaron desde la última revisión. */
+  const actualizar = async () => {
+    setRecargando(true);
+    setAvisoRecarga(null);
+    const nuevas = await cargarFotos();
+    setRecargando(false);
+    setUltimaRevision(new Date());
+
+    if (nuevas === null) {
+      setAvisoRecarga({
+        tipo: 'error',
+        texto: '❌ No pudimos conectar con el servidor. Vuelve a intentarlo en un momento.',
+      });
+      return;
+    }
+
+    if (nuevas === 0) {
+      setAvisoRecarga({ tipo: 'info', texto: '✓ Por ahora no hay fotos nuevas.' });
+      return;
+    }
+
+    setAvisoRecarga({
+      tipo: 'ok',
+      texto:
+        nuevas === 1
+          ? '✅ Llegó 1 foto nueva. Revísala y apruébala aquí abajo 👇'
+          : `✅ Llegaron ${nuevas} fotos nuevas. Revísalas y apruébalas aquí abajo 👇`,
+    });
   };
 
   const cambiarEstado = async (id: number, estado: EstadoFoto) => {
@@ -223,13 +308,39 @@ export default function AdminFotos() {
 
         {/* Subir foto desde el panel */}
         <div className="bg-white rounded-2xl shadow-card p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-800 mb-1">
-            📤 Subir una foto (se publica al instante)
-          </h2>
-          <p className="text-sm text-gray-500 mb-4">
-            Ideal para las fotos oficiales del evento: se aprueban automáticamente.
-          </p>
-          <div className="grid sm:grid-cols-2 gap-4 mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-800 mb-1">
+                📤 Subir una foto (se publica al instante)
+              </h2>
+              <p className="text-sm text-gray-500">
+                Ideal para las fotos oficiales del evento: se aprueban automáticamente.
+              </p>
+            </div>
+            <div className="flex flex-col items-start sm:items-end gap-1">
+              <BotonActualizar
+                recargando={recargando}
+                onActualizar={actualizar}
+                className="text-sm px-4 py-2 bg-white border-2 border-gray-200 text-gray-600 hover:border-pastel-pink hover:text-pastel-pink"
+              />
+              <span className="text-xs text-gray-400">
+                {ultimaRevision
+                  ? `Última revisión: ${ultimaRevision.toLocaleTimeString('es-CL', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}`
+                  : 'Revisa si los invitados ya enviaron más fotos'}
+              </span>
+            </div>
+          </div>
+
+          {avisoRecarga && (
+            <div className={`mt-4 p-3 rounded-lg text-sm ${COLOR_AVISO[avisoRecarga.tipo]}`}>
+              {avisoRecarga.texto}
+            </div>
+          )}
+
+          <div className="grid sm:grid-cols-2 gap-4 mt-4 mb-4">
             <div>
               <label htmlFor="autor" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Autor
@@ -293,6 +404,8 @@ export default function AdminFotos() {
           )}
         </div>
 
+        {/* QR para las mesas: el invitado escanea con el teléfono y sube sus fotos */}
+        <QrMesas />
 
         {/* Lista de fotos */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -309,15 +422,22 @@ export default function AdminFotos() {
                       : 'pendientes'
                 })`}
           </h2>
-          {filtro !== 'todas' && (
-            <button
-              type="button"
-              onClick={() => setFiltro('todas')}
-              className="text-sm font-semibold text-pastel-pink hover:text-pastel-lavender"
-            >
-              Ver todas las fotos
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-4">
+            {filtro !== 'todas' && (
+              <button
+                type="button"
+                onClick={() => setFiltro('todas')}
+                className="text-sm font-semibold text-pastel-pink hover:text-pastel-lavender"
+              >
+                Ver todas las fotos
+              </button>
+            )}
+            <BotonActualizar
+              recargando={recargando}
+              onActualizar={actualizar}
+              className="text-sm px-4 py-2 bg-white border-2 border-gray-200 text-gray-600 hover:border-pastel-pink hover:text-pastel-pink"
+            />
+          </div>
         </div>
 
         {fotosFiltradas.length === 0 ? (
