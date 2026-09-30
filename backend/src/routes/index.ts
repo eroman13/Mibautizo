@@ -45,6 +45,14 @@ import {
   deleteAdminUser,
 } from '../controllers/admin-users.controller';
 import { trackPageView, getAnalytics } from '../controllers/analytics.controller';
+import {
+  getFotosPublicas,
+  subirFotoPublica,
+  getFotosAdmin,
+  subirFotoAdmin,
+  actualizarEstadoFoto,
+  eliminarFoto,
+} from '../controllers/fotos.controller';
 
 const router = Router();
 
@@ -84,6 +92,19 @@ router.post(
 router.post('/confirmar-asistencia', confirmarAsistencia);
 router.post('/declinar-asistencia', declinarAsistencia);
 
+// Álbum de fotos del evento (público)
+// Los invitados suben fotos; quedan "pendiente" hasta que el admin las aprueba.
+router.get('/fotos', getFotosPublicas);
+router.post(
+  '/fotos',
+  rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: 40,
+    mensaje: 'Subiste muchas fotos seguidas, espera un momento e intenta de nuevo.',
+  }),
+  subirFotoPublica
+);
+
 // Analytics - Rastreo de visitantes (pública)
 router.post('/track-page-view', trackPageView);
 
@@ -111,6 +132,12 @@ router.post('/admin/test-email', verificarAuth, testEmail);
 router.get('/admin/asistencias', verificarAuth, getAsistencias);
 router.delete('/admin/asistencias/:id', verificarAuth, eliminarAsistencia);
 router.get('/admin/analytics', verificarAuth, getAnalytics);
+
+// Álbum de fotos (panel admin: moderación)
+router.get('/admin/fotos', verificarAuth, getFotosAdmin);
+router.post('/admin/fotos', verificarAuth, subirFotoAdmin);
+router.put('/admin/fotos/:id', verificarAuth, actualizarEstadoFoto);
+router.delete('/admin/fotos/:id', verificarAuth, eliminarFoto);
 
 // Rutas de invitaciones (enviadas por WhatsApp con enlace único)
 router.get('/admin/invitaciones', verificarAuth, getInvitaciones);

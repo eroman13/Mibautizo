@@ -18,6 +18,11 @@ interface AsistenteBody {
   nombre: string;
   tipo: 'adulto' | 'nino';
   edad?: number;
+  /**
+   * false = la persona NO asistirá (pero queda registrada en la confirmación).
+   * Permite el caso real: de una pareja asiste solo uno de los dos.
+   */
+  asiste?: boolean;
 }
 
 interface ConfirmarBody {
@@ -38,6 +43,10 @@ const MAX_PERSONAS = 30;
 
 /**
  * Validar la lista de asistentes. Devuelve un mensaje de error o null si es válida.
+ *
+ * Se permite marcar personas como "no asistirá" (asiste: false), pero siempre
+ * debe quedar al menos 1 persona asistiendo: si no asiste nadie, corresponde
+ * usar "No podré asistir" (POST /api/declinar-asistencia).
  */
 function validarAsistentes(asistentes: AsistenteBody[]): string | null {
   if (!Array.isArray(asistentes) || asistentes.length === 0) {
@@ -50,6 +59,9 @@ function validarAsistentes(asistentes: AsistenteBody[]): string | null {
   for (const persona of asistentes) {
     if (!persona || typeof persona.nombre !== 'string' || !persona.nombre.trim()) {
       return 'El nombre de cada persona es obligatorio';
+    }
+    if (persona.asiste !== undefined && typeof persona.asiste !== 'boolean') {
+      return 'El campo "asiste" de cada persona debe ser verdadero o falso';
     }
     if (persona.tipo !== 'adulto' && persona.tipo !== 'nino') {
       return 'Cada persona debe ser "adulto" o "nino"';
@@ -64,7 +76,18 @@ function validarAsistentes(asistentes: AsistenteBody[]): string | null {
       }
     }
   }
+
+  const asisten = asistentes.filter((p) => p.asiste !== false);
+  if (asisten.length === 0) {
+    return 'Nadie de tu grupo puede asistir: si finalmente no podrán ir, usa la opción "No podré asistir".';
+  }
+
   return null;
+}
+
+/** Personas que sí asistirán */
+function soloAsisten<T extends { asiste?: boolean | null }>(personas: T[]): T[] {
+  return personas.filter((p) => p.asiste !== false);
 }
 
 // Clasifica a una persona en un grupo para el resumen:
@@ -140,17 +163,20 @@ export async function confirmarAsistencia(req: Request, res: Response) {
         }
       }
       if (invitacionValida?.modalidad === 'adulto-hijos') {
-        const adultos = asistentes.filter((a) => a.tipo === 'adulto').length;
-        if (adultos !== 1) {
+        // Solo cuentan los adultos que realmente asistirán
+        const adultosQueAsisten = soloAsisten(asistentes).filter((a) => a.tipo === 'adulto').length;
+        if (adultosQueAsisten !== 1) {
           return res.status(400).json({
             success: false,
-            error: 'Esta invitación es para 1 adulto con sus hijos: debe asistir exactamente 1 adulto.',
+            error:
+              'Esta invitación es para 1 adulto con sus hijos: debe asistir exactamente 1 adulto.',
           });
         }
       }
     }
 
     // Guardar en una transacción: la confirmación + todas sus personas
+    // (incluidas las que finalmente no asistirán, con asiste = false)
     const confirmacion = await prisma.asistencia.create({
       data: {
         nombreFamilia,
@@ -162,15 +188,19 @@ export async function confirmarAsistencia(req: Request, res: Response) {
             nombre: p.nombre.trim(),
             tipo: p.tipo,
             edad: p.tipo === 'nino' ? Number(p.edad) : null,
+            asiste: p.asiste !== false,
           })),
         },
       },
       include: { asistentes: true },
     });
 
-    const adultos = confirmacion.asistentes.filter((a) => grupoDe(a) === 'adulto').length;
-    const ninosMenores = confirmacion.asistentes.filter((a) => grupoDe(a) === 'ninoMenor').length;
-    const ninosMayores = confirmacion.asistentes.filter((a) => grupoDe(a) === 'ninoMayor').length;
+    // Los conteos solo consideran a quienes realmente asistirán
+    const asisten = soloAsisten(confirmacion.asistentes);
+    const noAsisten = confirmacion.asistentes.length - asisten.length;
+    const adultos = asisten.filter((a) => grupoDe(a) === 'adulto').length;
+    const ninosMenores = asisten.filter((a) => grupoDe(a) === 'ninoMenor').length;
+    const ninosMayores = asisten.filter((a) => grupoDe(a) === 'ninoMayor').length;
     const ninos = ninosMenores + ninosMayores;
 
     // ---- Correos automáticos (sin bloquear la confirmación si fallan) ----
@@ -185,7 +215,7 @@ export async function confirmarAsistencia(req: Request, res: Response) {
           nombreFamilia,
           email: emailInvitado,
           telefono: (body.telefono || '').trim() || undefined,
-          asistentes: confirmacion.asistentes.map((a) => ({
+          asistentes: asisten.map((a) => ({
             nombre: a.nombre,
             tipo: a.tipo,
             edad: a.edad,
@@ -207,6 +237,20 @@ export async function confirmarAsistencia(req: Request, res: Response) {
       // 2) Notificación a los administradores/configurados
       const destinatarios = obtenerEmailsNotificacion(eventoNotif);
       if (destinatarios.length > 0) {
+        // Se avisa también quiénes finalmente no asistirán (útil en el correo)
+        const mensajeAdmin =
+          [
+            (body.mensaje || '').trim(),
+            noAsisten > 0
+              ? `⚠️ No asistirán (${noAsisten}): ${confirmacion.asistentes
+                  .filter((a) => a.asiste === false)
+                  .map((a) => a.nombre)
+                  .join(', ')}`
+              : '',
+          ]
+            .filter(Boolean)
+            .join('\n') || undefined;
+
         const resultadoAdmin = await enviarNotificacionAsistencia({
           para: destinatarios,
           nombreFamilia,
@@ -215,7 +259,7 @@ export async function confirmarAsistencia(req: Request, res: Response) {
           adultos,
           ninosMenores,
           ninosMayores,
-          mensaje: (body.mensaje || '').trim() || undefined,
+          mensaje: mensajeAdmin,
         });
         if (!resultadoAdmin.success) {
           console.warn(
@@ -263,7 +307,8 @@ export async function confirmarAsistencia(req: Request, res: Response) {
         ninos,
         ninosMenores,
         ninosMayores,
-        total: confirmacion.asistentes.length,
+        total: asisten.length,
+        noAsisten,
       },
     });
   } catch (error) {
@@ -371,11 +416,63 @@ export async function declinarAsistencia(req: Request, res: Response) {
 }
 
 /**
+ * Sincroniza las invitaciones declinadas que no tienen confirmación asociada.
+ *
+ * El admin puede marcar una invitación como "declinada" desde el panel y en ese
+ * caso no existe fila en Asistencia: el resumen las ignoraba y el contador
+ * "No asistirán" quedaba en 0. Aquí se crea la confirmación declinada
+ * equivalente (operación idempotente) para que todos los declines se cuenten
+ * igual sin importar dónde se registraron.
+ */
+async function sincronizarDeclinadas(): Promise<number> {
+  const pendientes = await prisma.invitacion.findMany({
+    where: { estado: 'declinada', asistenciaId: null },
+    select: { id: true, familia: true, fechaDeclinada: true, createdAt: true },
+  });
+
+  let creadas = 0;
+  for (const inv of pendientes) {
+    try {
+      const asistencia = await prisma.asistencia.create({
+        data: {
+          nombreFamilia: inv.familia,
+          estado: 'declinada',
+          createdAt: inv.fechaDeclinada || inv.createdAt,
+        },
+      });
+      await prisma.invitacion.update({
+        where: { id: inv.id },
+        data: { asistenciaId: asistencia.id },
+      });
+      creadas++;
+    } catch (errorSync) {
+      console.warn(
+        `⚠️ No se pudo sincronizar la invitación declinada "${inv.familia}":`,
+        errorSync instanceof Error ? errorSync.message : errorSync
+      );
+    }
+  }
+
+  if (creadas > 0) {
+    console.log(`🔁 ${creadas} invitación(es) declinada(s) sincronizadas con su confirmación`);
+  }
+  return creadas;
+}
+
+/**
  * Listar todas las confirmaciones de asistencia (admin)
  * GET /api/admin/asistencias
  */
 export async function getAsistencias(req: Request, res: Response) {
   try {
+    // Reparación idempotente: cualquier decline que exista solo como invitación
+    // (marcado manualmente en el panel) se convierte en confirmación declinada.
+    try {
+      await sincronizarDeclinadas();
+    } catch (errorSync) {
+      console.warn('⚠️ No se pudieron sincronizar las declinaciones:', errorSync);
+    }
+
     const lista = await prisma.asistencia.findMany({
       include: {
         asistentes: {
@@ -385,11 +482,12 @@ export async function getAsistencias(req: Request, res: Response) {
       orderBy: { createdAt: 'desc' },
     });
 
-    let familias = 0;
-    let declinadas = 0;
+    let familias = 0; // familias que asistirán
+    let declinadas = 0; // familias que no asistirán
     let adultos = 0;
     let ninosMenores = 0;
     let ninosMayores = 0;
+    let personasNoAsisten = 0; // personas marcadas como "no asistirá" dentro de familias que sí van
 
     for (const a of lista) {
       if (a.estado === 'declinada') {
@@ -398,11 +496,38 @@ export async function getAsistencias(req: Request, res: Response) {
       }
       familias++;
       for (const p of a.asistentes) {
+        if (p.asiste === false) {
+          personasNoAsisten++;
+          continue;
+        }
         const grupo = grupoDe(p);
         if (grupo === 'adulto') adultos++;
         else if (grupo === 'ninoMenor') ninosMenores++;
         else ninosMayores++;
       }
+    }
+
+    const ninos = ninosMenores + ninosMayores;
+    const totalAsistentes = adultos + ninos;
+
+    // Invitaciones enviadas: permite comparar cuántas familias ya respondieron
+    // frente al total invitado (sin depender de las confirmaciones).
+    let invitaciones = { total: 0, respondidas: 0, confirmadas: 0, declinadas: 0, sinResponder: 0 };
+    try {
+      const [total, confirmadasInv, declinadasInv] = await Promise.all([
+        prisma.invitacion.count(),
+        prisma.invitacion.count({ where: { estado: 'confirmada' } }),
+        prisma.invitacion.count({ where: { estado: 'declinada' } }),
+      ]);
+      invitaciones = {
+        total,
+        respondidas: confirmadasInv + declinadasInv,
+        confirmadas: confirmadasInv,
+        declinadas: declinadasInv,
+        sinResponder: Math.max(0, total - confirmadasInv - declinadasInv),
+      };
+    } catch (errorInv) {
+      console.warn('⚠️ No se pudo calcular el resumen de invitaciones:', errorInv);
     }
 
     res.json({
@@ -414,7 +539,12 @@ export async function getAsistencias(req: Request, res: Response) {
         adultos,
         ninosMenores,
         ninosMayores,
-        ninos: ninosMenores + ninosMayores,
+        ninos,
+        totalAsistentes, // personas que sí asistirán
+        personasNoAsisten, // personas que no asistirán dentro de familias que sí van
+        totalNoAsisten: declinadas + personasNoAsisten, // familias declinadas + personas sueltas
+        totalRespuestas: lista.length, // confirmadas + declinadas
+        invitaciones,
       },
     });
   } catch (error) {
@@ -442,6 +572,20 @@ export async function eliminarAsistencia(req: Request, res: Response) {
     // onDelete: Cascade elimina también las personas asociadas
     await prisma.asistencia.delete({ where: { id } });
     console.log(`🗑️ Confirmación de ${existente.nombreFamilia} eliminada`);
+
+    // Si la confirmación venía de una invitación, se libera para que la familia
+    // pueda responder de nuevo (antes quedaba "confirmada"/"declinada" para siempre).
+    try {
+      const liberadas = await prisma.invitacion.updateMany({
+        where: { asistenciaId: id },
+        data: { asistenciaId: null, fechaConfirmada: null, fechaDeclinada: null, estado: 'enviada' },
+      });
+      if (liberadas.count > 0) {
+        console.log(`↩️ ${liberadas.count} invitación(es) liberada(s) para volver a responder`);
+      }
+    } catch (errorInv) {
+      console.warn('⚠️ No se pudo liberar la invitación asociada:', errorInv);
+    }
 
     res.json({
       success: true,

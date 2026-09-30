@@ -117,16 +117,39 @@
 - Name: `EVENT_DATE`
 - Value: `15 de septiembre de 2026`
 
-**Variables 12-16: Cloudflare R2 (opcional - almacenamiento de imágenes)**
-- Name: `R2_ACCOUNT_ID` → Value: tu Account ID (Cloudflare → R2 → Overview, panel derecho)
-- Name: `R2_ACCESS_KEY_ID` → Value: (R2 → API → Manage API tokens → crear token del bucket)
-- Name: `R2_SECRET_ACCESS_KEY` → Value: (solo se muestra al crear el token)
-- Name: `R2_BUCKET` → Value: nombre del bucket
-- Name: `R2_PUBLIC_URL` → Value: `https://pub-xxxxxxxx.r2.dev` o tu dominio propio (sin barra final)
+**Variables 12-17: Cloudflare R2 (almacenamiento de imágenes) — ✅ ya configurado en local**
+
+Estado al 30-09-2026: el bucket `mibautizo-recuerdos` está creado, su URL pública funciona
+(`https://pub-2f5965b2a1c644b98f0fb181a2bfae49.r2.dev`) y el token de R2 (el mismo que usan
+los buckets de UnPresente) **ya incluye este bucket**. Lo único que falta es pegar los mismos
+valores en Railway (Dashboard → servicio backend → *Variables* → *Raw Editor*):
+
+- Name: `R2_ACCOUNT_ID` → Value: `f12d8cf865cafe76a1c40fd48c7d677a`
+- Name: `R2_ACCESS_KEY_ID` → Value: los mismos 32 caracteres que están en `backend/.env`
+- Name: `R2_SECRET_ACCESS_KEY` → Value: los mismos 64 caracteres que están en `backend/.env`
+- Name: `R2_BUCKET` → Value: `mibautizo-recuerdos`
+- Name: `R2_PUBLIC_URL` → Value: `https://pub-2f5965b2a1c644b98f0fb181a2bfae49.r2.dev` (sin barra final)
+- Name: `R2_PREFIX` → Value: `imagenes` (opcional; las fotos van a `imagenes/fotos/<fecha>/`)
+
+`R2_ENDPOINT` no hace falta: se deriva de `R2_ACCOUNT_ID`.
+
+Si algún día hay que repetir la configuración desde cero en Cloudflare:
+1. R2 → *Create bucket* → `mibautizo-recuerdos`
+2. Ese bucket → *Settings* → **Public Development URL** → *Enable* → escribir `allow` → copiar
+   el **Public Bucket URL** (`https://pub-xxxx.r2.dev`)
+3. R2 → *Manage API Tokens* → *Create API token* → permiso **Object Read & Write** →
+   *Apply to specific buckets only* → `mibautizo-recuerdos`, o bien añadir el bucket a un token
+   existente → copiar **Access Key ID** y **Secret Access Key**
+
+> ⚠️ Los tokens de R2 son **por bucket**: un token que no incluya `mibautizo-recuerdos` responde
+> `403 AccessDenied` aunque esté creado para la misma cuenta.
+> Verificar antes de desplegar: `cd backend && npm run diagnose:r2` (guía completa en
+> `backend/R2_CONFIG.md`).
 
 > Si NO configuras estas variables, las imágenes se siguen guardando como base64 en la base de
 > datos (funciona igual, pero la BD crece más). Para verificar el modo activo:
-> `https://<tu-backend>.railway.app/api/health` debe responder `"storage":"r2"`.
+> `https://<tu-backend>.railway.app/api/health` debe responder `"storage":"r2"`
+> (ojo: informa `r2` con las variables completas, pero no valida permisos).
 
 5. Click "Save" después de cada variable
 6. Railway redeploya automáticamente

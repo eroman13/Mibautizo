@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { adminApi } from '../../services/adminApi';
-import { ConfirmacionAsistencia } from '../../types';
+import { ConfirmacionAsistencia, ResumenAsistencias } from '../../types';
 
 // Clasifica a una persona igual que el backend:
 // - adulto (tipo adulto o edad >= 14)
@@ -20,15 +20,22 @@ function grupoDePersona(p: { tipo: string; edad?: number | null }): Grupo {
   return 'ninoMayor';
 }
 
+const RESUMEN_VACIO: ResumenAsistencias = {
+  familias: 0,
+  declinadas: 0,
+  adultos: 0,
+  ninosMenores: 0,
+  ninosMayores: 0,
+  ninos: 0,
+  totalAsistentes: 0,
+  personasNoAsisten: 0,
+  totalNoAsisten: 0,
+  totalRespuestas: 0,
+};
+
 export default function AdminAsistencias() {
   const [asistencias, setAsistencias] = useState<ConfirmacionAsistencia[]>([]);
-  const [resumen, setResumen] = useState({
-    familias: 0,
-    adultos: 0,
-    ninosMenores: 0,
-    ninosMayores: 0,
-    declinadas: 0,
-  });
+  const [resumen, setResumen] = useState<ResumenAsistencias>(RESUMEN_VACIO);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState('');
 
@@ -40,15 +47,7 @@ export default function AdminAsistencias() {
     try {
       const response = await adminApi.getAsistencias();
       setAsistencias(response.data || []);
-      setResumen(
-        response.resumen || {
-          familias: 0,
-          adultos: 0,
-          ninosMenores: 0,
-          ninosMayores: 0,
-          declinadas: 0,
-        }
-      );
+      setResumen({ ...RESUMEN_VACIO, ...(response.resumen || {}) });
     } catch (error) {
       console.error('Error al cargar asistencias:', error);
     } finally {
@@ -121,10 +120,13 @@ export default function AdminAsistencias() {
 
       <div className="container mx-auto px-4 py-8">
         {/* Resumen */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-4">
           <div className="bg-gradient-to-br from-pink-400 to-pink-600 text-white rounded-2xl shadow-card p-6">
             <h3 className="text-sm font-medium opacity-90">Familias</h3>
             <p className="text-3xl font-bold mt-1">{resumen.familias}</p>
+            <p className="text-xs opacity-90 mt-1">
+              {resumen.totalRespuestas} respuesta{resumen.totalRespuestas !== 1 ? 's' : ''} en total
+            </p>
           </div>
           <div className="bg-gradient-to-br from-blue-400 to-blue-600 text-white rounded-2xl shadow-card p-6">
             <h3 className="text-sm font-medium opacity-90">Adultos</h3>
@@ -138,11 +140,36 @@ export default function AdminAsistencias() {
             <h3 className="text-sm font-medium opacity-90">Niños (8 a 13 años)</h3>
             <p className="text-3xl font-bold mt-1">{resumen.ninosMayores}</p>
           </div>
+          <div className="bg-gradient-to-br from-teal-400 to-teal-600 text-white rounded-2xl shadow-card p-6">
+            <h3 className="text-sm font-medium opacity-90">Total asistentes</h3>
+            <p className="text-3xl font-bold mt-1">{resumen.totalAsistentes}</p>
+            <p className="text-xs opacity-90 mt-1">
+              {resumen.adultos} adultos · {resumen.ninos} niños
+            </p>
+          </div>
           <div className="bg-gradient-to-br from-red-400 to-red-600 text-white rounded-2xl shadow-card p-6">
             <h3 className="text-sm font-medium opacity-90">No asistirán</h3>
-            <p className="text-3xl font-bold mt-1">{resumen.declinadas}</p>
+            <p className="text-3xl font-bold mt-1">{resumen.totalNoAsisten}</p>
+            <p className="text-xs opacity-90 mt-1">
+              {resumen.declinadas} familia{resumen.declinadas !== 1 ? 's' : ''}
+              {resumen.personasNoAsisten > 0
+                ? ` · ${resumen.personasNoAsisten} persona${
+                    resumen.personasNoAsisten !== 1 ? 's' : ''
+                  }`
+                : ''}
+            </p>
           </div>
         </div>
+
+        {/* Estado de las invitaciones enviadas */}
+        {resumen.invitaciones && resumen.invitaciones.total > 0 && (
+          <p className="text-sm text-gray-500 mb-6">
+            Invitaciones enviadas: <strong>{resumen.invitaciones.total}</strong> · respondidas:{' '}
+            <strong>{resumen.invitaciones.respondidas}</strong> ({resumen.invitaciones.confirmadas}{' '}
+            asistirán, {resumen.invitaciones.declinadas} no podrán) · sin responder:{' '}
+            <strong>{resumen.invitaciones.sinResponder}</strong>
+          </p>
+        )}
 
         {/* Filtro */}
         <div className="mb-6 flex items-center justify-between gap-4">
@@ -180,13 +207,16 @@ export default function AdminAsistencias() {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {asistenciasFiltradas.map((a) => {
-                    const adultos = a.asistentes.filter(
+                    // Solo cuentan quienes realmente asistirán (asiste !== false)
+                    const asistiran = a.asistentes.filter((p) => p.asiste !== false);
+                    const noAsistiran = a.asistentes.filter((p) => p.asiste === false);
+                    const adultos = asistiran.filter(
                       (p) => grupoDePersona(p) === 'adulto'
                     ).length;
-                    const menores = a.asistentes.filter(
+                    const menores = asistiran.filter(
                       (p) => grupoDePersona(p) === 'ninoMenor'
                     );
-                    const mayores = a.asistentes.filter(
+                    const mayores = asistiran.filter(
                       (p) => grupoDePersona(p) === 'ninoMayor'
                     );
                     return (
@@ -222,9 +252,21 @@ export default function AdminAsistencias() {
                                 🧑 {mayores.length} (8-13)
                               </span>
                             )}
+                            {noAsistiran.length > 0 && (
+                              <span className="badge bg-red-100 text-red-700">
+                                🚫 {noAsistiran.length} no asistirá
+                                {noAsistiran.length !== 1 ? 'n' : ''}
+                              </span>
+                            )}
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
-                            {a.asistentes.map((p) => p.nombre).join(', ')}
+                            {asistiran.map((p) => p.nombre).join(', ')}
+                            {noAsistiran.length > 0 && (
+                              <span className="text-gray-400 line-through">
+                                {asistiran.length > 0 ? ' · ' : ''}
+                                {noAsistiran.map((p) => p.nombre).join(', ')}
+                              </span>
+                            )}
                             {(menores.length > 0 || mayores.length > 0) && (
                               <span className="text-gray-400">
                                 {' '}

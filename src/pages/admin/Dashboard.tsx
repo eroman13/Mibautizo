@@ -80,6 +80,9 @@ export default function AdminDashboard() {
             <Link to="/admin/regalos" className="text-gray-600 hover:text-pastel-pink">
               Gestionar Regalos
             </Link>
+            <Link to="/admin/fotos" className="text-gray-600 hover:text-pastel-pink">
+              📸 Fotos
+            </Link>
             <Link to="/admin/configuracion" className="text-gray-600 hover:text-pastel-pink">
               Configuración
             </Link>
@@ -156,7 +159,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Acciones rápidas */}
-        <div className="grid md:grid-cols-4 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <Link
             to="/admin/contribuciones"
             className="bg-white rounded-2xl shadow-card p-6 hover:shadow-xl transition-shadow"
@@ -190,6 +193,18 @@ export default function AdminDashboard() {
             </h3>
             <p className="text-gray-600 text-sm">
               Crear y administrar usuarios del panel
+            </p>
+          </Link>
+
+          <Link
+            to="/admin/fotos"
+            className="bg-white rounded-2xl shadow-card p-6 hover:shadow-xl transition-shadow"
+          >
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              📸 Álbum de Fotos
+            </h3>
+            <p className="text-gray-600 text-sm">
+              Aprobar, rechazar o subir fotos de los invitados
             </p>
           </Link>
 

@@ -219,4 +219,41 @@ export const adminApi = {
     });
     return response.json();
   },
+
+  // Álbum de fotos: listado completo con resumen por estado
+  getFotos: async () => {
+    const response = await fetch(`${API_URL}/admin/fotos`, {
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  },
+
+  // Álbum de fotos: subir una foto desde el panel (se aprueba automáticamente)
+  subirFotoAdmin: async (data: { base64: string; autor?: string; mensaje?: string }) => {
+    const response = await fetch(`${API_URL}/admin/fotos`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  },
+
+  // Álbum de fotos: aprobar o rechazar
+  actualizarEstadoFoto: async (id: number, estado: 'aprobada' | 'rechazada' | 'pendiente') => {
+    const response = await fetch(`${API_URL}/admin/fotos/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ estado }),
+    });
+    return response.json();
+  },
+
+  // Álbum de fotos: eliminar (también la borra de R2)
+  eliminarFoto: async (id: number) => {
+    const response = await fetch(`${API_URL}/admin/fotos/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  },
 };

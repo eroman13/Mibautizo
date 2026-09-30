@@ -164,6 +164,14 @@ export default function Home() {
             Ver la lista de regalos 🎁
           </Link>
         </div>
+        <div className="mt-4">
+          <Link
+            to="/fotos"
+            className="inline-flex items-center gap-2 text-pastel-pink font-semibold hover:text-pastel-lavender transition-colors"
+          >
+            📸 Ver y compartir fotos del bautizo
+          </Link>
+        </div>
       </section>
 
       {/* Recepción (se muestra si está configurada) */}

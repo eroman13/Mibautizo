@@ -110,6 +110,23 @@ model Asistente {
   nombre       String
   tipo         String // 'adulto' | 'nino'
   edad         Int? // Obligatorio si tipo = 'nino'
+  asiste       Boolean    @default(true) // false = la persona finalmente no asistirá (queda registrada para el conteo)
+}
+
+// Álbum de fotos compartido del evento (los invitados suben fotos y el admin las modera)
+model Foto {
+  id              Int      @id @default(autoincrement())
+  url             String // URL pública (Cloudflare R2) o data URL base64
+  storage         String   @default("r2") // "r2" | "base64"
+  autor           String? // Nombre de quien comparte la foto
+  mensaje         String? // Comentario opcional
+  invitacionToken String? // Token de la invitación desde la que se subió (si aplica)
+  estado          String   @default("pendiente") // "pendiente" | "aprobada" | "rechazada"
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([estado])
+  @@index([createdAt])
 }
 
 // Invitaciones a familias/personas (se envían por WhatsApp con un enlace único)

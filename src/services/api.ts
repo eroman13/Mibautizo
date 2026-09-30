@@ -65,7 +65,12 @@ export const api = {
     email?: string;
     telefono?: string;
     invitacionToken?: string;
-    asistentes: Array<{ nombre: string; tipo: 'adulto' | 'nino'; edad?: number | null }>;
+    asistentes: Array<{
+      nombre: string;
+      tipo: 'adulto' | 'nino';
+      edad?: number | null;
+      asiste?: boolean;
+    }>;
   }) => {
     return fetchAPI('/confirmar-asistencia', {
       method: 'POST',
@@ -96,5 +101,23 @@ export const api = {
     } catch (error) {
       console.log('Analytics: no se pudo rastrear visita');
     }
+  },
+
+  // Álbum de fotos del evento (público): solo devuelve las aprobadas
+  getFotos: async () => {
+    return fetchAPI('/fotos');
+  },
+
+  // Subir una foto al álbum (queda pendiente de aprobación de los papás)
+  subirFoto: async (data: {
+    base64: string;
+    autor?: string;
+    mensaje?: string;
+    invitacionToken?: string;
+  }) => {
+    return fetchAPI('/fotos', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
 };

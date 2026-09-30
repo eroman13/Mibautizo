@@ -19,6 +19,7 @@ import InvLink from './pages/InvLink';
 import Regalos from './pages/Regalos';
 import Checkout from './pages/Checkout';
 import ConfirmarAsistencia from './pages/ConfirmarAsistencia';
+import Fotos from './pages/Fotos';
 import PagoExitoso from './pages/PagoExitoso';
 import PagoFallido from './pages/PagoFallido';
 import PagoPendiente from './pages/PagoPendiente';
@@ -34,6 +35,7 @@ import AdminAsistencias from './pages/admin/Asistencias';
 import AdminInvitaciones from './pages/admin/Invitaciones';
 import AdminRegalos from './pages/admin/Regalos';
 import AdminConfiguracion from './pages/admin/Configuracion';
+import AdminFotos from './pages/admin/Fotos';
 import AdminUsers from './pages/admin/AdminUsers';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 
@@ -47,6 +49,7 @@ function RouteTracker() {
     if (location.pathname === '/regalos') page = 'regalos';
     else if (location.pathname === '/checkout') page = 'checkout';
     else if (location.pathname === '/confirmar-asistencia') page = 'asistencia';
+    else if (location.pathname === '/fotos') page = 'fotos';
     else if (location.pathname === '/invitacion') page = 'invitacion';
     else if (location.pathname.startsWith('/i/')) page = 'invitacion-link';
     else if (location.pathname.startsWith('/pago-')) page = 'pago';
@@ -82,6 +85,7 @@ function App() {
                 <Route path="/regalos" element={<Regalos />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/confirmar-asistencia" element={<ConfirmarAsistencia />} />
+                <Route path="/fotos" element={<Fotos />} />
 
                 {/* Páginas de retorno de Mercado Pago (validadas) */}
                 <Route
@@ -168,6 +172,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <AdminConfiguracion />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/fotos"
+                  element={
+                    <ProtectedRoute>
+                      <AdminFotos />
                     </ProtectedRoute>
                   }
                 />

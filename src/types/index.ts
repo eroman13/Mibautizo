@@ -55,6 +55,8 @@ export interface AsistenteConfirmacion {
   nombre: string;
   tipo: 'adulto' | 'nino';
   edad?: number | null;
+  /** false = la persona finalmente no asistirá (queda registrada para el conteo) */
+  asiste?: boolean;
 }
 
 export interface Invitacion {
@@ -84,4 +86,45 @@ export interface ConfirmacionAsistencia {
   estado?: 'confirmada' | 'declinada';
   createdAt: string;
   asistentes: AsistenteConfirmacion[];
+}
+
+/** Foto del álbum compartido del evento */
+export interface Foto {
+  id: number;
+  url: string;
+  storage?: 'r2' | 'base64';
+  autor?: string | null;
+  mensaje?: string | null;
+  invitacionToken?: string | null;
+  estado?: 'pendiente' | 'aprobada' | 'rechazada';
+  createdAt: string;
+}
+
+/** Resumen de la galería para el panel admin */
+export interface ResumenFotos {
+  total: number;
+  pendientes: number;
+  aprobadas: number;
+  rechazadas: number;
+}
+
+/** Resumen de confirmaciones de asistencia */
+export interface ResumenAsistencias {
+  familias: number;
+  declinadas: number;
+  adultos: number;
+  ninosMenores: number;
+  ninosMayores: number;
+  ninos: number;
+  totalAsistentes: number;
+  personasNoAsisten: number;
+  totalNoAsisten: number;
+  totalRespuestas: number;
+  invitaciones?: {
+    total: number;
+    respondidas: number;
+    confirmadas: number;
+    declinadas: number;
+    sinResponder: number;
+  };
 }

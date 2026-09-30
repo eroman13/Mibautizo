@@ -11,6 +11,7 @@
 
 import { Request, Response } from 'express';
 import crypto from 'node:crypto';
+import type { Invitacion } from '@prisma/client';
 import prisma from '../lib/prisma';
 
 interface InvitacionBody {
@@ -258,6 +259,53 @@ export async function crearInvitacionesMasivo(req: Request, res: Response) {
   }
 }
 
+/**
+ * Mantiene sincronizada la invitación con su confirmación de asistencia cuando
+ * el admin cambia el estado a mano:
+ * - al marcar "declinada" se crea la confirmación declinada (para que el
+ *   contador "No asistirán" del panel de Asistencias la cuente),
+ * - al salir de "declinada" se elimina esa confirmación automática (solo si no
+ *   tiene personas asociadas, es decir que no vino de un RSVP real).
+ */
+async function sincronizarDeclinacion(invitacion: {
+  id: number;
+  familia: string;
+  estado: string;
+  asistenciaId: number | null;
+}): Promise<Invitacion> {
+  try {
+    if (invitacion.estado === 'declinada' && !invitacion.asistenciaId) {
+      const asistencia = await prisma.asistencia.create({
+        data: { nombreFamilia: invitacion.familia, estado: 'declinada' },
+      });
+      return await prisma.invitacion.update({
+        where: { id: invitacion.id },
+        data: { asistenciaId: asistencia.id },
+      });
+    }
+
+    if (invitacion.estado !== 'declinada' && invitacion.asistenciaId) {
+      const asistencia = await prisma.asistencia.findUnique({
+        where: { id: invitacion.asistenciaId },
+        include: { asistentes: true },
+      });
+      if (asistencia && asistencia.estado === 'declinada' && asistencia.asistentes.length === 0) {
+        await prisma.asistencia.delete({ where: { id: asistencia.id } });
+        return await prisma.invitacion.update({
+          where: { id: invitacion.id },
+          data: { asistenciaId: null },
+        });
+      }
+    }
+  } catch (errorSync) {
+    console.warn(
+      `⚠️ No se pudo sincronizar la declinación de "${invitacion.familia}":`,
+      errorSync instanceof Error ? errorSync.message : errorSync
+    );
+  }
+  return invitacion as Invitacion;
+}
+
 /** Actualizar una invitación (permite cambiar estado para marcar confirmada manualmente) */
 export async function actualizarInvitacion(req: Request, res: Response) {
   try {
@@ -313,7 +361,18 @@ export async function actualizarInvitacion(req: Request, res: Response) {
       }
     }
 
-    const invitacion = await prisma.invitacion.update({ where: { id }, data });
+    let invitacion = await prisma.invitacion.update({ where: { id }, data });
+
+    // Mantener coherente el panel de Asistencias cuando se cambia el estado a mano
+    if (body.estado && body.estado !== existente.estado) {
+      invitacion = await sincronizarDeclinacion({
+        id: invitacion.id,
+        familia: invitacion.familia,
+        estado: invitacion.estado,
+        asistenciaId: invitacion.asistenciaId,
+      });
+    }
+
     res.json({ success: true, data: invitacion });
   } catch (error) {
     console.error('❌ Error al actualizar invitación:', error);

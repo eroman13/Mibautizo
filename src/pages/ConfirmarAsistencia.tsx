@@ -295,16 +295,21 @@ export default function ConfirmarAsistencia() {
   const validarPersonas = (): string => {
     const asistentes = personas.filter((p) => p.asiste !== false);
     if (asistentes.length === 0) {
-      return 'Debes confirmar al menos 1 persona.';
+      return 'Nadie de tu grupo podrá asistir: usa la opción "No podré asistir".';
     }
-    for (const p of asistentes) {
+    // El nombre es obligatorio en todas las filas: las personas que no asistirán
+    // también quedan registradas en la confirmación (para el conteo de "No asistirán").
+    for (const p of personas) {
       if (!p.nombre.trim()) {
-        return 'Todas las personas que asistirán deben tener un nombre.';
+        const pos = personas.indexOf(p) + 1;
+        return p.asiste === false
+          ? `Escribe el nombre de la persona ${pos}: aunque no asista, queda registrada en la confirmación.`
+          : 'Todas las personas que asistirán deben tener un nombre.';
       }
       if (p.tipo === 'nino') {
         const edad = Number(p.edad);
         if (p.edad === '' || Number.isNaN(edad)) {
-          return `Indica la edad de ${p.nombre.trim() || 'el niño/a'}.`;
+          return `Indica la edad de ${p.nombre.trim()}.`;
         }
         if (!Number.isInteger(edad) || edad < 0 || edad > 13) {
           return `La edad de ${p.nombre.trim()} debe ser un número entre 0 y 13 años (mayores de 13 se consideran adultos).`;
@@ -324,6 +329,8 @@ export default function ConfirmarAsistencia() {
     personas.filter(
       (p) => p.asiste !== false && p.nombre.trim() && p.tipo === 'nino'
     ).length;
+  // Personas invitadas que finalmente no asistirán (quedan registradas para el conteo)
+  const contarNoAsisten = () => personas.filter((p) => p.asiste === false).length;
 
   // Para invitaciones de pareja: alterna si un integrante asistirá o no
   const toggleAsiste = (key: number) =>
@@ -378,13 +385,12 @@ export default function ConfirmarAsistencia() {
         email: email.trim() || undefined,
         telefono: telefono.trim() || undefined,
         invitacionToken: invitacionToken || undefined,
-        asistentes: personas
-          .filter((p) => p.asiste !== false)
-          .map((p) => ({
-            nombre: p.nombre.trim(),
-            tipo: p.tipo,
-            edad: p.tipo === 'nino' ? Number(p.edad) : null,
-          })),
+        asistentes: personas.map((p) => ({
+          nombre: p.nombre.trim(),
+          tipo: p.tipo,
+          edad: p.tipo === 'nino' ? Number(p.edad) : null,
+          asiste: p.asiste !== false,
+        })),
       });
       setExito({
         nombreFamilia: response.data.nombreFamilia,
@@ -826,7 +832,7 @@ export default function ConfirmarAsistencia() {
                         abierta
                           ? 'border-pastel-pink bg-white shadow-sm'
                           : 'border-gray-100 bg-gray-50/60'
-                      } ${esPareja && p.asiste === false ? 'opacity-60' : ''}`}
+                      } ${p.asiste === false ? 'opacity-60' : ''}`}
                     >
                       <div
                         role="button"
@@ -860,23 +866,27 @@ export default function ConfirmarAsistencia() {
                             </span>
                             <span className="block text-xs text-gray-500">
                               {resumen}
-                              {esPareja && p.asiste === false ? ' · no asistirá' : ''}
+                              {p.asiste === false ? ' · no asistirá' : ''}
                               {abierta ? ' · completando…' : ''}
                             </span>
                           </span>
                         </span>
                         <span className="flex items-center gap-1 shrink-0">
-                          {esPareja ? (
-                            p.asiste !== false ? (
+                          {(esPareja ||
+                            (!esIndividual &&
+                              personas.length > 1 &&
+                              !(esAdultoHijos && idx === 0))) &&
+                            (p.asiste !== false ? (
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   toggleAsiste(p.key);
                                 }}
+                                title="Marcar como no asistirá"
                                 className="px-2 py-1 rounded-full text-xs font-semibold transition-colors text-red-600 bg-red-50 hover:bg-red-100"
                               >
-                                Quitar
+                                {esPareja ? 'Quitar' : 'No asistirá'}
                               </button>
                             ) : (
                               <button
@@ -885,12 +895,13 @@ export default function ConfirmarAsistencia() {
                                   e.stopPropagation();
                                   toggleAsiste(p.key);
                                 }}
+                                title="Marcar como sí asistirá"
                                 className="px-2 py-1 rounded-full text-xs font-semibold transition-colors text-green-700 bg-green-100 hover:bg-green-200"
                               >
-                                ＋ Agregar
+                                ＋ {esPareja ? 'Agregar' : 'Sí asistirá'}
                               </button>
-                            )
-                          ) : esAdultoHijos && idx === 0 ? null : !esIndividual ? (
+                            ))}
+                          {!esPareja && (!esAdultoHijos || idx > 0) && !esIndividual && (
                             <button
                               type="button"
                               onClick={(e) => {
@@ -902,7 +913,7 @@ export default function ConfirmarAsistencia() {
                             >
                               Quitar
                             </button>
-                          ) : null}
+                          )}
                           <span
                             className={`text-gray-400 text-xs transition-transform ${
                               abierta ? 'rotate-180' : ''
@@ -1050,6 +1061,13 @@ export default function ConfirmarAsistencia() {
                   fila (no se borra, y con «＋ Agregar» lo vuelves a incluir). Sin niños.
                 </p>
               )}
+              {!esPareja && !esIndividual && personas.length > 1 && (
+                <p className="text-xs text-gray-500 mt-3">
+                  🚫 Si alguien de tu grupo finalmente no podrá ir, usa «No asistirá» en su fila:
+                  la persona queda registrada (no se borra) y con «＋ Sí asistirá» la vuelves a
+                  incluir. Si no asiste nadie, usa la opción «No podré asistir».
+                </p>
+              )}
               {esAdultoHijos && (
                 <p className="text-xs text-gray-500 mt-3">
                   🧑‍🧒 Invitas a 1 adulto con sus hijos. Agrega cada hijo con su edad (0 a 13 años).
@@ -1074,6 +1092,12 @@ export default function ConfirmarAsistencia() {
                   <span className="px-2.5 py-0.5 rounded-full bg-white border border-pastel-lavender text-pastel-lavender font-medium">
                     🧒 {contarNinos()} niño{contarNinos() !== 1 ? 's' : ''}
                   </span>
+                  {contarNoAsisten() > 0 && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-white border border-red-200 text-red-600 font-medium">
+                      🚫 {contarNoAsisten()} no asistirá
+                      {contarNoAsisten() !== 1 ? 'n' : ''}
+                    </span>
+                  )}
                 </div>
                 {(email.trim() || telefono.trim()) && (
                   <p className="text-xs text-gray-500">

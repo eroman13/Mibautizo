@@ -210,6 +210,67 @@ Primera versión completa y funcional de la Mesa de Regalos Digital para el baut
 
 ---
 
+## [1.1.0] - 2026-09-30
+
+### ✨ Added - Álbum de fotos del evento
+
+#### Backend
+- **Modelo `Foto`** en Prisma (url, storage, autor, mensaje, invitacionToken, estado) con índices
+  por `estado` y `createdAt`, más la migración `20260930120000_add_fotos_y_asistente_asiste`.
+- **Endpoints públicos** (`/api/fotos`): listado de fotos aprobadas y subida por invitados
+  (queda `pendiente` de moderación). Rate limit de 40 solicitudes cada 10 minutos.
+- **Endpoints admin** (`/api/admin/fotos`): listado completo con resumen por estado, subida
+  (se aprueba al instante), aprobar/rechazar/dejar pendiente y eliminar.
+- **Almacenamiento**: las fotos se suben a Cloudflare R2 en la carpeta `fotos/`; si R2 no está
+  configurado se guardan como data URL con un tope de 3 MB (8 MB si R2 está disponible).
+- **Validación compartida** en `lib/imagen.ts` (firmas de archivo JPG/PNG/WEBP/GIF y tamaño),
+  reutilizada por la subida del álbum y por `/upload-image`.
+- `subirImagenR2` acepta prefijo/carpeta y se agregó `eliminarImagenR2` (borra el archivo del
+  bucket al eliminar una foto del panel).
+- **Diagnóstico de almacenamiento**: `npm run diagnose:r2` (backend/diagnose-r2.ts) verifica las
+  variables `R2_*`, los permisos del token (subir/leer/borrar) y que la URL pública responda.
+  Admite `--bucket`, `--public-url` y `--prefix` para comparar buckets sin tocar el `.env`.
+- **Activación asistida del token**: `npm run r2:activar -- <access-key-id> <secret-access-key>`
+  (backend/activar-r2.ts) escribe las claves en `.env` respetando el resto del archivo (con
+  `--dry-run`, `--bucket`, `--public-url`, `--prefix`, `--env`) y encadena el diagnóstico,
+  terminando con su mismo código de salida.
+- **R2 activado y verificado**: bucket `mibautizo-recuerdos` con URL pública
+  `https://pub-2f5965b2a1c644b98f0fb181a2bfae49.r2.dev`; `diagnose:r2` termina en `🎉 R2 listo`
+  (subir / leer / borrar / URL pública 200) y `/api/health` responde `"storage":"r2"`.
+  Las fotos del álbum ya no se guardan como base64 en la base de datos.
+  Guía de configuración en `backend/R2_CONFIG.md`.
+
+#### Frontend público
+- **Nueva página `/fotos`**: subida de hasta 10 fotos a la vez (con compresión en el navegador),
+  campos opcionales de autor y mensaje, y galería responsive con lightbox.
+  Si la URL trae `?familia=` y `?token=` se precargan el nombre y el token de la invitación.
+- Enlace al álbum desde el Home y registro de la página en analytics.
+
+#### Frontend admin
+- **Nueva página `/admin/fotos`**: resumen clicable (total / pendientes / aprobadas / rechazadas),
+  filtrado por estado, aprobar, rechazar, dejar pendiente, eliminar y subir fotos oficiales.
+  Cada foto muestra un indicador `· R2` / `· BD` para ver de un vistazo dónde está almacenada.
+- Acceso desde la navegación y las acciones rápidas del Dashboard.
+
+### 🐛 Fixed - Contador "No asistirán" en el panel de Asistencias
+
+- Las invitaciones marcadas como **declinadas** desde el panel de Invitaciones no generaban fila
+  en `Asistencia`, por lo que el resumen mostraba **0 personas** en "No asistirán". Ahora
+  `sincronizarDeclinadas()` crea la confirmación declinada equivalente (idempotente) al abrir
+  Asistencias, y `sincronizarDeclinacion()` lo hace al cambiar el estado a mano.
+- Las personas que **no asistirán dentro de una familia que sí va** ya no se pierden: el frontend
+  envía todas las personas con su flag `asiste` y el backend requiere al menos una que asista.
+- El resumen de asistencias ahora distingue familias declinadas, personas sueltas que no asisten,
+  total que no asistirá, total que sí asistirá y el estado de las invitaciones (respondidas,
+  confirmadas, declinadas y sin responder).
+
+### 🗄️ Base de datos
+
+- `Asistente.asiste BOOLEAN DEFAULT true` (las filas existentes se mantienen como asistentes).
+- Nueva tabla `Foto` con índices.
+
+---
+
 ## [Unreleased] - Próximas Mejoras
 
 ### ✨ Added
