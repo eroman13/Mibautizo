@@ -120,7 +120,15 @@ export default function AdminAsistencias() {
 
       <div className="container mx-auto px-4 py-8">
         {/* Resumen */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 mb-4">
+          <div className="bg-gradient-to-br from-emerald-400 to-emerald-600 text-white rounded-2xl shadow-card p-6">
+            <h3 className="text-sm font-medium opacity-90">Total confirmados</h3>
+            <p className="text-3xl font-bold mt-1">{resumen.totalAsistentes}</p>
+            <p className="text-xs opacity-90 mt-1">
+              {resumen.familias} familia{resumen.familias !== 1 ? 's' : ''} confirmada
+              {resumen.familias !== 1 ? 's' : ''}
+            </p>
+          </div>
           <div className="bg-gradient-to-br from-pink-400 to-pink-600 text-white rounded-2xl shadow-card p-6">
             <h3 className="text-sm font-medium opacity-90">Familias</h3>
             <p className="text-3xl font-bold mt-1">{resumen.familias}</p>
