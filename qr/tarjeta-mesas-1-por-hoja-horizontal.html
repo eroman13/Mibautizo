@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Tarjetas QR para las mesas · Bautizo de Antonia y Emilia</title>
+    <title>Tarjetas QR para las mesas · Bautizo de Antonia y Emilia (horizontal)</title>
     <style>
   :root {
     --rosa: #b0336f;
@@ -164,7 +164,7 @@
   .hoja--horizontal.hoja--4 .pasos { font-size: 8.5pt; }
   .hoja--horizontal.hoja--4 .url { font-size: 7.5pt; }
 
-  @page { size: A4 portrait; margin: 8mm; }
+  @page { size: A4 landscape; margin: 8mm; }
   @media print {
     body { background: #fff; }
     .ayuda { display: none; }
@@ -182,19 +182,19 @@
   <body>
     <div class="ayuda">
       <h1>🖨️ Cómo imprimir estas tarjetas</h1>
-      <p><b>A4 vertical (retrato)</b> · una tarjeta por hoja</p>
+      <p><b>A4 apaisada (horizontal)</b> · una tarjeta por hoja · el QR queda a la izquierda</p>
       <ol>
         <li>Abre el diálogo de impresión con <code>Cmd/Ctrl + P</code>.</li>
         <li>Destino: tu impresora o <b>“Guardar como PDF”</b>.</li>
-        <li>Tamaño <b>A4</b>, orientación <b>Vertical</b>, márgenes <b>Predeterminado</b>, escala <b>100 %</b> (no “ajustar a la página”) y activa <b>gráficos de fondo</b>.</li>
+        <li>Tamaño <b>A4</b>, orientación <b>Horizontal</b>, márgenes <b>Predeterminado</b>, escala <b>100 %</b> (no “ajustar a la página”) y activa <b>gráficos de fondo</b>.</li>
         <li>Las tarjetas están marcadas con línea de puntos: <b>corta por el borde</b>.</li>
         <li>Si el navegador agrega encabezado o pie con la dirección, <b>desactívalos</b> en el diálogo de impresión.</li>
         <li>El código apunta a <code>https://bautizo-anto-emi.vercel.app/fotos</code> — antes de la impresión definitiva, escanéalo con tu teléfono.</li>
       </ol>
       <p>Este recuadro no se imprime.</p>
     </div>
-    <section class="hoja">
-      <article class="tarjeta">
+    <section class="hoja hoja--horizontal">
+      <article class="tarjeta tarjeta--horizontal">
         <div class="cabecera">
           <p class="eyebrow">📸 Comparte tus fotos</p>
           <h1>Bautizo de<br /><span>Antonia y Emilia</span></h1>

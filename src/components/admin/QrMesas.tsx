@@ -15,6 +15,9 @@ import { api } from '../../services/api';
 
 const RUTA_ALBUM = '/fotos';
 
+/** Orientación de la hoja al imprimir: vertical (retrato) u horizontal (apaisada). */
+type Orientacion = 'vertical' | 'horizontal';
+
 type DatosEvento = {
   nombreMelliza1?: string;
   nombreMelliza2?: string;
@@ -26,8 +29,11 @@ type Props = {
   nombreEvento?: string;
 };
 
-/** Hoja imprimible: se abre en una pestaña nueva para no depender de los estilos del panel. */
-const ESTILOS_IMPRESION = `
+/**
+ * Hoja imprimible: se abre en una pestaña nueva para no depender de los estilos del panel.
+ * La orientación va aquí (y no en una clase) porque también decide el tamaño de página.
+ */
+const estilosImpresion = (orientacion: Orientacion) => `
   * { box-sizing: border-box; }
   body {
     margin: 0;
@@ -58,6 +64,12 @@ const ESTILOS_IMPRESION = `
     border-radius: 6mm;
     background: linear-gradient(160deg, #ffffff 0%, #fff6fb 55%, #f8f3fd 100%);
     overflow: hidden;
+  }
+  .cabecera,
+  .pie {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   .eyebrow {
     margin: 0;
@@ -112,7 +124,42 @@ const ESTILOS_IMPRESION = `
     flex: 0 0 auto;
   }
   .url { margin: 3mm 0 0; font-size: 8pt; letter-spacing: 0.06em; color: #9ca3af; }
-  @page { size: A4; margin: 8mm; }
+
+  /* Hoja apaisada (horizontal): el QR va a la izquierda y el texto a la derecha */
+  .hoja--horizontal { width: 281mm; height: 194mm; }
+  .tarjeta--horizontal {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    align-content: center;
+    justify-items: start;
+    column-gap: 9mm;
+    row-gap: 3mm;
+    text-align: left;
+    padding: 8mm 10mm;
+  }
+  .tarjeta--horizontal .cabecera { grid-column: 2; grid-row: 1; align-items: flex-start; align-self: end; }
+  .tarjeta--horizontal .qr { grid-column: 1; grid-row: 1 / span 2; margin: 0; }
+  .tarjeta--horizontal .pie { grid-column: 2; grid-row: 2; align-items: flex-start; align-self: start; }
+  .tarjeta--horizontal li { justify-content: flex-start; }
+  .hoja--horizontal .qr svg { width: 115mm; height: 115mm; }
+  .hoja--horizontal h1 { font-size: 26pt; }
+  .hoja--horizontal .eyebrow { font-size: 11pt; }
+  .hoja--horizontal .fecha { font-size: 11pt; }
+  .hoja--horizontal .scan { font-size: 12pt; }
+  .hoja--horizontal ol { font-size: 11pt; }
+  .hoja--horizontal .url { font-size: 9pt; }
+  .hoja--horizontal.hoja--4 .tarjeta { padding: 5mm; column-gap: 6mm; row-gap: 2mm; }
+  .hoja--horizontal.hoja--4 .qr { padding: 2.5mm; }
+  .hoja--horizontal.hoja--4 .qr svg { width: 60mm; height: 60mm; }
+  .hoja--horizontal.hoja--4 h1 { font-size: 14pt; }
+  .hoja--horizontal.hoja--4 .eyebrow { font-size: 8.5pt; letter-spacing: 0.1em; }
+  .hoja--horizontal.hoja--4 .fecha { font-size: 8.5pt; }
+  .hoja--horizontal.hoja--4 .scan { font-size: 9pt; }
+  .hoja--horizontal.hoja--4 ol { font-size: 8.5pt; }
+  .hoja--horizontal.hoja--4 .url { font-size: 7.5pt; }
+
+  @page { size: A4 ${orientacion === 'horizontal' ? 'landscape' : 'portrait'}; margin: 8mm; }
   @media print {
     .hoja { break-after: page; page-break-after: always; }
     .tarjeta { break-inside: avoid; page-break-inside: avoid; }
@@ -144,37 +191,54 @@ function descargar(contenido: string, nombre: string) {
 }
 
 
-type DatosTarjeta = { svg: string; url: string; nombres: string; fecha: string };
+type DatosTarjeta = {
+  svg: string;
+  url: string;
+  nombres: string;
+  fecha: string;
+  orientacion: Orientacion;
+};
 
-function tarjetaImpresion({ svg, url, nombres, fecha }: DatosTarjeta) {
+/**
+ * Tarjeta de la hoja impresa. Los tres bloques (cabecera, QR y pie) permiten poner el QR
+ * a la izquierda cuando la hoja es apaisada.
+ */
+function tarjetaImpresion({ svg, url, nombres, fecha, orientacion }: DatosTarjeta) {
   return `
-      <article class="tarjeta">
-        <p class="eyebrow">📸 Comparte tus fotos</p>
-        <h1>Bautizo de<br /><span>${nombres}</span></h1>
-        ${fecha ? `<p class="fecha">${fecha}</p>` : ''}
+      <article class="tarjeta${orientacion === 'horizontal' ? ' tarjeta--horizontal' : ''}">
+        <div class="cabecera">
+          <p class="eyebrow">📸 Comparte tus fotos</p>
+          <h1>Bautizo de<br /><span>${nombres}</span></h1>
+          ${fecha ? `<p class="fecha">${fecha}</p>` : ''}
+        </div>
         <div class="qr">${svg}</div>
-        <p class="scan">Escanea con la cámara de tu teléfono</p>
-        <ol>
-          <li><b>1</b> Escanea el código</li>
-          <li><b>2</b> Elige y envía tus fotos</li>
-          <li><b>3</b> Los papás las aprueban y aparecen en la galería</li>
-        </ol>
-        <p class="url">${url.replace(/^https?:\/\//, '')}</p>
+        <div class="pie">
+          <p class="scan">Escanea con la cámara de tu teléfono</p>
+          <ol>
+            <li><b>1</b> Escanea el código</li>
+            <li><b>2</b> Elige y envía tus fotos</li>
+            <li><b>3</b> Los papás las aprueban y aparecen en la galería</li>
+          </ol>
+          <p class="url">${url.replace(/^https?:\/\//, '')}</p>
+        </div>
       </article>`;
 }
 
 /** Documento completo que se abre en una pestaña nueva para imprimir. */
 function plantillaImpresion(datos: DatosTarjeta & { porHoja: number }) {
   const tarjetas = Array.from({ length: datos.porHoja }, () => tarjetaImpresion(datos)).join('');
+  const clases = ['hoja'];
+  if (datos.porHoja === 4) clases.push('hoja--4');
+  if (datos.orientacion === 'horizontal') clases.push('hoja--horizontal');
   return `<!doctype html>
 <html lang="es-CL">
   <head>
     <meta charset="utf-8" />
     <title>Tarjetas QR · Bautizo de ${datos.nombres}</title>
-    <style>${ESTILOS_IMPRESION}</style>
+    <style>${estilosImpresion(datos.orientacion)}</style>
   </head>
   <body>
-    <section class="hoja${datos.porHoja === 4 ? ' hoja--4' : ''}">${tarjetas}</section>
+    <section class="${clases.join(' ')}">${tarjetas}</section>
   </body>
 </html>`;
 }
@@ -184,6 +248,7 @@ export default function QrMesas({ nombreEvento }: Props) {
   const [url, setUrl] = useState('');
   const [evento, setEvento] = useState<DatosEvento | null>(null);
   const [porHoja, setPorHoja] = useState(4);
+  const [orientacion, setOrientacion] = useState<Orientacion>('vertical');
   const [aviso, setAviso] = useState('');
   const svgRef = useRef<SVGSVGElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -266,7 +331,7 @@ export default function QrMesas({ nombreEvento }: Props) {
       return;
     }
     ventana.document.write(
-      plantillaImpresion({ svg, url: urlLimpia, nombres, fecha: fechaTexto, porHoja })
+      plantillaImpresion({ svg, url: urlLimpia, nombres, fecha: fechaTexto, porHoja, orientacion })
     );
     ventana.document.close();
     ventana.focus();
@@ -277,6 +342,22 @@ export default function QrMesas({ nombreEvento }: Props) {
   const mensajeWhatsApp = `📸 ¡Comparte las fotos del bautizo de ${nombres}!
 Entra aquí desde tu teléfono: ${urlLimpia}
 (Las fotos pasan por revisión: los papás las aprueban y quedan en la galería 💕)`;
+
+  // La vista previa imita la tarjeta: apilada en vertical, con el QR a la izquierda en horizontal
+  const esHorizontal = orientacion === 'horizontal';
+  const alineacion = esHorizontal ? 'items-start' : 'items-center';
+  const bloqueQr = (
+    <div className={`inline-block rounded-xl bg-white p-2 shadow-soft ${esHorizontal ? '' : 'mt-3'}`}>
+      <QRCodeSVG
+        ref={svgRef}
+        value={urlLimpia}
+        size={196}
+        level="H"
+        marginSize={4}
+        title={`Código QR del álbum de fotos (${urlLimpia})`}
+      />
+    </div>
+  );
 
   return (
     <section className="bg-white rounded-2xl shadow-card p-6 mb-8">
@@ -298,37 +379,45 @@ Entra aquí desde tu teléfono: ${urlLimpia}
       </div>
 
       {abierto && (
-        <div className="mt-6 grid lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)] gap-6 items-start">
-          {/* Vista previa de la tarjeta */}
-          <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-gradient-to-b from-white to-pink-50/70 p-5 text-center">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-pastel-pink">
-              📸 Comparte tus fotos
-            </p>
-            <p className="font-display text-xl font-bold text-gray-800 mt-1 leading-tight">
-              Bautizo de
-              <br />
-              <span className="text-pastel-pink">{nombres}</span>
-            </p>
-            {fechaTexto && <p className="text-[11px] text-gray-500 mt-1">{fechaTexto}</p>}
-            <div className="mt-3 inline-block rounded-xl bg-white p-2 shadow-soft">
-              <QRCodeSVG
-                ref={svgRef}
-                value={urlLimpia}
-                size={196}
-                level="H"
-                marginSize={4}
-                title={`Código QR del álbum de fotos (${urlLimpia})`}
-              />
+        <div
+          className={`mt-6 grid gap-6 items-start ${
+            esHorizontal ? '' : 'lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)]'
+          }`}
+        >
+          {/* Vista previa de la tarjeta (cambia de forma según la orientación elegida) */}
+          <div
+            className={`rounded-2xl border-2 border-dashed border-gray-200 bg-gradient-to-b from-white to-pink-50/70 p-5 ${
+              esHorizontal
+                ? 'flex flex-col sm:flex-row sm:items-center gap-5 text-left'
+                : 'text-center'
+            }`}
+          >
+            {esHorizontal && bloqueQr}
+            <div className={esHorizontal ? 'min-w-0 flex-1' : ''}>
+              <div className={`flex flex-col ${alineacion}`}>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-pastel-pink">
+                  📸 Comparte tus fotos
+                </p>
+                <p className="font-display text-xl font-bold text-gray-800 mt-1 leading-tight">
+                  Bautizo de
+                  <br />
+                  <span className="text-pastel-pink">{nombres}</span>
+                </p>
+                {fechaTexto && <p className="text-[11px] text-gray-500 mt-1">{fechaTexto}</p>}
+              </div>
+              {!esHorizontal && bloqueQr}
+              <div className={`flex flex-col ${alineacion}`}>
+                <p className="text-xs font-semibold text-gray-700 mt-3">
+                  Escanea con la cámara de tu teléfono
+                </p>
+                <ol className="mt-2 space-y-1 text-[11px] text-gray-500 text-left">
+                  <li>1️⃣ Escanea el código</li>
+                  <li>2️⃣ Elige y envía tus fotos</li>
+                  <li>3️⃣ Los papás las aprueban y aparecen en la galería</li>
+                </ol>
+                <p className="mt-3 text-[10px] tracking-wide text-gray-400">{dominio}</p>
+              </div>
             </div>
-            <p className="text-xs font-semibold text-gray-700 mt-3">
-              Escanea con la cámara de tu teléfono
-            </p>
-            <ol className="mt-2 space-y-1 text-[11px] text-gray-500 text-left">
-              <li>1️⃣ Escanea el código</li>
-              <li>2️⃣ Elige y envía tus fotos</li>
-              <li>3️⃣ Los papás las aprueban y aparecen en la galería</li>
-            </ol>
-            <p className="mt-3 text-[10px] tracking-wide text-gray-400">{dominio}</p>
           </div>
 
 
@@ -417,6 +506,34 @@ Entra aquí desde tu teléfono: ${urlLimpia}
                   1 (letrero grande)
                 </button>
               </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 mt-3">
+              <span className="text-sm text-gray-600">Orientación de la hoja:</span>
+              <div className="inline-flex rounded-full border-2 border-gray-200 p-1">
+                <button
+                  type="button"
+                  onClick={() => setOrientacion('vertical')}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+                    orientacion === 'vertical'
+                      ? 'bg-pastel-pink text-white'
+                      : 'text-gray-500 hover:text-pastel-pink'
+                  }`}
+                >
+                  ↕️ Vertical
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOrientacion('horizontal')}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+                    orientacion === 'horizontal'
+                      ? 'bg-pastel-pink text-white'
+                      : 'text-gray-500 hover:text-pastel-pink'
+                  }`}
+                >
+                  ↔️ Horizontal
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={imprimir}
@@ -425,6 +542,10 @@ Entra aquí desde tu teléfono: ${urlLimpia}
                 🖨️ Imprimir tarjetas
               </button>
             </div>
+            <p className="text-xs text-gray-400 mt-2">
+              En <strong>horizontal</strong> el QR queda a la izquierda y el texto a la derecha: la
+              tarjeta es ancha y baja, así se puede doblar por la mitad y dejarla parada en la mesa.
+            </p>
 
             <ul className="mt-5 text-xs text-gray-500 space-y-1 list-disc pl-4">
               <li>
@@ -436,8 +557,9 @@ Entra aquí desde tu teléfono: ${urlLimpia}
                 sobre una foto).
               </li>
               <li>
-                En el diálogo de impresión: A4, escala <strong>100 %</strong>, márgenes
-                predeterminados y <em>gráficos de fondo</em> activados.
+                En el diálogo de impresión: A4, orientación <strong>Vertical</strong> o{' '}
+                <strong>Horizontal</strong> según lo que elegiste arriba, escala <strong>100 %</strong>,
+                márgenes predeterminados y <em>gráficos de fondo</em> activados.
               </li>
               <li>
                 Si el navegador agrega un encabezado o pie con la dirección, desactívalos en el

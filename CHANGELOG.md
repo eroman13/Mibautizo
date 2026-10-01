@@ -318,6 +318,15 @@ Primera versión completa y funcional de la Mesa de Regalos Digital para el baut
   una **tarjeta grande por hoja** y un `LEEME.md` con el paso a paso de impresión. Toma los nombres
   y la fecha reales desde la API (o se pasan a mano) y **verifica el QR decodificándolo** antes de
   guardarlo, así no se imprime un código roto; `--url` permite regenerar todo si cambia el dominio.
+- **Tarjetas en hoja apaisada (horizontal)**: además de las hojas verticales, el panel y el
+  generador producen la versión **A4 horizontal**, donde el QR queda a la izquierda y el texto a la
+  derecha (la tarjeta es ancha y baja, ideal para doblarla por la mitad y dejarla parada en la mesa).
+  - En `/admin/fotos → 🔳 QR para las mesas` hay un selector **Orientación de la hoja:
+    ↕️ Vertical / ↔️ Horizontal** junto a “Tarjetas por hoja A4”, y la vista previa cambia de forma
+    según lo que elijas.
+  - `npm run qr:mesas` deja ahora cuatro archivos listos para imprimir:
+    `tarjetas-mesas-4-por-hoja(-horizontal).pdf` y `tarjeta-mesas-1-por-hoja(-horizontal).pdf`
+    (más sus `.html`), con la orientación de página ya fijada en el PDF.
 
 ### 🗄️ Base de datos
 
