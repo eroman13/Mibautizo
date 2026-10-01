@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { adminApi } from '../../services/adminApi';
 import { ConfirmacionAsistencia, ResumenAsistencias } from '../../types';
+import { exportarInvitadosExcel } from '../../utils/exportar';
 
 // Clasifica a una persona igual que el backend:
 // - adulto (tipo adulto o edad >= 14)
@@ -78,6 +79,15 @@ export default function AdminAsistencias() {
   const asistenciasFiltradas = asistencias.filter((a) =>
     a.nombreFamilia.toLowerCase().includes(filtro.toLowerCase())
   );
+
+  const exportarExcel = () => {
+    if (asistencias.length === 0) {
+      alert('No hay confirmaciones para exportar.');
+      return;
+    }
+    const total = exportarInvitadosExcel(asistencias);
+    alert(`Se exportaron ${total} invitado${total !== 1 ? 's' : ''} a Excel.`);
+  };
 
   const formatearFecha = (iso: string) =>
     new Date(iso).toLocaleDateString('es-CL', {
@@ -188,9 +198,19 @@ export default function AdminAsistencias() {
             placeholder="Buscar por familia..."
             className="input-field max-w-sm"
           />
-          <span className="text-gray-500 text-sm">
-            {asistenciasFiltradas.length} respuesta{asistenciasFiltradas.length !== 1 ? 's' : ''}
-          </span>
+          <div className="flex items-center gap-4">
+            <span className="text-gray-500 text-sm">
+              {asistenciasFiltradas.length} respuesta{asistenciasFiltradas.length !== 1 ? 's' : ''}
+            </span>
+            <button
+              type="button"
+              onClick={exportarExcel}
+              className="btn-primary whitespace-nowrap text-sm py-2 px-4"
+              title="Descargar todos los invitados (uno a uno) en un archivo Excel"
+            >
+              📊 Exportar a Excel
+            </button>
+          </div>
         </div>
 
         {/* Tabla */}
