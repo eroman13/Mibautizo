@@ -1,6 +1,7 @@
 /**
  * Panel admin: invitaciones por familia
- * Cada invitación tiene un enlace único /invitacion para compartir por WhatsApp
+ * Cada invitación tiene un enlace único /invitacion para compartir por WhatsApp,
+ * Instagram, Facebook o cualquier app (hoja de compartir nativa o copiar mensaje)
  */
 
 import { useEffect, useState } from 'react';
@@ -30,8 +31,8 @@ const FORM_VACIO: FormInvitacion = {
 
 type EstadoFiltro = 'todos' | 'sin-confirmar' | Invitacion['estado'];
 
-/** Fecha límite de confirmación que se menciona en los mensajes de WhatsApp */
-const FECHA_LIMITE_CONFIRMACION = '30 de septiembre';
+/** Plazo de confirmación que se menciona en los mensajes de WhatsApp */
+const PLAZO_CONFIRMACION = 'lo antes posible';
 
 /** Etiquetas del filtro de la lista de invitaciones */
 const ETIQUETA_FILTRO: Record<EstadoFiltro, string> = {
@@ -93,7 +94,7 @@ Nos hace una ilusión enorme compartir contigo un momento muy especial para nues
 
 ${enlaceInvitacion(inv)}
 
-¡Esperamos contar con tu presencia! 🙏 Nos encantaría que nos acompañaras: te pedimos confirmar tu asistencia hasta el ${FECHA_LIMITE_CONFIRMACION} 💌`;
+¡Esperamos contar con tu presencia! 🙏 Nos encantaría que nos acompañaras: te pedimos, por favor, confirmar tu asistencia ${PLAZO_CONFIRMACION} 💌`;
 }
 
 /** Mensaje de recordatorio para quienes todavía no confirman su asistencia */
@@ -109,7 +110,7 @@ Tu invitación sigue vigente e incluye toda la información del evento:
 
 ${enlaceInvitacion(inv)}
 
-¿Nos puedes confirmar tu asistencia hasta el ${FECHA_LIMITE_CONFIRMACION}? Tu respuesta nos ayuda a organizar todo 🙏 ¡Gracias!`;
+¿Nos puedes confirmar tu asistencia ${PLAZO_CONFIRMACION}? Tu respuesta nos ayuda a organizar todo 🙏 ¡Gracias!`;
 }
 
 function telefonoWa(inv: Invitacion): string {
@@ -145,6 +146,7 @@ export default function AdminInvitaciones() {
   const [importando, setImportando] = useState(false);
   const [mensaje, setMensaje] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null);
   const [copiadoId, setCopiadoId] = useState<number | null>(null);
+  const [copiadoMensajeId, setCopiadoMensajeId] = useState<number | null>(null);
   const [recordatoriosAbierto, setRecordatoriosAbierto] = useState(false);
 
   useEffect(() => {
@@ -311,6 +313,48 @@ export default function AdminInvitaciones() {
     }
   };
 
+  /** Copia el mensaje completo (texto + enlace) para pegarlo en cualquier red social */
+  const copiarMensaje = async (inv: Invitacion, texto: string) => {
+    try {
+      await navigator.clipboard.writeText(texto);
+      setCopiadoMensajeId(inv.id);
+      setTimeout(() => setCopiadoMensajeId(null), 2000);
+      setMensaje({
+        tipo: 'ok',
+        texto: '💬 Mensaje copiado. Pégalo en Instagram, Facebook, WhatsApp o donde quieras.',
+      });
+    } catch {
+      alert('No se pudo copiar el mensaje.');
+    }
+  };
+
+  /**
+   * Abre la hoja de compartir nativa del dispositivo (Instagram, Facebook, WhatsApp,
+   * Messenger, Telegram, correo, etc.). Instagram y Facebook no permiten enlaces con
+   * mensaje pre-cargado como WhatsApp, así que esta es la vía para compartir ahí.
+   * En navegadores que no la soportan (ej. escritorio), copia el mensaje al portapapeles.
+   */
+  const compartir = async (inv: Invitacion, texto: string) => {
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share({
+          title: 'Invitación al bautizo de las mellizas',
+          text: texto,
+        });
+        // Solo marcamos como enviada si el usuario completó el compartir
+        if (inv.estado === 'pendiente') {
+          await adminApi.marcarEnviadaInvitacion(inv.id).catch(() => undefined);
+          await cargar();
+        }
+      } catch {
+        // El usuario canceló el diálogo de compartir: no hay nada que hacer
+      }
+      return;
+    }
+    // Sin soporte nativo (ej. escritorio): copiamos el mensaje
+    await copiarMensaje(inv, texto);
+  };
+
   const cambiarEstado = async (inv: Invitacion, estado: Invitacion['estado']) => {
     const response = await adminApi.actualizarInvitacion(inv.id, { estado });
     if (response.success) {
@@ -473,7 +517,7 @@ export default function AdminInvitaciones() {
               </p>
               <p className="text-sm text-amber-700">
                 Envíales un recordatorio por WhatsApp (incluye su enlace único). Sugerencia: espera
-                unos días entre cada recordatorio y hazlo antes del {FECHA_LIMITE_CONFIRMACION}.
+                unos días entre cada recordatorio y hazlo cuanto antes.
               </p>
             </div>
             <button
@@ -597,6 +641,22 @@ export default function AdminInvitaciones() {
                     >
                       📲 WhatsApp
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => compartir(inv, mensajeWhatsApp(inv))}
+                      title="Compartir por Instagram, Facebook, WhatsApp o cualquier app"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 text-white text-xs font-semibold hover:opacity-90 transition-opacity"
+                    >
+                      📤 Compartir
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => copiarMensaje(inv, mensajeWhatsApp(inv))}
+                      title="Copiar el mensaje completo para pegarlo donde quieras"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200 transition-colors"
+                    >
+                      {copiadoMensajeId === inv.id ? '✅ Copiado' : '💬 Mensaje'}
+                    </button>
                     {sinConfirmar(inv) && (
                       <button
                         type="button"
@@ -703,6 +763,22 @@ export default function AdminInvitaciones() {
                             className="px-3 py-2 rounded-full bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition-colors"
                           >
                             📲 Recordar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => compartir(inv, mensajeRecordatorio(inv))}
+                            title="Compartir el recordatorio por Instagram, Facebook o cualquier app"
+                            className="px-3 py-2 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 text-white text-xs font-semibold hover:opacity-90 transition-opacity"
+                          >
+                            📤
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => copiarMensaje(inv, mensajeRecordatorio(inv))}
+                            title="Copiar el mensaje del recordatorio"
+                            className="px-3 py-2 rounded-full bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200 transition-colors"
+                          >
+                            {copiadoMensajeId === inv.id ? '✅' : '💬'}
                           </button>
                           <button
                             type="button"
