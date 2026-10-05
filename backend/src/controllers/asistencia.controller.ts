@@ -133,14 +133,26 @@ export async function confirmarAsistencia(req: Request, res: Response) {
     if (invitacionToken) {
       const invitacionValida = await prisma.invitacion.findUnique({
         where: { token: invitacionToken },
-        select: { modalidad: true, estado: true },
+        select: { modalidad: true, estado: true, asistenciaId: true },
       });
       if (invitacionValida?.estado === 'confirmada') {
-        return res.status(409).json({
-          success: false,
-          error:
-            'Ya confirmaste tu asistencia con este enlace. Si necesitas modificar algo, contáctate directamente con los papás.',
-        });
+        // Si la confirmación asociada todavía existe, bloqueamos el reenvío.
+        // Si ya no existe (por ejemplo, los papás la eliminaron del panel para
+        // corregir un dato), permitimos que la familia vuelva a confirmar con
+        // su enlace en lugar de dejar la invitación "trabada".
+        const asistenciaViva = invitacionValida.asistenciaId
+          ? await prisma.asistencia.findUnique({
+              where: { id: invitacionValida.asistenciaId },
+              select: { id: true },
+            })
+          : null;
+        if (asistenciaViva) {
+          return res.status(409).json({
+            success: false,
+            error:
+              'Ya confirmaste tu asistencia con este enlace. Si necesitas modificar algo, contáctate directamente con los papás.',
+          });
+        }
       }
       if (invitacionValida?.modalidad === 'individual' && asistentes.length > 1) {
         return res.status(400).json({

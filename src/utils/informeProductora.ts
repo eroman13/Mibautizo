@@ -46,6 +46,36 @@ export function formatearClp(monto: number): string {
   return '$' + monto.toLocaleString('es-CL');
 }
 
+/** Clasifica a una persona en su grupo de precio (igual que el backend). */
+function grupoDePersona(p: {
+  tipo: string;
+  edad?: number | null;
+}): 'adulto' | 'ninoMenor' | 'ninoMayor' {
+  if (p.tipo === 'adulto') return 'adulto';
+  const edad = p.edad ?? 14; // sin edad registrada -> adulto
+  if (edad >= 14) return 'adulto';
+  if (edad <= 7) return 'ninoMenor';
+  return 'ninoMayor';
+}
+
+/**
+ * Valor total (CLP) que representa una familia según sus asistentes.
+ * Solo cuentan quienes efectivamente asistirán (asiste !== false); los niños/as
+ * de 0 a 7 años no pagan.
+ */
+export function valorDeFamilia(
+  asistentes: Array<{ tipo: string; edad?: number | null; asiste?: boolean }>
+): number {
+  let total = 0;
+  for (const p of asistentes) {
+    if (p.asiste === false) continue;
+    const grupo = grupoDePersona(p);
+    if (grupo === 'ninoMayor') total += PRECIO_NINO_MAYOR;
+    else if (grupo === 'adulto') total += PRECIO_ADULTO;
+  }
+  return total;
+}
+
 /** Calcula el desglose de invitados por categoría y el total a pagar. */
 export function calcularInformeProductora(resumen: ResumenAsistencias): InformeProductora {
   const ninos0a7 = resumen.ninosMenores || 0;

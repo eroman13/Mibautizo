@@ -17,6 +17,7 @@ export const adminApi = {
   getStats: async () => {
     const response = await fetch(`${API_URL}/admin/stats`, {
       headers: getAuthHeaders(),
+      cache: 'no-store',
     });
     return response.json();
   },
@@ -25,6 +26,7 @@ export const adminApi = {
   getContribuciones: async () => {
     const response = await fetch(`${API_URL}/admin/contribuciones`, {
       headers: getAuthHeaders(),
+      cache: 'no-store',
     });
     return response.json();
   },
@@ -70,6 +72,7 @@ export const adminApi = {
   getEventoAdmin: async () => {
     const response = await fetch(`${API_URL}/admin/evento`, {
       headers: getAuthHeaders(),
+      cache: 'no-store',
     });
     return response.json();
   },
@@ -125,6 +128,7 @@ export const adminApi = {
   getAsistencias: async () => {
     const response = await fetch(`${API_URL}/admin/asistencias`, {
       headers: getAuthHeaders(),
+      cache: 'no-store',
     });
     return response.json();
   },
@@ -141,6 +145,7 @@ export const adminApi = {
   getInvitaciones: async () => {
     const response = await fetch(`${API_URL}/admin/invitaciones`, {
       headers: getAuthHeaders(),
+      cache: 'no-store',
     });
     return response.json();
   },
@@ -205,6 +210,7 @@ export const adminApi = {
     
     const response = await fetch(`${API_URL}/admin/analytics?${query}`, {
       headers: getAuthHeaders(),
+      cache: 'no-store',
     });
     return response.json();
   },
@@ -224,6 +230,7 @@ export const adminApi = {
   getFotos: async () => {
     const response = await fetch(`${API_URL}/admin/fotos`, {
       headers: getAuthHeaders(),
+      cache: 'no-store',
     });
     return response.json();
   },

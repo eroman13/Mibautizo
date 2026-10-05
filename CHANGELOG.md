@@ -375,6 +375,21 @@ Primera versión completa y funcional de la Mesa de Regalos Digital para el baut
   - Nuevo módulo `src/utils/informeProductora.ts` con la lógica de cálculo, la vista imprimible y la
     exportación a Excel.
 
+- **Tabla de asistencias más clara**: en `/admin/asistencias` se agregó la columna "Valor" con el monto
+  a pagar por cada familia (según sus asistentes; los niños/as de 0 a 7 años no pagan), para no tener
+  que calcularlo a mano.
+
+- **Arreglo al borrar y volver a confirmar**: si los papás eliminan una confirmación desde el panel
+  para corregir un dato, el enlace de invitación se rehabilita automáticamente para que la familia
+  pueda responder de nuevo (antes el enlace quedaba "trabado" mostrando "ya confirmaste" y no se
+  creaba el nuevo registro). `POST /api/confirmar-asistencia` y `GET /api/invitacion` ahora verifican
+  que la confirmación asociada siga existiendo antes de bloquear una nueva respuesta.
+
+- **Totales siempre actualizados**: las lecturas del panel admin (`asistencias`, `invitaciones`,
+  `stats`, `contribuciones`, `fotos`, `analytics`) y la consulta pública de la invitación ahora piden
+  datos frescos al servidor (`cache: 'no-store'`), evitando que el navegador muestre conteos antiguos
+  al cambiar de página.
+
 ### Planificado para v1.1.0
 
 - [ ] Envío de emails de confirmación (Resend/SendGrid)

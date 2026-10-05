@@ -5,11 +5,15 @@
 import { buildApiUrl } from './config';
 
 async function fetchAPI(endpoint: string, options?: RequestInit) {
+  const method = (options?.method || 'GET').toUpperCase();
   const response = await fetch(buildApiUrl(endpoint), {
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,
     },
+    // Las lecturas siempre piden datos frescos: así los contadores de
+    // asistentes/invitaciones no quedan "pegados" con datos en caché.
+    cache: method === 'GET' ? 'no-store' : undefined,
     ...options,
   });
 

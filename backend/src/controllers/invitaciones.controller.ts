@@ -133,6 +133,33 @@ export async function getInvitacionPublica(req: Request, res: Response) {
       return res.status(404).json({ success: false, error: 'Invitación no encontrada' });
     }
 
+    // Autocorrección: si la invitación figura como ya respondida (confirmada o
+    // declinada) pero su confirmación de asistencia ya no existe (por ejemplo,
+    // los papás la eliminaron del panel para corregir un dato), se rehabilita
+    // para que la familia pueda volver a responder con su enlace en lugar de
+    // encontrarse con el mensaje "ya confirmaste".
+    let estado = invitacion.estado;
+    if (estado === 'confirmada' || estado === 'declinada') {
+      const asistenciaViva = invitacion.asistenciaId
+        ? await prisma.asistencia.findUnique({
+            where: { id: invitacion.asistenciaId },
+            select: { id: true },
+          })
+        : null;
+      if (!asistenciaViva) {
+        await prisma.invitacion.update({
+          where: { id: invitacion.id },
+          data: {
+            estado: 'enviada',
+            asistenciaId: null,
+            fechaConfirmada: null,
+            fechaDeclinada: null,
+          },
+        });
+        estado = 'enviada';
+      }
+    }
+
     // Personas para precargar en el RSVP (nombres y detalle adulto/niño)
     const invitados = invitadosEstructurados({
       modalidad: invitacion.modalidad,
@@ -148,7 +175,7 @@ export async function getInvitacionPublica(req: Request, res: Response) {
         familia: invitacion.familia,
         contacto: invitacion.contacto,
         modalidad: invitacion.modalidad,
-        estado: invitacion.estado,
+        estado,
         personas,
         invitados,
       },

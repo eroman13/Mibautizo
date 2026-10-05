@@ -11,6 +11,7 @@ import {
   calcularInformeProductora,
   exportarInformeProductoraExcel,
   imprimirInformeProductora,
+  valorDeFamilia,
 } from '../../utils/informeProductora';
 import { formatCLP } from '../../utils/format';
 
@@ -344,6 +345,12 @@ export default function AdminAsistencias() {
                     <th className="px-6 py-3">Familia</th>
                     <th className="px-6 py-3">Contacto</th>
                     <th className="px-6 py-3">Asistentes</th>
+                    <th
+                      className="px-6 py-3 text-right"
+                      title="Valor a pagar por esta familia según sus asistentes (0-7 no pagan)"
+                    >
+                      Valor
+                    </th>
                     <th className="px-6 py-3">Confirmado</th>
                     <th className="px-6 py-3 text-right">Acciones</th>
                   </tr>
@@ -362,6 +369,9 @@ export default function AdminAsistencias() {
                     const mayores = asistiran.filter(
                       (p) => grupoDePersona(p) === 'ninoMayor'
                     );
+                    // Valor a pagar por esta familia (CLP) según sus asistentes
+                    const valorFamilia =
+                      a.estado === 'declinada' ? 0 : valorDeFamilia(asistiran);
                     return (
                       <tr key={a.id} className="hover:bg-pink-50/30">
                         <td className="px-6 py-4">
@@ -420,6 +430,17 @@ export default function AdminAsistencias() {
                               </span>
                             )}
                           </div>
+                        </td>
+                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                          {a.estado === 'declinada' ? (
+                            <span className="text-gray-400">—</span>
+                          ) : valorFamilia > 0 ? (
+                            <span className="font-semibold text-gray-800">
+                              {formatCLP(valorFamilia)}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">$0</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-gray-500 text-xs whitespace-nowrap">
                           {formatearFecha(a.createdAt)}
