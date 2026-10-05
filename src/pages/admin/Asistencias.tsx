@@ -46,6 +46,7 @@ export default function AdminAsistencias() {
   const [resumen, setResumen] = useState<ResumenAsistencias>(RESUMEN_VACIO);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState('');
+  const [soloConfirmados, setSoloConfirmados] = useState(true);
 
   useEffect(() => {
     cargarAsistencias();
@@ -83,9 +84,18 @@ export default function AdminAsistencias() {
     }
   };
 
-  const asistenciasFiltradas = asistencias.filter((a) =>
-    a.nombreFamilia.toLowerCase().includes(filtro.toLowerCase())
-  );
+  const asistenciasFiltradas = asistencias.filter((a) => {
+    const coincideNombre = a.nombreFamilia.toLowerCase().includes(filtro.toLowerCase());
+    const coincideEstado = soloConfirmados ? a.estado !== 'declinada' : true;
+    return coincideNombre && coincideEstado;
+  });
+
+  // Total a pagar por las familias que se muestran (solo cuentan quienes asistirán)
+  const totalMostrado = asistenciasFiltradas.reduce((suma, a) => {
+    if (a.estado === 'declinada') return suma;
+    const asistiran = a.asistentes.filter((p) => p.asiste !== false);
+    return suma + valorDeFamilia(asistiran);
+  }, 0);
 
   /** Desglose por categoría de edad y valor a pagar (informe para la productora) */
   const informe = calcularInformeProductora(resumen);
@@ -104,7 +114,7 @@ export default function AdminAsistencias() {
       alert('No hay confirmaciones para generar el informe.');
       return;
     }
-    const ok = imprimirInformeProductora(resumen);
+    const ok = imprimirInformeProductora(resumen, asistencias);
     if (!ok) {
       alert('Permite las ventanas emergentes del navegador para poder imprimir el informe.');
     }
@@ -306,17 +316,28 @@ export default function AdminAsistencias() {
         </div>
 
         {/* Filtro */}
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <input
-            type="text"
-            value={filtro}
-            onChange={(e) => setFiltro(e.target.value)}
-            placeholder="Buscar por familia..."
-            className="input-field max-w-sm"
-          />
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <input
+              type="text"
+              value={filtro}
+              onChange={(e) => setFiltro(e.target.value)}
+              placeholder="Buscar por familia..."
+              className="input-field max-w-sm"
+            />
+            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={soloConfirmados}
+                onChange={(e) => setSoloConfirmados(e.target.checked)}
+                className="h-4 w-4 accent-pastel-pink"
+              />
+              Solo confirmados
+            </label>
+          </div>
           <div className="flex items-center gap-4">
             <span className="text-gray-500 text-sm">
-              {asistenciasFiltradas.length} respuesta{asistenciasFiltradas.length !== 1 ? 's' : ''}
+              {asistenciasFiltradas.length} familia{asistenciasFiltradas.length !== 1 ? 's' : ''}
             </span>
             <button
               type="button"
@@ -333,9 +354,19 @@ export default function AdminAsistencias() {
         <div className="bg-white rounded-2xl shadow-card overflow-hidden">
           {asistenciasFiltradas.length === 0 ? (
             <div className="p-12 text-center text-gray-500">
-              Todavía no hay confirmaciones de asistencia.
-              <br />
-              Comparte el link de la web para que las familias confirmen. 💌
+              {asistencias.length === 0 ? (
+                <>
+                  Todavía no hay confirmaciones de asistencia.
+                  <br />
+                  Comparte el link de la web para que las familias confirmen. 💌
+                </>
+              ) : (
+                <>
+                  No hay familias que coincidan con el filtro.
+                  <br />
+                  Desmarca “Solo confirmados” para ver también las que no asistirán.
+                </>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -457,6 +488,21 @@ export default function AdminAsistencias() {
                     );
                   })}
                 </tbody>
+                {asistenciasFiltradas.length > 0 && (
+                  <tfoot>
+                    <tr className="border-t-2 border-gray-200 bg-gray-50">
+                      <td className="px-6 py-4 font-bold text-gray-800" colSpan={3}>
+                        TOTAL ({asistenciasFiltradas.length} familia
+                        {asistenciasFiltradas.length !== 1 ? 's' : ''})
+                      </td>
+                      <td className="px-6 py-4 text-right font-extrabold text-emerald-600 whitespace-nowrap">
+                        {formatCLP(totalMostrado)}
+                      </td>
+                      <td className="px-6 py-4"></td>
+                      <td className="px-6 py-4"></td>
+                    </tr>
+                  </tfoot>
+                )}
               </table>
             </div>
           )}

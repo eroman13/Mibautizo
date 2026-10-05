@@ -396,6 +396,25 @@ Primera versión completa y funcional de la Mesa de Regalos Digital para el baut
   `/admin/asistencias` se vuelve a crear la confirmación automáticamente (idempotente) usando las
   personas invitadas, para que la familia reaparezca en el listado y se cuente en los totales.
 
+- **Sin familias duplicadas**: se corrigieron los casos en que una familia aparecía dos veces en
+  `/admin/asistencias`:
+  - Al confirmar una invitación que antes había declinado, se elimina la declinación previa (antes
+    quedaba a la vez en "Confirmados" y en "No asistirán").
+  - La reparación de confirmaciones huérfanas ahora **reutiliza** una confirmación viva con el mismo
+    nombre en lugar de crear otra fila.
+  - Se limpian las declinaciones "fantasma" (sin personas ni datos de contacto) cuando la misma familia
+    ya tiene una confirmación viva.
+
+- **Resumen para el centro de eventos: solo confirmados**: en `/admin/asistencias` ahora se puede
+  trabajar solo con quienes confirmaron que asistirán (se excluyen las familias que declinaron y las
+  personas marcadas como "no asistirá"):
+  - La tabla tiene la casilla **"Solo confirmados"** (activada por defecto) y una fila **TOTAL** al
+    pie con la suma a pagar por las familias mostradas.
+  - El informe imprimible/PDF agrega el desglose **familia por familia** (adultos, niños/as de 0-7 y
+    8-13, asistentes y valor) con un total general, además del resumen por categorías.
+  - La exportación "📊 Exportar a Excel" de invitados ya no incluye a las familias que declinaron ni
+    a las personas marcadas como "no asistirá".
+
 ### Planificado para v1.1.0
 
 - [ ] Envío de emails de confirmación (Resend/SendGrid)

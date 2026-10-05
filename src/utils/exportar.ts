@@ -32,11 +32,12 @@ export interface InvitadoExport {
 }
 
 /**
- * Convierte las confirmaciones en una lista "uno a uno": una fila por invitado.
+ * Convierte las confirmaciones en una lista "uno a uno": una fila por invitado
+ * que **sí asistirá**.
  *
- * - Cada persona registrada en una confirmación genera su propia fila.
- * - Las familias que declinaron (sin personas cargadas) se incluyen como una
- *   fila con el nombre de la familia y estado "No asistirá", para no perderlas.
+ * - Se omiten por completo las familias que declinaron (estado "declinada").
+ * - Dentro de una familia confirmada, se omiten las personas marcadas como
+ *   "no asistirá" (asiste === false).
  */
 export function invitadosUnoAUno(
   asistencias: ConfirmacionAsistencia[]
@@ -44,7 +45,9 @@ export function invitadosUnoAUno(
   const filas: InvitadoExport[] = [];
 
   for (const conf of asistencias) {
-    const estado = conf.estado === 'declinada' ? 'No asistirá' : 'Confirmada';
+    // Solo se exportan los que confirmaron que asistirán.
+    if (conf.estado === 'declinada') continue;
+
     const fecha = new Date(conf.createdAt).toLocaleString('es-CL', {
       day: '2-digit',
       month: '2-digit',
@@ -55,32 +58,21 @@ export function invitadosUnoAUno(
 
     const base = {
       familia: conf.nombreFamilia,
-      estado,
+      estado: 'Confirmada',
       email: conf.email || '',
       telefono: conf.telefono || '',
       mensaje: conf.mensaje || '',
       fecha,
     };
 
-    if (conf.asistentes.length === 0) {
-      // Familia declinada sin personas cargadas: se registra igual
-      filas.push({
-        ...base,
-        nombre: conf.nombreFamilia,
-        tipo: '',
-        edad: '',
-        asiste: 'No',
-      });
-      continue;
-    }
-
     for (const persona of conf.asistentes) {
+      if (persona.asiste === false) continue;
       filas.push({
         ...base,
         nombre: persona.nombre,
         tipo: persona.tipo === 'nino' ? 'Niño/a' : 'Adulto',
         edad: persona.tipo === 'nino' && persona.edad != null ? persona.edad : '',
-        asiste: persona.asiste === false ? 'No' : 'Sí',
+        asiste: 'Sí',
       });
     }
   }
@@ -90,6 +82,8 @@ export function invitadosUnoAUno(
 
 /**
  * Exporta todos los invitados (uno a uno) a un archivo CSV compatible con Excel.
+ * Solo incluye a quienes asistirán: se excluyen las familias que declinaron y
+ * las personas marcadas como "no asistirá".
  * Devuelve la cantidad de filas (invitados) exportadas.
  */
 export function exportarInvitadosExcel(asistencias: ConfirmacionAsistencia[]): number {

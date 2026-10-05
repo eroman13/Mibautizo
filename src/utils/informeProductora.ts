@@ -12,7 +12,7 @@
  * marcadas como "no asistirá" quedan fuera.
  */
 
-import { ResumenAsistencias } from '../types';
+import { ConfirmacionAsistencia, ResumenAsistencias } from '../types';
 
 /** Valor por niño/a de 8 a 13 años (CLP) */
 export const PRECIO_NINO_MAYOR = 15000;
@@ -74,6 +74,63 @@ export function valorDeFamilia(
     else if (grupo === 'adulto') total += PRECIO_ADULTO;
   }
   return total;
+}
+
+/** Una fila del desglose "familia por familia" del informe imprimible. */
+export interface FilaFamiliaInforme {
+  familia: string;
+  adultos: number;
+  ninos0a7: number;
+  ninos8a13: number;
+  total: number;
+  valor: number;
+}
+
+/**
+ * Desglose familia por familia para el informe del centro de eventos.
+ * Solo incluye familias confirmadas (se omiten las que declinaron) y, dentro de
+ * cada familia, solo a las personas que asistirán. Ordenado alfabéticamente.
+ */
+export function detalleFamilias(
+  asistencias: ConfirmacionAsistencia[]
+): FilaFamiliaInforme[] {
+  const filas: FilaFamiliaInforme[] = [];
+
+  for (const conf of asistencias) {
+    if (conf.estado === 'declinada') continue;
+
+    let adultos = 0;
+    let ninos0a7 = 0;
+    let ninos8a13 = 0;
+    for (const p of conf.asistentes) {
+      if (p.asiste === false) continue;
+      const grupo = grupoDePersona(p);
+      if (grupo === 'adulto') adultos++;
+      else if (grupo === 'ninoMenor') ninos0a7++;
+      else ninos8a13++;
+    }
+
+    filas.push({
+      familia: conf.nombreFamilia,
+      adultos,
+      ninos0a7,
+      ninos8a13,
+      total: adultos + ninos0a7 + ninos8a13,
+      valor: valorDeFamilia(conf.asistentes),
+    });
+  }
+
+  filas.sort((a, b) => a.familia.localeCompare(b.familia, 'es'));
+  return filas;
+}
+
+/** Escapa texto para insertarlo de forma segura dentro del HTML del informe. */
+function escHtml(texto: string): string {
+  return texto
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 /** Calcula el desglose de invitados por categoría y el total a pagar. */
@@ -164,7 +221,10 @@ export function exportarInformeProductoraExcel(resumen: ResumenAsistencias): voi
 
 
 /** Documento HTML listo para imprimir o guardar como PDF. */
-function plantillaInforme(inf: InformeProductora): string {
+function plantillaInforme(
+  inf: InformeProductora,
+  familias: FilaFamiliaInforme[]
+): string {
   const hoy = new Date().toLocaleDateString('es-CL', {
     day: 'numeric',
     month: 'long',
@@ -185,6 +245,28 @@ function plantillaInforme(inf: InformeProductora): string {
   const familiasTexto =
     inf.familias === 1 ? '1 familia confirmada' : `${inf.familias} familias confirmadas`;
 
+  const totalFamilias = familias.length;
+  const totalAdultos = familias.reduce((s, f) => s + f.adultos, 0);
+  const totalNinos0a7 = familias.reduce((s, f) => s + f.ninos0a7, 0);
+  const totalNinos8a13 = familias.reduce((s, f) => s + f.ninos8a13, 0);
+  const totalPersonasFamilias = familias.reduce((s, f) => s + f.total, 0);
+  const totalValorFamilias = familias.reduce((s, f) => s + f.valor, 0);
+
+  const filasFamilias = familias.length
+    ? familias
+        .map(
+          (f) => `<tr>
+        <td>${escHtml(f.familia)}</td>
+        <td class="num">${f.adultos}</td>
+        <td class="num">${f.ninos0a7}</td>
+        <td class="num">${f.ninos8a13}</td>
+        <td class="num">${f.total}</td>
+        <td class="num">${f.valor === 0 ? '—' : formatearClp(f.valor)}</td>
+      </tr>`
+        )
+        .join('')
+    : '<tr><td colspan="6">Sin familias confirmadas.</td></tr>';
+
   return `<!doctype html>
 <html lang="es-CL">
   <head>
@@ -194,6 +276,7 @@ function plantillaInforme(inf: InformeProductora): string {
       * { box-sizing: border-box; }
       body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #1f2937; margin: 0; padding: 40px; }
       h1 { font-size: 22px; margin: 0 0 4px; }
+      h2 { font-size: 16px; margin: 28px 0 8px; }
       .sub { color: #6b7280; margin: 0 0 24px; font-size: 14px; }
       table { width: 100%; border-collapse: collapse; font-size: 14px; }
       th, td { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; text-align: left; }
@@ -236,6 +319,30 @@ function plantillaInforme(inf: InformeProductora): string {
         PRECIO_NINO_MAYOR
       )} c/u · jóvenes y adultos de 14 años o más ${formatearClp(PRECIO_ADULTO)} c/u.
     </p>
+    <h2>Detalle por familia (solo confirmados)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Familia</th>
+          <th class="num">Adultos</th>
+          <th class="num">Niños 0-7</th>
+          <th class="num">Niños 8-13</th>
+          <th class="num">Asistentes</th>
+          <th class="num">Valor</th>
+        </tr>
+      </thead>
+      <tbody>${filasFamilias}</tbody>
+      <tfoot>
+        <tr>
+          <td>TOTAL (${totalFamilias} familia${totalFamilias !== 1 ? 's' : ''})</td>
+          <td class="num">${totalAdultos}</td>
+          <td class="num">${totalNinos0a7}</td>
+          <td class="num">${totalNinos8a13}</td>
+          <td class="num">${totalPersonasFamilias}</td>
+          <td class="num total">${formatearClp(totalValorFamilias)}</td>
+        </tr>
+      </tfoot>
+    </table>
     <p class="pie">Documento generado automáticamente desde el panel de administración.</p>
   </body>
 </html>`;
@@ -243,13 +350,19 @@ function plantillaInforme(inf: InformeProductora): string {
 
 /**
  * Abre una pestaña con el informe listo para imprimir o guardar como PDF.
+ * Incluye, además del resumen por categorías, el desglose familia por familia
+ * con solo las familias confirmadas.
  * Devuelve `false` si el navegador bloqueó las ventanas emergentes.
  */
-export function imprimirInformeProductora(resumen: ResumenAsistencias): boolean {
+export function imprimirInformeProductora(
+  resumen: ResumenAsistencias,
+  asistencias: ConfirmacionAsistencia[] = []
+): boolean {
   const inf = calcularInformeProductora(resumen);
+  const familias = detalleFamilias(asistencias);
   const ventana = window.open('', '_blank');
   if (!ventana) return false;
-  ventana.document.write(plantillaInforme(inf));
+  ventana.document.write(plantillaInforme(inf, familias));
   ventana.document.close();
   ventana.focus();
   // Pequeña espera para que el navegador calcule el diseño antes de abrir el diálogo

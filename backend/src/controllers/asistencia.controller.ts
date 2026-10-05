@@ -105,6 +105,11 @@ function grupoDe(asistente: { tipo: string; edad: number | null }): GrupoAsisten
   return 'ninoMayor';
 }
 
+/** Normaliza un nombre de familia para comparar (sin espacios extra ni mayúsculas). */
+function normalizarNombre(nombre: string): string {
+  return nombre.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
 /**
  * Confirmar asistencia al evento (público)
  * POST /api/confirmar-asistencia
@@ -301,6 +306,26 @@ export async function confirmarAsistencia(req: Request, res: Response) {
             },
           });
           console.log(`✅ Invitación de "${invitacion.familia}" marcada como confirmada`);
+
+          // Si la invitación tenía una respuesta previa (una declinación), se
+          // elimina para no dejar a la familia duplicada: aparecía a la vez en
+          // "Confirmados" y en "No asistirán".
+          const previaId = invitacion.asistenciaId;
+          if (previaId && previaId !== confirmacion.id) {
+            const previa = await prisma.asistencia.findUnique({
+              where: { id: previaId },
+              include: { asistentes: true },
+            });
+            if (
+              previa &&
+              (previa.estado === 'declinada' || previa.asistentes.length === 0)
+            ) {
+              await prisma.asistencia.delete({ where: { id: previa.id } });
+              console.log(
+                `🧹 Respuesta anterior (${previa.estado}) de "${invitacion.familia}" eliminada`
+              );
+            }
+          }
         }
       } catch (errorLink) {
         console.warn('⚠️ No se pudo vincular la invitación:', errorLink);
@@ -514,12 +539,35 @@ async function sincronizarConfirmadasHuerfanas(): Promise<number> {
     : [];
   const vivasSet = new Set(vivas.map((a) => a.id));
 
+  // Confirmaciones "confirmada" que ya existen, indexadas por nombre normalizado,
+  // para reutilizarlas en lugar de crear una fila duplicada de la misma familia.
+  const existentes = await prisma.asistencia.findMany({
+    where: { estado: 'confirmada' },
+    select: { id: true, nombreFamilia: true },
+  });
+  const porNombre = new Map<string, number>();
+  for (const a of existentes) {
+    const clave = normalizarNombre(a.nombreFamilia);
+    if (!porNombre.has(clave)) porNombre.set(clave, a.id);
+  }
+
   let creadas = 0;
   for (const inv of confirmadas) {
     // Vínculo sano: la confirmación existe, no hay nada que reparar
     if (inv.asistenciaId && vivasSet.has(inv.asistenciaId)) continue;
 
     try {
+      // Si ya hay una confirmación viva con el mismo nombre, solo se vuelve a
+      // enlazar: así la familia no aparece duplicada en el panel.
+      const idExistente = porNombre.get(normalizarNombre(inv.familia));
+      if (idExistente) {
+        await prisma.invitacion.update({
+          where: { id: inv.id },
+          data: { asistenciaId: idExistente },
+        });
+        continue;
+      }
+
       const invitados = invitadosEstructurados(inv);
       const filas = invitados.map((p) => ({
         nombre: (p.nombre || '').trim() || inv.familia,
@@ -543,6 +591,7 @@ async function sincronizarConfirmadasHuerfanas(): Promise<number> {
         where: { id: inv.id },
         data: { asistenciaId: asistencia.id },
       });
+      porNombre.set(normalizarNombre(inv.familia), asistencia.id);
       creadas++;
     } catch (errorSync) {
       console.warn(
@@ -556,6 +605,57 @@ async function sincronizarConfirmadasHuerfanas(): Promise<number> {
     console.log(`🔁 ${creadas} invitación(es) confirmada(s) sincronizadas con su confirmación`);
   }
   return creadas;
+}
+
+/**
+ * Elimina declinaciones "fantasma": registros que quedaron en estado declinada
+ * (típicamente generados al marcar una invitación como "declinada" a mano, o por
+ * una declinación previa del enlace) cuando la misma familia ya tiene una
+ * confirmación viva.
+ *
+ * Evita que una familia aparezca duplicada: a la vez en "Confirmados" y en
+ * "No asistirán".
+ */
+async function limpiarDeclinadasObsoletas(): Promise<number> {
+  const [confirmadas, declinadas] = await Promise.all([
+    prisma.asistencia.findMany({
+      where: { estado: 'confirmada' },
+      select: { nombreFamilia: true },
+    }),
+    prisma.asistencia.findMany({
+      where: {
+        estado: 'declinada',
+        email: null,
+        telefono: null,
+        mensaje: null,
+        asistentes: { none: {} },
+      },
+      select: { id: true, nombreFamilia: true },
+    }),
+  ]);
+
+  const nombresConfirmados = new Set(
+    confirmadas.map((a) => normalizarNombre(a.nombreFamilia))
+  );
+
+  let borradas = 0;
+  for (const d of declinadas) {
+    if (!nombresConfirmados.has(normalizarNombre(d.nombreFamilia))) continue;
+    try {
+      await prisma.asistencia.delete({ where: { id: d.id } });
+      borradas++;
+    } catch (errorDelete) {
+      console.warn(
+        `⚠️ No se pudo eliminar la declinación duplicada de "${d.nombreFamilia}":`,
+        errorDelete instanceof Error ? errorDelete.message : errorDelete
+      );
+    }
+  }
+
+  if (borradas > 0) {
+    console.log(`🧹 ${borradas} declinación(es) duplicadas eliminadas`);
+  }
+  return borradas;
 }
 
 /**
@@ -579,6 +679,14 @@ export async function getAsistencias(req: Request, res: Response) {
       await sincronizarConfirmadasHuerfanas();
     } catch (errorSync) {
       console.warn('⚠️ No se pudieron sincronizar las confirmaciones:', errorSync);
+    }
+
+    // Limpieza: declinaciones "fantasma" que quedaron cuando una familia declinó
+    // y luego confirmó (o el estado se cambió a mano). Evita que aparezca repetida.
+    try {
+      await limpiarDeclinadasObsoletas();
+    } catch (errorSync) {
+      console.warn('⚠️ No se pudieron limpiar las declinaciones duplicadas:', errorSync);
     }
 
     const lista = await prisma.asistencia.findMany({
