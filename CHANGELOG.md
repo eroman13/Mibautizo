@@ -366,6 +366,15 @@ Primera versión completa y funcional de la Mesa de Regalos Digital para el baut
   - `GET /api/health` ahora informa `storage` (`"r2"` o `"base64"`) para verificar la
     configuración en producción.
 
+- **Informe de invitados y valores para la productora**: en el panel `/admin/asistencias` ahora hay
+  una tarjeta "💰 Informe para la productora" que muestra la cantidad de invitados por categoría de
+  edad y el valor a pagar según lo acordado: niños de 0 a 7 años no pagan, de 8 a 13 años $15.000 y
+  jóvenes/adultos de 14 años o más $29.000 (con subtotales y total general).
+  - Botón "🖨️ Imprimir / PDF" que abre el informe en una pestaña nueva listo para imprimir o guardar
+    como PDF, y botón "📊 Excel" que descarga el resumen por categoría como CSV.
+  - Nuevo módulo `src/utils/informeProductora.ts` con la lógica de cálculo, la vista imprimible y la
+    exportación a Excel.
+
 ### Planificado para v1.1.0
 
 - [ ] Envío de emails de confirmación (Resend/SendGrid)

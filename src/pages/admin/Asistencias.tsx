@@ -7,6 +7,12 @@ import { Link } from 'react-router-dom';
 import { adminApi } from '../../services/adminApi';
 import { ConfirmacionAsistencia, ResumenAsistencias } from '../../types';
 import { exportarInvitadosExcel } from '../../utils/exportar';
+import {
+  calcularInformeProductora,
+  exportarInformeProductoraExcel,
+  imprimirInformeProductora,
+} from '../../utils/informeProductora';
+import { formatCLP } from '../../utils/format';
 
 // Clasifica a una persona igual que el backend:
 // - adulto (tipo adulto o edad >= 14)
@@ -80,6 +86,9 @@ export default function AdminAsistencias() {
     a.nombreFamilia.toLowerCase().includes(filtro.toLowerCase())
   );
 
+  /** Desglose por categoría de edad y valor a pagar (informe para la productora) */
+  const informe = calcularInformeProductora(resumen);
+
   const exportarExcel = () => {
     if (asistencias.length === 0) {
       alert('No hay confirmaciones para exportar.');
@@ -87,6 +96,25 @@ export default function AdminAsistencias() {
     }
     const total = exportarInvitadosExcel(asistencias);
     alert(`Se exportaron ${total} invitado${total !== 1 ? 's' : ''} a Excel.`);
+  };
+
+  const imprimirInforme = () => {
+    if (asistencias.length === 0) {
+      alert('No hay confirmaciones para generar el informe.');
+      return;
+    }
+    const ok = imprimirInformeProductora(resumen);
+    if (!ok) {
+      alert('Permite las ventanas emergentes del navegador para poder imprimir el informe.');
+    }
+  };
+
+  const exportarInforme = () => {
+    if (asistencias.length === 0) {
+      alert('No hay confirmaciones para exportar.');
+      return;
+    }
+    exportarInformeProductoraExcel(resumen);
   };
 
   const formatearFecha = (iso: string) =>
@@ -188,6 +216,93 @@ export default function AdminAsistencias() {
             <strong>{resumen.invitaciones.sinResponder}</strong>
           </p>
         )}
+
+        {/* Informe para la productora */}
+        <div className="mb-6 bg-white rounded-2xl shadow-card p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div>
+              <h2 className="text-lg font-display font-bold text-gray-800">
+                💰 Informe para la productora
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Cuánto pagar por los invitados que asistirán, según su edad. Solo se cuentan
+                quienes confirmaron que asistirán.
+              </p>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={imprimirInforme}
+                className="btn-primary text-sm py-2 px-4 whitespace-nowrap"
+                title="Abrir el informe para imprimir o guardar como PDF"
+              >
+                🖨️ Imprimir / PDF
+              </button>
+              <button
+                type="button"
+                onClick={exportarInforme}
+                className="btn-secondary text-sm py-2 px-4 whitespace-nowrap"
+                title="Descargar este resumen por categorías (con valores) en un archivo Excel/CSV"
+              >
+                📊 Excel del informe
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-left text-gray-500 uppercase text-xs border-b border-gray-200">
+                <tr>
+                  <th className="py-2 pr-4">Categoría (por edad)</th>
+                  <th className="py-2 px-4 text-right">Invitados</th>
+                  <th className="py-2 px-4 text-right">Valor por persona</th>
+                  <th className="py-2 pl-4 text-right">Subtotal a pagar</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {informe.filas.map((f) => (
+                  <tr key={f.categoria}>
+                    <td className="py-3 pr-4">
+                      <div className="font-medium text-gray-800">{f.categoria}</div>
+                      <div className="text-xs text-gray-400">{f.detalle}</div>
+                    </td>
+                    <td className="py-3 px-4 text-right font-semibold text-gray-800">
+                      {f.cantidad}
+                    </td>
+                    <td className="py-3 px-4 text-right text-gray-600">
+                      {f.precioUnitario === 0 ? 'No pagan' : formatCLP(f.precioUnitario)}
+                    </td>
+                    <td className="py-3 pl-4 text-right font-semibold text-gray-800">
+                      {f.subtotal === 0 ? '—' : formatCLP(f.subtotal)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-gray-300 bg-gray-50">
+                  <td className="py-3 pr-4 font-bold text-gray-800">TOTAL A PAGAR</td>
+                  <td className="py-3 px-4 text-right font-medium text-gray-600">
+                    {informe.totalPersonas} invitado{informe.totalPersonas !== 1 ? 's' : ''}
+                  </td>
+                  <td className="py-3 px-4"></td>
+                  <td className="py-3 pl-4 text-right font-extrabold text-emerald-600 text-lg">
+                    {formatCLP(informe.total)}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <p className="text-xs text-gray-500 mt-3 leading-relaxed">
+            Se incluyen los invitados que asistirán ({informe.familias} familia
+            {informe.familias !== 1 ? 's' : ''} confirmada{informe.familias !== 1 ? 's' : ''}).
+            Quedan fuera {resumen.declinadas} familia{resumen.declinadas !== 1 ? 's' : ''} que
+            declinó{resumen.declinadas !== 1 ? 'n' : ''} y {resumen.personasNoAsisten} persona
+            {resumen.personasNoAsisten !== 1 ? 's' : ''} marcada
+            {resumen.personasNoAsisten !== 1 ? 's' : ''} como “no asistirá”. Para el detalle
+            invitado por invitado usa “📊 Exportar a Excel”.
+          </p>
+        </div>
 
         {/* Filtro */}
         <div className="mb-6 flex items-center justify-between gap-4">
