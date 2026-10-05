@@ -40,7 +40,7 @@ function normalizarFamiliaFamiliar(
   return /^familia\b/i.test(nombre) ? nombre : `Familia ${nombre}`;
 }
 
-interface InvitadoEstructurado {
+export interface InvitadoEstructurado {
   nombre: string;
   tipo: 'adulto' | 'nino';
   edad: number | null;
@@ -64,7 +64,7 @@ function interpretarLineaInvitado(linea: string, forzarNino = false): InvitadoEs
 }
 
 /** Lista estructurada de invitados según la modalidad (para precargar el RSVP). */
-function invitadosEstructurados(inv: {
+export function invitadosEstructurados(inv: {
   modalidad: string;
   familia: string;
   contacto?: string | null;

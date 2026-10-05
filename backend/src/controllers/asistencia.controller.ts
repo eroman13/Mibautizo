@@ -13,6 +13,7 @@ import {
   enviarNotificacionDeclinacion,
   obtenerEmailsNotificacion,
 } from '../lib/email';
+import { invitadosEstructurados } from './invitaciones.controller';
 
 interface AsistenteBody {
   nombre: string;
@@ -472,6 +473,92 @@ async function sincronizarDeclinadas(): Promise<number> {
 }
 
 /**
+ * Sincroniza las invitaciones marcadas como "confirmada" que ya no tienen una
+ * confirmación de asistencia viva.
+ *
+ * Casos reales que cubre:
+ * - El admin marca la invitación como "confirmada" a mano (sin RSVP): no existía
+ *   fila en Asistencia, así que la familia aparecía como "Confirmada" en el panel
+ *   de Invitaciones pero desaparecía del listado de Asistencias.
+ * - La confirmación asociada se eliminó y el vínculo quedó roto (asistenciaId
+ *   apuntando a un registro inexistente).
+ *
+ * Aquí se re-crea la confirmación (idempotente) usando las personas invitadas de
+ * la invitación, para que la familia vuelva a aparecer y se cuente en los totales.
+ */
+async function sincronizarConfirmadasHuerfanas(): Promise<number> {
+  const confirmadas = await prisma.invitacion.findMany({
+    where: { estado: 'confirmada' },
+    select: {
+      id: true,
+      familia: true,
+      contacto: true,
+      modalidad: true,
+      asistentes: true,
+      asistenciaId: true,
+      fechaConfirmada: true,
+      createdAt: true,
+    },
+  });
+  if (confirmadas.length === 0) return 0;
+
+  // Confirmaciones que todavía existen (para no duplicar registros)
+  const idsReferenciados = confirmadas
+    .map((i) => i.asistenciaId)
+    .filter((id): id is number => typeof id === 'number');
+  const vivas = idsReferenciados.length
+    ? await prisma.asistencia.findMany({
+        where: { id: { in: idsReferenciados } },
+        select: { id: true },
+      })
+    : [];
+  const vivasSet = new Set(vivas.map((a) => a.id));
+
+  let creadas = 0;
+  for (const inv of confirmadas) {
+    // Vínculo sano: la confirmación existe, no hay nada que reparar
+    if (inv.asistenciaId && vivasSet.has(inv.asistenciaId)) continue;
+
+    try {
+      const invitados = invitadosEstructurados(inv);
+      const filas = invitados.map((p) => ({
+        nombre: (p.nombre || '').trim() || inv.familia,
+        tipo: p.tipo,
+        edad: p.edad,
+        asiste: true,
+      }));
+      if (filas.length === 0) {
+        filas.push({ nombre: inv.familia, tipo: 'adulto', edad: null, asiste: true });
+      }
+
+      const asistencia = await prisma.asistencia.create({
+        data: {
+          nombreFamilia: inv.familia,
+          estado: 'confirmada',
+          createdAt: inv.fechaConfirmada || inv.createdAt,
+          asistentes: { create: filas },
+        },
+      });
+      await prisma.invitacion.update({
+        where: { id: inv.id },
+        data: { asistenciaId: asistencia.id },
+      });
+      creadas++;
+    } catch (errorSync) {
+      console.warn(
+        `⚠️ No se pudo sincronizar la confirmación de "${inv.familia}":`,
+        errorSync instanceof Error ? errorSync.message : errorSync
+      );
+    }
+  }
+
+  if (creadas > 0) {
+    console.log(`🔁 ${creadas} invitación(es) confirmada(s) sincronizadas con su confirmación`);
+  }
+  return creadas;
+}
+
+/**
  * Listar todas las confirmaciones de asistencia (admin)
  * GET /api/admin/asistencias
  */
@@ -483,6 +570,15 @@ export async function getAsistencias(req: Request, res: Response) {
       await sincronizarDeclinadas();
     } catch (errorSync) {
       console.warn('⚠️ No se pudieron sincronizar las declinaciones:', errorSync);
+    }
+
+    // Reparación idempotente: invitaciones marcadas como "confirmada" sin una
+    // confirmación viva (marcadas a mano o con el vínculo roto) se re-crean para
+    // que vuelvan a aparecer en el panel y en los totales.
+    try {
+      await sincronizarConfirmadasHuerfanas();
+    } catch (errorSync) {
+      console.warn('⚠️ No se pudieron sincronizar las confirmaciones:', errorSync);
     }
 
     const lista = await prisma.asistencia.findMany({

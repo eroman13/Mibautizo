@@ -390,6 +390,12 @@ Primera versión completa y funcional de la Mesa de Regalos Digital para el baut
   datos frescos al servidor (`cache: 'no-store'`), evitando que el navegador muestre conteos antiguos
   al cambiar de página.
 
+- **Reparación de confirmaciones huérfanas**: si una invitación queda marcada como "Confirmada" en el
+  panel de Invitaciones pero no tiene una confirmación de asistencia viva (por ejemplo, porque se marcó
+  a mano sin RSVP o porque se borró el registro y el vínculo quedó roto), al abrir
+  `/admin/asistencias` se vuelve a crear la confirmación automáticamente (idempotente) usando las
+  personas invitadas, para que la familia reaparezca en el listado y se cuente en los totales.
+
 ### Planificado para v1.1.0
 
 - [ ] Envío de emails de confirmación (Resend/SendGrid)
