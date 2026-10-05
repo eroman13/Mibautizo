@@ -111,6 +111,26 @@ function normalizarNombre(nombre: string): string {
 }
 
 /**
+ * Clave de comparación "fuerte" de nombres: minúsculas, sin acentos, sin
+ * espacios extra y sin el prefijo "familia". Así "Familia Guevara Reyes" y
+ * "Guevara Reyes" se consideran la misma familia.
+ */
+function normalizarClave(nombre: string): string {
+  return nombre
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // quita acentos
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/^familia\s+/, '');
+}
+
+/** Normaliza un email para comparar (minúsculas y sin espacios). */
+function normalizarEmail(email: string | null | undefined): string {
+  return (email || '').trim().toLowerCase();
+}
+
+/**
  * Confirmar asistencia al evento (público)
  * POST /api/confirmar-asistencia
  */
@@ -659,6 +679,87 @@ async function limpiarDeclinadasObsoletas(): Promise<number> {
 }
 
 /**
+ * Elimina confirmaciones duplicadas de la misma familia.
+ *
+ * El formulario público SIN token no deduplicaba: si una familia lo enviaba dos
+ * veces (o lo reenviaba corregido) quedaban dos filas "confirmada" idénticas que
+ * inflaban todos los totales (familias, adultos, niños, valor a pagar...).
+ *
+ * Se consideran duplicadas las confirmaciones que comparten:
+ * - el mismo email (no vacío) y el mismo nombre de familia normalizado, o
+ * - el mismo nombre de familia normalizado Y exactamente las mismas personas
+ *   (para los envíos sin email).
+ *
+ * De cada grupo se conserva el registro MÁS RECIENTE (con su lista de
+ * asistentes actualizada) y se eliminan los anteriores. Las invitaciones que
+ * apuntaban a un registro eliminado se re-apuntan al conservado, para no dejar
+ * el vínculo roto. Operación idempotente.
+ */
+async function eliminarConfirmacionesDuplicadas(): Promise<number> {
+  const confirmadas = await prisma.asistencia.findMany({
+    where: { estado: 'confirmada' },
+    select: {
+      id: true,
+      nombreFamilia: true,
+      email: true,
+      createdAt: true,
+      asistentes: { select: { nombre: true } },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  // Agrupar por clave de duplicado
+  const grupos = new Map<string, typeof confirmadas>();
+  for (const a of confirmadas) {
+    const email = normalizarEmail(a.email);
+    const nombre = normalizarClave(a.nombreFamilia);
+    const personas = a.asistentes
+      .map((p) => normalizarClave(p.nombre))
+      .sort()
+      .join(',');
+    const clave = email
+      ? `email:${email}|${nombre}`
+      : `nombre:${nombre}|${personas}`;
+    const grupo = grupos.get(clave);
+    if (grupo) grupo.push(a);
+    else grupos.set(clave, [a]);
+  }
+
+  let borradas = 0;
+  for (const grupo of grupos.values()) {
+    if (grupo.length < 2) continue;
+    // El grupo está ordenado por createdAt asc: la última es la más reciente.
+    const ordenadas = [...grupo].reverse();
+    const conservada = ordenadas[0];
+    for (const dup of ordenadas.slice(1)) {
+      try {
+        // Re-apuntar invitaciones que referenciaban la fila eliminada.
+        const reenlazadas = await prisma.invitacion.updateMany({
+          where: { asistenciaId: dup.id },
+          data: { asistenciaId: conservada.id },
+        });
+        await prisma.asistencia.delete({ where: { id: dup.id } });
+        borradas++;
+        console.log(
+          `🧹 Confirmación duplicada de "${dup.nombreFamilia}" (#${dup.id}) eliminada; se conserva #${conservada.id}` +
+            (reenlazadas.count > 0 ? ` (${reenlazadas.count} invitación(es) re-enlazada(s))` : '')
+        );
+      } catch (errorDelete) {
+        console.warn(
+          `⚠️ No se pudo eliminar la confirmación duplicada de "${dup.nombreFamilia}":`,
+          errorDelete instanceof Error ? errorDelete.message : errorDelete
+        );
+      }
+    }
+  }
+
+  if (borradas > 0) {
+    console.log(`🧹 ${borradas} confirmación(es) duplicadas eliminadas`);
+  }
+  return borradas;
+}
+
+/**
  * Listar todas las confirmaciones de asistencia (admin)
  * GET /api/admin/asistencias
  */
@@ -687,6 +788,15 @@ export async function getAsistencias(req: Request, res: Response) {
       await limpiarDeclinadasObsoletas();
     } catch (errorSync) {
       console.warn('⚠️ No se pudieron limpiar las declinaciones duplicadas:', errorSync);
+    }
+
+    // Limpieza: confirmaciones duplicadas de la misma familia (el formulario
+    // público sin token permitía reenviar y creaba una fila nueva). Se conserva
+    // la más reciente para que los totales cuenten cada familia una sola vez.
+    try {
+      await eliminarConfirmacionesDuplicadas();
+    } catch (errorSync) {
+      console.warn('⚠️ No se pudieron eliminar las confirmaciones duplicadas:', errorSync);
     }
 
     const lista = await prisma.asistencia.findMany({

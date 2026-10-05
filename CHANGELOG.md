@@ -404,6 +404,10 @@ Primera versión completa y funcional de la Mesa de Regalos Digital para el baut
     nombre en lugar de crear otra fila.
   - Se limpian las declinaciones "fantasma" (sin personas ni datos de contacto) cuando la misma familia
     ya tiene una confirmación viva.
+  - Las **confirmaciones duplicadas** de la misma familia (mismo email y nombre de familia normalizado,
+    o mismo nombre y exactamente las mismas personas cuando no hay email) se detectan y eliminan
+    conservando la **más reciente**, y las invitaciones se re-enlazan al registro conservado. Así los
+    totales (familias, adultos, niños, valor a pagar) cuentan cada familia una sola vez.
 
 - **Resumen para el centro de eventos: solo confirmados**: en `/admin/asistencias` ahora se puede
   trabajar solo con quienes confirmaron que asistirán (se excluyen las familias que declinaron y las
