@@ -97,7 +97,10 @@ Primera versión completa y funcional de la Mesa de Regalos Digital para el baut
 - **Endpoints Admin (protegidos)**
   - `POST /api/admin/login` - Autenticación
   - `GET /api/admin/stats` - Estadísticas agregadas
-  - `GET /api/admin/contribuciones` - Listar contribuciones
+  - `GET /api/admin/contribuciones` - Listar contribuciones (incluye resumen de montos)
+  - `POST /api/admin/contribuciones` - Registrar aporte manual (transferencia/efectivo/otro)
+  - `PUT /api/admin/contribuciones/:id` - Editar aporte manual
+  - `DELETE /api/admin/contribuciones/:id` - Eliminar aporte manual
   - `POST /api/admin/regalos` - Crear regalo
   - `PUT /api/admin/regalos/:id` - Actualizar regalo
   - `DELETE /api/admin/regalos/:id` - Eliminar regalo

@@ -64,6 +64,7 @@ mesa-regalos-bautizo-mellizas/
 │   │   │       ├── Login.tsx
 │   │   │       ├── Dashboard.tsx
 │   │   │       ├── Contribuciones.tsx
+│   │   │       ├── RegalosRecibidos.tsx # Quién regaló + aportes manuales
 │   │   │       ├── Regalos.tsx
 │   │   │       └── Configuracion.tsx
 │   │   ├── components/          # Componentes reutilizables
@@ -429,7 +430,8 @@ Authorization: Bearer admin-authenticated
 **Respuesta:**
 ```json
 {
-  "contribuciones": [
+  "success": true,
+  "data": [
     {
       "id": 1,
       "nombreInvitado": "Juan Pérez",
@@ -439,15 +441,72 @@ Authorization: Bearer admin-authenticated
       "montoNetoCLP": 17316,
       "estadoPago": "approved",
       "mpPaymentId": "123456789",
+      "metodoPago": "mercadopago",
+      "referencia": null,
+      "paraMelliza": "melliza1",
+      "registradoPor": null,
       "dedicatoria": "Felicidades",
       "createdAt": "2026-08-28T10:00:00Z",
       "gift": {
         "nombre": "Pack de 4 bodies"
       }
     }
-  ]
+  ],
+  "resumen": {
+    "total": 1,
+    "montoBruto": 18000,
+    "comision": 684,
+    "montoNeto": 17316,
+    "manuales": 0,
+    "montoManual": 0
+  }
 }
 ```
+
+#### 3.1 Registrar aporte recibido por fuera de Mercado Pago
+```http
+POST /admin/contribuciones
+Authorization: Bearer admin-authenticated
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "nombreInvitado": "Familia Soto",
+  "emailInvitado": "soto@example.com",
+  "montoCLP": 50000,
+  "giftId": 3,
+  "metodoPago": "transferencia",
+  "referencia": "Transferencia 987654321",
+  "paraMelliza": "melliza2",
+  "fecha": "2026-10-05",
+  "dedicatoria": "Con cariño para las mellizas"
+}
+```
+
+**Notas:** `metodoPago` acepta `transferencia`, `efectivo` u `otro`. El aporte se
+guarda como `estadoPago: "approved"`, sin comisión (`comisionCLP: 0`), y recalcula
+el monto recaudado y el estado del regalo asociado.
+
+#### 3.2 Editar un aporte registrado a mano
+```http
+PUT /admin/contribuciones/:id
+Authorization: Bearer admin-authenticated
+Content-Type: application/json
+```
+
+**Body:** igual que el registro manual (todos los campos son revalidados).
+Los aportes de Mercado Pago no se pueden editar (registro de auditoría).
+
+#### 3.3 Eliminar un aporte registrado a mano
+```http
+DELETE /admin/contribuciones/:id
+Authorization: Bearer admin-authenticated
+```
+
+**Notas:** elimina el aporte y recalcula el monto recaudado del regalo.
+Los aportes de Mercado Pago no se pueden eliminar desde aquí.
 
 #### 4. Crear Regalo
 ```http

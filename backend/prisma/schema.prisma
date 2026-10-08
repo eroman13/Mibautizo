@@ -73,9 +73,15 @@ model Contribution {
   emailInvitado  String?
   dedicatoria    String?
   estadoPago     String // "pending" | "approved" | "rejected" | "cancelled"
-  mpPaymentId    String // ID del pago en Mercado Pago (puede repetirse si un pago cubre varios regalos)
+  mpPaymentId    String? // ID del pago en Mercado Pago (null si el aporte se registró a mano)
+  metodoPago     String   @default("mercadopago") // "mercadopago" | "transferencia" | "efectivo" | "otro"
+  referencia     String? // N° de operación / comprobante de la transferencia (opcional)
+  paraMelliza    String? // "melliza1" | "melliza2" (para quién es el regalo)
+  registradoPor  String? // Usuario admin que registró un aporte manual
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  @@index([metodoPago])
 }
 
 // Usuarios administradores

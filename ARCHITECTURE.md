@@ -271,6 +271,10 @@ router.post('/webhook', webhookMercadoPago);
 router.post('/admin/login', adminLogin);
 router.get('/admin/stats', verificarAuth, getStats);
 router.get('/admin/contribuciones', verificarAuth, getContribuciones);
+// Aportes registrados a mano (transferencia bancaria, efectivo u otro)
+router.post('/admin/contribuciones', verificarAuth, crearContribucionManual);
+router.put('/admin/contribuciones/:id', verificarAuth, actualizarContribucionManual);
+router.delete('/admin/contribuciones/:id', verificarAuth, eliminarContribucionManual);
 router.post('/admin/regalos', verificarAuth, crearRegalo);
 router.put('/admin/regalos/:id', verificarAuth, actualizarRegalo);
 router.delete('/admin/regalos/:id', verificarAuth, eliminarRegalo);

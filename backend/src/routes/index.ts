@@ -18,6 +18,9 @@ import {
   adminLogin,
   getStats,
   getContribuciones,
+  crearContribucionManual,
+  actualizarContribucionManual,
+  eliminarContribucionManual,
   crearRegalo,
   crearRegalosMasivo,
   actualizarRegalo,
@@ -120,6 +123,10 @@ router.post(
 );
 router.get('/admin/stats', verificarAuth, getStats);
 router.get('/admin/contribuciones', verificarAuth, getContribuciones);
+// Aportes registrados a mano por el admin (transferencia bancaria, efectivo u otro)
+router.post('/admin/contribuciones', verificarAuth, crearContribucionManual);
+router.put('/admin/contribuciones/:id', verificarAuth, actualizarContribucionManual);
+router.delete('/admin/contribuciones/:id', verificarAuth, eliminarContribucionManual);
 router.post('/admin/regalos', verificarAuth, crearRegalo);
 router.post('/admin/regalos/bulk', verificarAuth, crearRegalosMasivo);
 router.put('/admin/regalos/:id', verificarAuth, actualizarRegalo);

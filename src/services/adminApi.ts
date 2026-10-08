@@ -31,6 +31,45 @@ export const adminApi = {
     return response.json();
   },
 
+  // Registrar un regalo recibido por fuera de Mercado Pago (transferencia, efectivo u otro)
+  crearContribucion: async (data: {
+    nombreInvitado: string;
+    emailInvitado?: string;
+    montoCLP: number;
+    giftId?: number | null;
+    paraMelliza?: 'melliza1' | 'melliza2' | null;
+    metodoPago?: 'transferencia' | 'efectivo' | 'otro';
+    referencia?: string;
+    fecha?: string;
+    dedicatoria?: string;
+  }) => {
+    const response = await fetch(`${API_URL}/admin/contribuciones`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  },
+
+  // Editar un aporte registrado a mano
+  actualizarContribucion: async (id: number, data: any) => {
+    const response = await fetch(`${API_URL}/admin/contribuciones/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  },
+
+  // Eliminar un aporte registrado a mano
+  eliminarContribucion: async (id: number) => {
+    const response = await fetch(`${API_URL}/admin/contribuciones/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  },
+
   // CRUD de regalos
   crearRegalo: async (data: any) => {
     const response = await fetch(`${API_URL}/admin/regalos`, {

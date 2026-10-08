@@ -148,6 +148,9 @@ export async function webhook(req: Request, res: Response) {
           dedicatoria: invitado.dedicatoria || null,
           estadoPago: 'approved',
           mpPaymentId: paymentId.toString(),
+          // Origen del aporte y para quién es el regalo (si el checkout lo indicó)
+          metodoPago: 'mercadopago',
+          paraMelliza: regalo.paraMelliza || null,
         },
       });
 

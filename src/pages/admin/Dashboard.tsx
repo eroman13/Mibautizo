@@ -185,6 +185,18 @@ export default function AdminDashboard() {
           </Link>
 
           <Link
+            to="/admin/regalos-recibidos"
+            className="bg-white rounded-2xl shadow-card p-6 hover:shadow-xl transition-shadow"
+          >
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              🎉 Regalos recibidos
+            </h3>
+            <p className="text-gray-600 text-sm">
+              Ver quién regaló y registrar transferencias bancarias
+            </p>
+          </Link>
+
+          <Link
             to="/admin/usuarios"
             className="bg-white rounded-2xl shadow-card p-6 hover:shadow-xl transition-shadow"
           >

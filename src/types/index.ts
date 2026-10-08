@@ -128,3 +128,39 @@ export interface ResumenAsistencias {
     sinResponder: number;
   };
 }
+
+/** Formas en que un aporte pudo ser recibido */
+export type MetodoPagoAporte = 'mercadopago' | 'transferencia' | 'efectivo' | 'otro';
+
+/**
+ * Aporte/regalo recibido: pago con Mercado Pago o aporte registrado a mano
+ * por el admin (transferencia bancaria, efectivo, etc.).
+ */
+export interface Contribucion {
+  id: number;
+  giftId: number | null;
+  gift?: { nombre: string } | null;
+  montoBrutoCLP: number;
+  comisionCLP: number;
+  montoNetoCLP: number;
+  nombreInvitado: string;
+  emailInvitado?: string | null;
+  dedicatoria?: string | null;
+  estadoPago: string;
+  mpPaymentId?: string | null;
+  metodoPago?: MetodoPagoAporte;
+  referencia?: string | null;
+  paraMelliza?: 'melliza1' | 'melliza2' | null;
+  registradoPor?: string | null;
+  createdAt: string;
+}
+
+/** Resumen de aportes que acompaña al listado del panel admin */
+export interface ResumenContribuciones {
+  total: number;
+  montoBruto: number;
+  comision: number;
+  montoNeto: number;
+  manuales: number;
+  montoManual: number;
+}

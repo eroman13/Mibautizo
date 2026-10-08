@@ -31,6 +31,7 @@ import AdminLogin from './pages/admin/Login';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminAnalytics from './pages/admin/Analytics';
 import AdminContribuciones from './pages/admin/Contribuciones';
+import AdminRegalosRecibidos from './pages/admin/RegalosRecibidos';
 import AdminAsistencias from './pages/admin/Asistencias';
 import AdminInvitaciones from './pages/admin/Invitaciones';
 import AdminRegalos from './pages/admin/Regalos';
@@ -164,6 +165,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <AdminRegalos />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/regalos-recibidos"
+                  element={
+                    <ProtectedRoute>
+                      <AdminRegalosRecibidos />
                     </ProtectedRoute>
                   }
                 />
