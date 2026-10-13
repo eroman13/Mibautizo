@@ -1,9 +1,11 @@
 /**
  * Vista de regalos recibidos (exclusiva del panel admin)
  *
- * Muestra quién ha realizado un regalo/aporte, con qué método lo hizo, a qué
- * regalo lo destinó y permite registrar a mano los regalos recibidos por
- * transferencia bancaria (o efectivo), que no pasan por Mercado Pago.
+ * Muestra quién ha realizado un regalo/aporte, a qué familia pertenece (se
+ * deduce cruzando el nombre/email con las invitaciones y RSVP), con qué método
+ * lo hizo, a qué regalo lo destinó y permite registrar a mano los regalos
+ * recibidos por transferencia bancaria (o efectivo), que no pasan por Mercado
+ * Pago. Todos los administradores pueden registrar aportes manuales.
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -89,6 +91,8 @@ function esManual(aporte: Contribucion): boolean {
 
 interface ResumenInvitado {
   nombre: string;
+  /** Familias registradas atribuidas a los aportes de este invitado */
+  familias: string[];
   email: string | null;
   aportes: number;
   total: number;
@@ -192,6 +196,7 @@ export default function AdminRegalosRecibidos() {
       if (!texto) return true;
       return (
         aporte.nombreInvitado.toLowerCase().includes(texto) ||
+        (aporte.nombreFamilia || '').toLowerCase().includes(texto) ||
         (aporte.emailInvitado || '').toLowerCase().includes(texto) ||
         (aporte.gift?.nombre || 'aporte libre').toLowerCase().includes(texto) ||
         (aporte.referencia || '').toLowerCase().includes(texto) ||
@@ -208,6 +213,7 @@ export default function AdminRegalosRecibidos() {
       const clave = aporte.nombreInvitado.trim().toLowerCase();
       const actual: ResumenInvitado = mapa.get(clave) || {
         nombre: aporte.nombreInvitado,
+        familias: [],
         email: aporte.emailInvitado || null,
         aportes: 0,
         total: 0,
@@ -229,6 +235,10 @@ export default function AdminRegalosRecibidos() {
       if (!actual.metodos.includes(metodo)) actual.metodos.push(metodo);
 
       if (!actual.email && aporte.emailInvitado) actual.email = aporte.emailInvitado;
+
+      if (aporte.nombreFamilia && !actual.familias.includes(aporte.nombreFamilia)) {
+        actual.familias.push(aporte.nombreFamilia);
+      }
 
       mapa.set(clave, actual);
     }
@@ -442,6 +452,10 @@ export default function AdminRegalosRecibidos() {
                 Usa este formulario para los regalos que llegan fuera de Mercado Pago:
                 transferencia bancaria, efectivo o entregas en mano.
               </p>
+              <p className="text-xs text-gray-400 mt-1">
+                La familia que hizo el aporte se deduce automáticamente cruzando el nombre y el
+                email con las invitaciones y confirmaciones de asistencia.
+              </p>
             </div>
             {!mostrarForm && (
               <button onClick={abrirNuevo} className="btn-primary">
@@ -604,7 +618,7 @@ export default function AdminRegalosRecibidos() {
               type="text"
               value={filtro}
               onChange={(e) => setFiltro(e.target.value)}
-              placeholder="Buscar por invitado, regalo, referencia o mensaje..."
+              placeholder="Buscar por invitado, familia, regalo, referencia o mensaje..."
               className="input-field w-full md:max-w-md"
             />
             <div className="flex gap-2 flex-wrap">
@@ -689,6 +703,11 @@ export default function AdminRegalosRecibidos() {
                       <tr key={invitado.nombre} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
                           <div className="text-sm font-medium text-gray-800">{invitado.nombre}</div>
+                          {invitado.familias.length > 0 && (
+                            <div className="text-xs text-pastel-lavender font-semibold mt-0.5">
+                              👨‍👩‍👧 {invitado.familias.join(' / ')}
+                            </div>
+                          )}
                           {invitado.email && (
                             <div className="text-xs text-gray-500">{invitado.email}</div>
                           )}
@@ -728,6 +747,9 @@ export default function AdminRegalosRecibidos() {
                       Invitado
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
+                      Familia
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
                       Regalo
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
@@ -750,7 +772,7 @@ export default function AdminRegalosRecibidos() {
                 <tbody className="divide-y divide-gray-200">
                   {aportesFiltrados.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="px-6 py-10 text-center text-gray-500">
+                      <td colSpan={9} className="px-6 py-10 text-center text-gray-500">
                         No hay aportes que coincidan con los filtros.
                       </td>
                     </tr>
@@ -771,6 +793,20 @@ export default function AdminRegalosRecibidos() {
                             <div className="text-xs text-gray-500 italic mt-1">
                               "{aporte.dedicatoria}"
                             </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                          {aporte.nombreFamilia ? (
+                            <span className="font-semibold text-pastel-lavender">
+                              👨‍👩‍👧 {aporte.nombreFamilia}
+                            </span>
+                          ) : (
+                            <span
+                              className="text-gray-400"
+                              title="No se pudo relacionar con una invitación o RSVP"
+                            >
+                              —
+                            </span>
                           )}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-800">
@@ -858,7 +894,9 @@ export default function AdminRegalosRecibidos() {
         <p className="text-xs text-gray-500 pb-6">
           Los aportes de Mercado Pago se registran automáticamente y no se pueden editar ni eliminar
           (se conservan como registro de auditoría). Los aportes que registres a mano actualizan el
-          monto recaudado del regalo y su estado.
+          monto recaudado del regalo y su estado. La columna «Familia» se deduce cruzando el
+          nombre/email del aporte con las invitaciones y confirmaciones de asistencia (aparece «—»
+          cuando no hay una coincidencia única).
         </p>
       </div>
     </div>

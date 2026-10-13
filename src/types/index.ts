@@ -144,6 +144,12 @@ export interface Contribucion {
   comisionCLP: number;
   montoNetoCLP: number;
   nombreInvitado: string;
+  /**
+   * Familia registrada (invitación o RSVP) a la que se atribuye el aporte,
+   * deducida por el backend cruzando el email/nombre escrito. `null` si no se
+   * puede determinar con certeza.
+   */
+  nombreFamilia?: string | null;
   emailInvitado?: string | null;
   dedicatoria?: string | null;
   estadoPago: string;

@@ -52,6 +52,7 @@ export default function AdminContribuciones() {
 
   const contribucionesFiltradas = contribuciones.filter(c =>
     c.nombreInvitado.toLowerCase().includes(filtro.toLowerCase()) ||
+    (c.nombreFamilia || '').toLowerCase().includes(filtro.toLowerCase()) ||
     c.gift?.nombre.toLowerCase().includes(filtro.toLowerCase())
   );
 
@@ -95,7 +96,7 @@ export default function AdminContribuciones() {
               type="text"
               value={filtro}
               onChange={(e) => setFiltro(e.target.value)}
-              placeholder="Buscar por nombre o regalo..."
+              placeholder="Buscar por nombre, familia o regalo..."
               className="input-field max-w-md"
             />
             <div className="flex gap-3 flex-wrap">
@@ -138,6 +139,11 @@ export default function AdminContribuciones() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-800">{c.nombreInvitado}</div>
+                      {c.nombreFamilia && (
+                        <div className="text-xs text-pastel-lavender font-semibold mt-0.5">
+                          👨‍👩‍👧 {c.nombreFamilia}
+                        </div>
+                      )}
                       {c.emailInvitado && (
                         <div className="text-xs text-gray-500">{c.emailInvitado}</div>
                       )}

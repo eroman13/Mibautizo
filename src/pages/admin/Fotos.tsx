@@ -246,9 +246,14 @@ export default function AdminFotos() {
                 Revisa, aprueba y publica las fotos que comparten los invitados
               </p>
             </div>
-            <Link to="/admin/dashboard" className="text-pastel-pink hover:text-pastel-lavender">
-              ← Volver al dashboard
-            </Link>
+            <div className="flex items-center gap-4 text-sm">
+              <Link to="/admin/regalos-recibidos" className="text-pastel-pink hover:text-pastel-lavender">
+                🎉 Regalos recibidos
+              </Link>
+              <Link to="/admin/dashboard" className="text-pastel-pink hover:text-pastel-lavender">
+                ← Volver al dashboard
+              </Link>
+            </div>
           </div>
         </div>
       </header>

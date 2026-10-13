@@ -251,6 +251,12 @@ export default function AdminUsers() {
               Gestionar Regalos
             </Link>
             <Link
+              to="/admin/regalos-recibidos"
+              className="px-4 py-4 text-gray-600 hover:text-pastel-pink border-b-2 border-transparent hover:border-pastel-pink transition"
+            >
+              🎉 Regalos recibidos
+            </Link>
+            <Link
               to="/admin/configuracion"
               className="px-4 py-4 text-gray-600 hover:text-pastel-pink border-b-2 border-transparent hover:border-pastel-pink transition"
             >

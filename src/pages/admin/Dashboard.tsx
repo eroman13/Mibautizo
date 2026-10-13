@@ -80,6 +80,9 @@ export default function AdminDashboard() {
             <Link to="/admin/regalos" className="text-gray-600 hover:text-pastel-pink">
               Gestionar Regalos
             </Link>
+            <Link to="/admin/regalos-recibidos" className="text-gray-600 hover:text-pastel-pink">
+              🎉 Regalos recibidos
+            </Link>
             <Link to="/admin/fotos" className="text-gray-600 hover:text-pastel-pink">
               📸 Fotos
             </Link>

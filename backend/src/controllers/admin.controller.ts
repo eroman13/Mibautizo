@@ -8,6 +8,28 @@ import bcrypt from 'bcryptjs';
 import { COMMISSION_RATE } from '../lib/mercadopago';
 import { enviarCorreoPrueba } from '../lib/email';
 import { firmarToken } from '../lib/security';
+import { crearBuscadorDeFamilias } from '../utils/familias';
+
+/**
+ * Carga las familias registradas (invitaciones + confirmaciones de asistencia)
+ * para poder deducir a qué familia pertenece cada aporte.
+ */
+async function cargarFamiliasRegistradas() {
+  const [invitaciones, asistencias] = await Promise.all([
+    prisma.invitacion.findMany({
+      select: { familia: true, asistentes: true },
+    }),
+    prisma.asistencia.findMany({
+      select: {
+        nombreFamilia: true,
+        email: true,
+        asistentes: { select: { nombre: true } },
+      },
+    }),
+  ]);
+
+  return { invitaciones, asistencias };
+}
 
 /**
  * Login con usuario y contraseña
@@ -117,28 +139,42 @@ export async function getStats(req: Request, res: Response) {
  * Devuelve todos los aportes (pagos de Mercado Pago y aportes registrados a mano)
  * junto a un resumen de totales. `data` sigue siendo el arreglo de aportes por
  * compatibilidad; el resumen se agrega en la propiedad `resumen`.
+ *
+ * Cada aporte incluye `nombreFamilia`: la familia registrada (invitación o
+ * RSVP) que hizo el aporte, deducida cruzando el email/nombre escrito. Es
+ * `null` cuando no se puede determinar con certeza.
  */
 export async function getContribuciones(req: Request, res: Response) {
   try {
-    const contribuciones = await prisma.contribution.findMany({
-      include: {
-        gift: {
-          select: {
-            nombre: true,
+    const [contribuciones, familias] = await Promise.all([
+      prisma.contribution.findMany({
+        include: {
+          gift: {
+            select: {
+              nombre: true,
+            },
           },
         },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      cargarFamiliasRegistradas(),
+    ]);
+
+    // Se agrega la familia que hizo el aporte (solo informativo, no se guarda)
+    const familiaDeAporte = crearBuscadorDeFamilias(familias);
+    const datos = contribuciones.map((c) => ({
+      ...c,
+      nombreFamilia: familiaDeAporte(c.nombreInvitado, c.emailInvitado),
+    }));
 
     const aprobadas = contribuciones.filter((c) => c.estadoPago === 'approved');
     const manuales = contribuciones.filter((c) => c.metodoPago !== 'mercadopago');
 
     res.json({
       success: true,
-      data: contribuciones,
+      data: datos,
       resumen: {
         total: contribuciones.length,
         montoBruto: aprobadas.reduce((sum, c) => sum + c.montoBrutoCLP, 0),
@@ -674,23 +710,30 @@ export async function actualizarEvento(req: Request, res: Response) {
  */
 export async function exportarCSV(req: Request, res: Response) {
   try {
-    const contribuciones = await prisma.contribution.findMany({
-      include: {
-        gift: {
-          select: {
-            nombre: true,
+    const [contribuciones, familias] = await Promise.all([
+      prisma.contribution.findMany({
+        include: {
+          gift: {
+            select: {
+              nombre: true,
+            },
           },
         },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      cargarFamiliasRegistradas(),
+    ]);
+
+    // Familia que hizo cada aporte (deducida del email/nombre escrito)
+    const familiaDeAporte = crearBuscadorDeFamilias(familias);
 
     // Crear CSV
     const headers = [
       'Fecha',
       'Nombre Invitado',
+      'Familia',
       'Email',
       'Regalo',
       'Monto Bruto',
@@ -707,6 +750,7 @@ export async function exportarCSV(req: Request, res: Response) {
       return [
         c.createdAt.toISOString().split('T')[0],
         `"${c.nombreInvitado.replace(/"/g, '""')}"`,
+        `"${(familiaDeAporte(c.nombreInvitado, c.emailInvitado) || '').replace(/"/g, '""')}"`,
         c.emailInvitado || '',
         `"${(c.gift?.nombre || 'Aporte libre').replace(/"/g, '""')}"`,
         c.montoBrutoCLP,

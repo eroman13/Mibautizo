@@ -425,9 +425,14 @@ export default function AdminRegalos() {
             <h1 className="text-2xl font-display font-bold text-gray-800">
               🎁 Gestión de Regalos
             </h1>
-            <Link to="/admin/dashboard" className="text-pastel-pink hover:text-pastel-lavender">
-              ← Volver al dashboard
-            </Link>
+            <div className="flex items-center gap-4 text-sm">
+              <Link to="/admin/regalos-recibidos" className="text-pastel-pink hover:text-pastel-lavender">
+                🎉 Regalos recibidos
+              </Link>
+              <Link to="/admin/dashboard" className="text-pastel-pink hover:text-pastel-lavender">
+                ← Volver al dashboard
+              </Link>
+            </div>
           </div>
         </div>
       </header>

@@ -435,6 +435,7 @@ Authorization: Bearer admin-authenticated
     {
       "id": 1,
       "nombreInvitado": "Juan Pérez",
+      "nombreFamilia": "Familia Pérez",
       "emailInvitado": "juan@example.com",
       "montoBrutoCLP": 18000,
       "comisionCLP": 684,
@@ -462,6 +463,11 @@ Authorization: Bearer admin-authenticated
   }
 }
 ```
+
+**Nota:** `nombreFamilia` es la familia registrada (invitación o RSVP) a la que se atribuye el aporte,
+deducida cruzando el email y el nombre escrito contra las invitaciones y confirmaciones de asistencia
+(`backend/src/utils/familias.ts`). Se calcula al consultar (no se guarda en la base de datos) y es
+`null` cuando no existe una coincidencia inequívoca.
 
 #### 3.1 Registrar aporte recibido por fuera de Mercado Pago
 ```http
@@ -570,7 +576,9 @@ GET /admin/export-csv
 Authorization: Bearer admin-authenticated
 ```
 
-**Respuesta:** Archivo CSV descargable con todas las contribuciones.
+**Respuesta:** Archivo CSV descargable con todas las contribuciones. Incluye la columna
+**Familia** con la familia registrada que hizo cada aporte (deducida por email/nombre; vacía si
+no hay coincidencia inequívoca).
 
 ---
 
@@ -594,10 +602,19 @@ Authorization: Bearer admin-authenticated
 
 #### 2. Contribuciones 💰
 - Tabla completa con todas las contribuciones
-- Filtro por nombre de invitado o regalo
+- Filtro por nombre de invitado, familia o regalo
+- Muestra la **familia** que hizo el aporte (👨‍👩‍👧) junto al nombre escrito, cuando se puede
+  deducir de las invitaciones o confirmaciones de asistencia
 - Columnas: Fecha, Nombre, Email, Regalo, Montos, Estado, Dedicatoria
 - Botón **"Exportar CSV"** para descarga
 - Resumen de totales al final
+
+#### 2.1 Regalos recibidos 🎉
+- Quién regaló (agrupado por invitado y su familia) y detalle aporte por aporte, con columna **Familia**
+- Filtros por método: Mercado Pago, transferencia, efectivo u otro
+- Botón **"➕ Registrar aporte"** (disponible para **todos los administradores**) para registrar
+  regalos recibidos por transferencia bancaria, efectivo o entregas en mano
+- Los aportes de Mercado Pago se muestran como registro de auditoría (no se editan ni eliminan)
 
 #### 3. Gestionar Regalos 🎁
 - Grid de tarjetas con todos los regalos

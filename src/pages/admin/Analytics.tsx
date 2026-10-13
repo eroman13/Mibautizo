@@ -82,6 +82,7 @@ export default function AnalyticsPage() {
             <Link to="/admin/asistencias" className="text-gray-600 hover:text-pastel-pink">Asistencia</Link>
             <Link to="/admin/invitaciones" className="text-gray-600 hover:text-pastel-pink">Invitaciones</Link>
             <Link to="/admin/regalos" className="text-gray-600 hover:text-pastel-pink">Gestionar Regalos</Link>
+            <Link to="/admin/regalos-recibidos" className="text-gray-600 hover:text-pastel-pink">Regalos recibidos</Link>
             <Link to="/admin/configuracion" className="text-gray-600 hover:text-pastel-pink">Configuracion</Link>
             <Link to="/admin/usuarios" className="text-gray-600 hover:text-pastel-pink">Usuarios</Link>
           </div>

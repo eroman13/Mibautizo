@@ -343,6 +343,21 @@ Primera versión completa y funcional de la Mesa de Regalos Digital para el baut
 
 ### ✨ Added
 
+- **Familia que hizo cada aporte en `/admin/regalos-recibidos`**: el panel muestra ahora, junto al
+  nombre escrito por el invitado, la familia registrada a la que corresponde el aporte (invitación o
+  confirmación de asistencia), sin necesidad de guardar un campo nuevo.
+  - Nuevo módulo `backend/src/utils/familias.ts`: empareja por email, por nombre completo normalizado
+    (sin acentos ni el prefijo "familia") y por coincidencia parcial de términos ("María Soto" ↔
+    "María Soto Pérez", "Soto" ↔ "Familia Soto"). Con nombres de una sola palabra exige que la familia
+    sea única; si hay ambigüedad devuelve `null` y el panel muestra «—».
+  - `GET /api/admin/contribuciones` agrega `nombreFamilia` a cada aporte y la exportación CSV
+    (`GET /api/admin/export-csv`) incorpora la columna **Familia**.
+  - La vista «🧾 Detalle de aportes» agrega la columna **Familia** y la vista «👥 Quién regaló» la
+    muestra bajo el nombre; el buscador también filtra por familia. Igual dato en `/admin/contribuciones`.
+  - El registro de aportes manuales (transferencia/efectivo/otro) queda disponible para **todos los
+    administradores** y el enlace «🎉 Regalos recibidos» se agregó a la navegación de todo el panel
+    (Dashboard, Analytics, Usuarios, Asistencias, Invitaciones, Regalos, Fotos y Configuración).
+
 - **Recordatorios para invitaciones sin confirmar**: en el panel `/admin/invitaciones` ahora se
   ve un resumen y un panel con las familias que aún no responden, un filtro "🔔 Sin confirmar",
   un botón "🔔 Recordar" por invitación (y otro dentro del modal de recordatorios) que abre
